@@ -30,11 +30,27 @@ if [ -n "$ELIMINAR" ]; then
   [ "$hechas" -gt 0 ] || { echo "✗ no se pudo sacar ninguna"; exit 1; }
 fi
 
-callado "armar el sitio (pasos.py)" python pasos.py --obra "$OBRA"
-# Si web/ salió rota (un JSON inválido, un token de plantilla sin
-# reemplazar, una obra sin su página), no se guarda ni se sube.
-callado "comprobar web/" python ../tests/comprobar_web.py
-
 if [ -n "$ELIMINAR" ]; then MSG="Sacar $ELIMINAR del sitio ($MODO)"; else MSG="Publicar ${OBRA:-sitio} (web/ al día)"; fi
-guardar "$MSG" sitio web
+armar_y_guardar() {
+  cd "$REPO_DIR/sitio"
+  callado "armar el sitio (pasos.py)" python pasos.py --obra "$OBRA" || return 1
+  # Si web/ salió rota (un JSON inválido, un token de plantilla sin
+  # reemplazar, una obra sin su página), no se guarda ni se sube.
+  callado "comprobar web/" python ../tests/comprobar_web.py || return 1
+  guardar "$MSG" sitio web
+}
+# Si mientras se armaba entró otra publicación o la matriz, los archivos
+# calculados chocan: se descarta lo armado, se trae main y se vuelve a
+# armar sobre lo último (una vez). Con «eliminar» no: lo que hizo
+# eliminar_obra.py se perdería al traer main.
+if ! armar_y_guardar; then
+  [ -z "$ELIMINAR" ] || exit 1
+  echo "· chocó con otro cambio en main: se vuelve a armar sobre lo último"
+  git -C "$REPO_DIR" rebase --abort >> "$REGISTRO" 2>&1 || true
+  git -C "$REPO_DIR" fetch -q origin main >> "$REGISTRO" 2>&1
+  git -C "$REPO_DIR" reset -q --hard origin/main >> "$REGISTRO" 2>&1
+  git -C "$REPO_DIR" clean -qfd -- sitio web >> "$REGISTRO" 2>&1
+  ORIGEN=$(git -C "$REPO_DIR" rev-parse HEAD)
+  armar_y_guardar
+fi
 marcar publicar "$ORIGEN"
