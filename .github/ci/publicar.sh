@@ -37,7 +37,14 @@ armar_y_guardar() {
   # Si web/ salió rota (un JSON inválido, un token de plantilla sin
   # reemplazar, una obra sin su página), no se guarda ni se sube.
   callado "comprobar web/" python ../tests/comprobar_web.py || return 1
-  guardar "$MSG" sitio web
+  guardar "$MSG" sitio web $(resumen)
+}
+# registros/ultima-publicacion.md: lo escribe pasos.py (qué obras se
+# regeneraron, cuáles no y por qué, diagonales, errores). Se guarda con
+# web/ para que un aviso que no hace fallar el paso se pueda leer en el
+# repo privado; acá no se imprime nada.
+resumen() {
+  [ -f "$REPO_DIR/registros/ultima-publicacion.md" ] && echo registros/ultima-publicacion.md || true
 }
 # Si mientras se armaba entró otra publicación o la matriz, los archivos
 # calculados chocan: se descarta lo armado, se trae main y se vuelve a
@@ -51,6 +58,20 @@ if ! armar_y_guardar; then
   git -C "$REPO_DIR" reset -q --hard origin/main >> "$REGISTRO" 2>&1
   git -C "$REPO_DIR" clean -qfd -- sitio web >> "$REGISTRO" 2>&1
   ORIGEN=$(git -C "$REPO_DIR" rev-parse HEAD)
-  armar_y_guardar
+  if ! armar_y_guardar; then
+    # Sin web/ nueva igual queda el resumen de por qué: se lo aparta, se
+    # vuelve a main tal cual (nada de lo armado se guarda) y se guarda solo
+    # ese archivo.
+    if [ -n "$(resumen)" ]; then
+      cp "$REPO_DIR/registros/ultima-publicacion.md" "$RUNNER_TEMP/resumen.md"
+      git -C "$REPO_DIR" rebase --abort >> "$REGISTRO" 2>&1 || true
+      git -C "$REPO_DIR" fetch -q origin main >> "$REGISTRO" 2>&1 || true
+      git -C "$REPO_DIR" reset -q --hard origin/main >> "$REGISTRO" 2>&1 || true
+      mkdir -p "$REPO_DIR/registros"
+      cp "$RUNNER_TEMP/resumen.md" "$REPO_DIR/registros/ultima-publicacion.md"
+      guardar "Publicación fallida: resumen [skip ci]" registros/ultima-publicacion.md || true
+    fi
+    exit 1
+  fi
 fi
 marcar publicar "$ORIGEN"
