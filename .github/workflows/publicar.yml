@@ -1,0 +1,72 @@
+# Publicar sitio: arma web/ en el repo privado (p4p13b/p314b), la guarda en
+# main y la sube a Cloudflare.
+#
+# Lo lanzan el botón «⚡ publicar» y «quitar de la web / eliminar obra» del
+# taller (con obra / eliminar / modo), vigilar.yml cuando entra un cambio en
+# sitio/ y superficie.yml cuando cambia algo de lo que se publica.
+#
+# Corre acá, en el repo público, porque los minutos de Actions de un repo
+# público no se cobran. Los registros son públicos: todo lo que imprime el
+# repo privado va a un archivo (ver .github/ci/comun.sh).
+name: Publicar sitio
+
+on:
+  workflow_dispatch:
+    inputs:
+      obra:
+        description: 'slug de obras/<slug>.json a generar primero (vacío = todas)'
+        required: false
+        default: ''
+      eliminar:
+        description: 'slug(s) de obras a sacar del sitio, separados por espacio (vacío = ninguna)'
+        required: false
+        default: ''
+      modo:
+        description: '"ocultar" (solo quitarla de la web) o "eliminar" (a la papelera)'
+        required: false
+        default: 'ocultar'
+
+permissions:
+  contents: read
+
+# De a una por vez. Si llegan varias mientras corre una, GitHub deja solo la
+# última en espera: como arma todo el sitio, alcanza con esa.
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      P314B_TOKEN: ${{ secrets.P314B_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      # La cuenta donde vive el Worker (no es un secreto).
+      CLOUDFLARE_ACCOUNT_ID: ec97a0a05849c2eb20a491d3c59255ca
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: _ci
+      - uses: actions/checkout@v4
+        with:
+          repository: p4p13b/p314b
+          token: ${{ secrets.P314B_TOKEN }}
+          ref: main
+          path: p314b
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Armar y guardar el sitio
+        run: bash _ci/.github/ci/publicar.sh
+
+      - name: Subir a Cloudflare
+        run: bash _ci/.github/ci/desplegar.sh
+
+      - name: Guardar el registro (si falló)
+        if: failure()
+        run: bash _ci/.github/ci/registro.sh publicar

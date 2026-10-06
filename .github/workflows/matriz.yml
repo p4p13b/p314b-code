@@ -1,0 +1,76 @@
+# Matriz relacional: índice de pasajes, pesos, propuestas, recorridos y capa
+# autónoma, en el repo privado. Escribe solo sitio/matriz/, que no se
+# publica: lo ve la autora en matriz.html y en el taller.
+#
+# Corre todos los días, cuando vigilar.yml ve decisiones nuevas
+# (sitio/matriz/decisiones.json) y a mano. El índice con las páginas
+# completas (cache-matriz/) queda en la caché de Actions, nunca en un repo.
+#
+# Acá no hace falta cortar a los 45 minutos y seguir en otra corrida (como
+# en el repo privado): en un repo público el job puede durar hasta 6 horas
+# sin costo.
+name: Matriz
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 6 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: matriz
+  cancel-in-progress: false
+
+jobs:
+  matriz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      P314B_TOKEN: ${{ secrets.P314B_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: _ci
+      - uses: actions/checkout@v4
+        with:
+          repository: p4p13b/p314b
+          token: ${{ secrets.P314B_TOKEN }}
+          ref: main
+          path: p314b
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: _ci/.github/workflows/matriz.yml
+
+      - name: Caché del modelo y de los vectores
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            p314b/cache-matriz
+          key: matriz-${{ github.run_id }}
+          restore-keys: matriz-
+
+      - name: Instalar (torch solo CPU)
+        run: |
+          pip install --quiet --index-url https://download.pytorch.org/whl/cpu torch > /dev/null
+          pip install --quiet numpy sentence-transformers > /dev/null
+
+      - name: Pasajes, pesos, propuestas y recorridos
+        run: bash _ci/.github/ci/matriz.sh
+
+      - name: Guardar la caché (aunque el cálculo haya fallado)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            p314b/cache-matriz
+          key: matriz-${{ github.run_id }}
+
+      - name: Guardar el registro (si falló)
+        if: failure()
+        run: bash _ci/.github/ci/registro.sh matriz

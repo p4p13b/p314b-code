@@ -1,0 +1,55 @@
+# Superficie relacional y lemas del diccionario: lemas-auto.json, el índice
+# de pasajes, el anexo de la matriz y las familias de palabras, en el repo
+# privado. Si cambió algo de lo que se publica, lanza «Publicar sitio».
+#
+# La lanza vigilar.yml cuando cambian lemas.json, una obra, el manifest, los
+# .txt de datos-lee o los scripts del anexo; también una vez por semana y a
+# mano (Actions → Superficie → Run workflow).
+name: Superficie
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '41 5 * * 1'
+
+permissions:
+  contents: read
+  actions: write   # para lanzar publicar.yml
+
+# Si entran varios cambios seguidos, solo cuenta el último.
+concurrency:
+  group: superficie
+  cancel-in-progress: true
+
+jobs:
+  superficie:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      P314B_TOKEN: ${{ secrets.P314B_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: _ci
+      - uses: actions/checkout@v4
+        with:
+          repository: p4p13b/p314b
+          token: ${{ secrets.P314B_TOKEN }}
+          ref: main
+          path: p314b
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: _ci/.github/workflows/superficie.yml
+      - name: Instalar
+        run: pip install --quiet numpy networkx pypdf simplemma > /dev/null
+
+      - name: Lemas, índice, anexo y familias
+        run: bash _ci/.github/ci/superficie.sh publicar
+
+      - name: Guardar el registro (si falló)
+        if: failure()
+        run: bash _ci/.github/ci/registro.sh superficie

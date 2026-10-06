@@ -1,0 +1,59 @@
+# Comprobar el sitio: arma web/ en limpio desde una rama del repo privado
+# (pasos.py, sin guardar nada) y corre tests/comprobar_web.py con navegador.
+# El resultado queda como estado «comprobar» en el commit de la PR del repo
+# privado, con enlace a esta corrida.
+#
+# La lanza vigilar.yml para cada PR abierta del repo privado que toque el
+# sitio y todavía no tenga ese estado. También a mano, con el sha.
+name: Comprobar el sitio
+
+on:
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: 'commit del repo privado a comprobar'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: comprobar-${{ inputs.sha }}
+  cancel-in-progress: true
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      P314B_TOKEN: ${{ secrets.P314B_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: _ci
+      - name: Marcar «comprobando» en el commit
+        run: bash _ci/.github/ci/estado-commit.sh pending "comprobando…"
+      - uses: actions/checkout@v4
+        with:
+          repository: p4p13b/p314b
+          token: ${{ secrets.P314B_TOKEN }}
+          ref: ${{ inputs.sha }}
+          path: p314b
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Armar web/ y comprobarla en el navegador
+        run: bash _ci/.github/ci/comprobar.sh
+
+      - name: Resultado en el commit
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = success ]; then
+            bash _ci/.github/ci/estado-commit.sh success "web/ sale bien"
+          else
+            bash _ci/.github/ci/estado-commit.sh failure "falló: el detalle está en registros/"
+          fi
+      - name: Guardar el registro (si falló)
+        if: failure()
+        run: bash _ci/.github/ci/registro.sh comprobar

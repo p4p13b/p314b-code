@@ -1,0 +1,101 @@
+# Actualizar todo: el botón «actualizar todo» del taller (o a mano, desde
+# Actions → «Actualizar todo» → Run workflow). Corre en orden, en un solo
+# job, todo lo que deja el sitio al día:
+#
+#   1. Matriz      índice de pasajes, pesos, propuestas y recorridos
+#   2. Superficie  lemas del diccionario, anexo, superficie relacional y
+#                  familias de palabras
+#   3. Archivo     manifest del Archivo, términos para resaltar y terceros
+#   4. Publicar    pasos.py (generar_obra, subgrafo, cowork, publicar.py)
+#   5. Desplegar   wrangler deploy
+#
+# Antes lanzaba los otros workflows y se quedaba esperando (y la espera se
+# cobraba). Ahora hace los pasos él mismo. El taller sigue el avance por el
+# nombre de los pasos («1 · …», «2 · …»): no cambiarlos sin mirar
+# publicar.js. Si uno falla, se corta ahí y el sitio queda como estaba.
+name: Actualizar todo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: actualizar
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      P314B_TOKEN: ${{ secrets.P314B_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ec97a0a05849c2eb20a491d3c59255ca
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: _ci
+      - uses: actions/checkout@v4
+        with:
+          repository: p4p13b/p314b
+          token: ${{ secrets.P314B_TOKEN }}
+          ref: main
+          path: p314b
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: _ci/.github/workflows/actualizar.yml
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Caché del modelo y de los vectores
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            p314b/cache-matriz
+          key: matriz-${{ github.run_id }}
+          restore-keys: matriz-
+      - name: Instalar
+        run: |
+          pip install --quiet --index-url https://download.pytorch.org/whl/cpu torch > /dev/null
+          pip install --quiet numpy sentence-transformers networkx pypdf simplemma > /dev/null
+
+      - name: 1 · Matriz
+        run: bash _ci/.github/ci/matriz.sh
+
+      - name: Guardar la caché de la matriz
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            p314b/cache-matriz
+          key: matriz-${{ github.run_id }}
+
+      # Cada paso trae antes lo último de main: la matriz puede tardar y
+      # mientras tanto pudo entrar un guardado del taller.
+      - name: 2 · Superficie y familias
+        run: |
+          . _ci/.github/ci/comun.sh; al_dia
+          bash _ci/.github/ci/superficie.sh
+
+      - name: 3 · Archivo, términos y terceros
+        run: |
+          . _ci/.github/ci/comun.sh; al_dia
+          bash _ci/.github/ci/archivo.sh
+
+      - name: 4 · Publicar
+        run: |
+          . _ci/.github/ci/comun.sh; al_dia
+          bash _ci/.github/ci/publicar.sh
+
+      - name: 5 · Desplegar
+        run: bash _ci/.github/ci/desplegar.sh
+
+      - name: Guardar el registro (si falló)
+        if: failure()
+        run: bash _ci/.github/ci/registro.sh actualizar

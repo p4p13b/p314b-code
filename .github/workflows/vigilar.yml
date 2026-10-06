@@ -1,0 +1,36 @@
+# Vigilar el repo privado: cada 5 minutos se fija si entró algo nuevo en
+# main de p4p13b/p314b y lanza lo que haga falta (publicar, superficie,
+# matriz), y comprueba las PR abiertas que todavía no tienen su estado.
+#
+# Reemplaza a los disparos «on: push» del repo privado: entre repos no
+# existen, y un workflow allá gastaría minutos. Lo que ya se procesó lo
+# marcan las ramas estado/<nombre> del repo privado (ver .github/ci/vigilar.sh).
+name: Vigilar
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write   # para lanzar los otros workflows y mantenerlos activos
+
+concurrency:
+  group: vigilar
+  cancel-in-progress: false
+
+jobs:
+  vigilar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      P314B_TOKEN: ${{ secrets.P314B_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: _ci
+      - name: Mirar el repo privado
+        run: bash _ci/.github/ci/vigilar.sh
