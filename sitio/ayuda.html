@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ayuda — p314b</title>
+<meta name="description" content="Qué es p314b y cómo se lee: las diagonales, la marea, las otras lecturas y qué se guarda de tu paso.">
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<style>
+
+/* Ayuda para quien llega: qué es este sitio y qué hace cada cosa. */
+:root{
+  --bg:#080808;--page:#0d0d0d;--ink:#f5f5f5;--ink-soft:#d0d0d0;--ink-muted:#8a8a8a;--rule:#292929;
+  --line-ctl:color-mix(in oklab,var(--ink) 42%,var(--bg));
+  --mark:#3b82f6;--mark-lt:#60a5fa;--violet:#a78bfa;
+  --font-body:'Newsreader',Georgia,serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f6f4ef;--page:#fbfaf6;--ink:#141414;--ink-soft:#333;--ink-muted:#6b6b6b;--rule:#dcd8cf;--mark:#2563eb;--mark-lt:#1d4ed8;--violet:#7c3aed;}}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--bg);color:var(--ink);}
+body{font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
+a{color:inherit;}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;border-bottom:1px solid var(--rule);background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(10px);}
+.nav-btn,.btn{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-decoration:none;padding:7px 11px;min-height:34px;display:inline-flex;align-items:center;border:1px solid var(--line-ctl);border-radius:3px;background:transparent;cursor:pointer;}
+.nav-btn:hover,.btn:hover{border-color:var(--ink);}
+.btn:focus-visible,.nav-btn:focus-visible,a:focus-visible{outline:2px solid var(--mark-lt);outline-offset:2px;}
+main{max-width:1100px;margin:0 auto;padding:40px 24px 80px;}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-muted);margin:0 0 6px;}
+h1{font-style:italic;font-weight:300;font-size:clamp(44px,8vw,84px);line-height:1;margin:0 0 16px;letter-spacing:-.02em;}
+h2{font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-muted);font-weight:500;margin:44px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--rule);}
+.lede{font-size:18px;line-height:1.55;color:var(--ink-soft);max-width:62ch;margin:0 0 18px;}
+
+.ayuda{max-width:66ch;}
+.ayuda p,.ayuda li{font-size:17px;line-height:1.6;color:var(--ink-soft);}
+.ayuda ul{padding-left:1.1em;margin:0 0 14px;}
+.ayuda li{margin:0 0 6px;}
+.ayuda code,.ayuda .mk{font-family:var(--font-mono);font-size:13px;color:var(--ink);}
+.mk.diag{text-decoration:underline;text-decoration-color:var(--mark);text-underline-offset:.24em;}
+.mk.hoj{text-decoration:underline dotted var(--violet);text-underline-offset:.24em;}
+.mk.nota{text-decoration:underline;text-decoration-color:#4ade80;text-underline-offset:.24em;}
+.mk.marg{text-decoration:underline;text-decoration-color:#f87171;text-underline-offset:.24em;}
+.ayuda ul.intenciones li{margin-bottom:10px;}
+</style>
+</head>
+<body>
+<nav class="nav"><a class="nav-btn" href="index.html">← índice</a><span class="eyebrow" style="margin:0">p314b</span></nav>
+<main class="ayuda">
+  <p class="eyebrow">ayuda</p>
+  <h1>cómo se lee esto</h1>
+  <p class="lede">Es un corpus: textos escritos entre 2017 y 2026, pensados para leerse en diagonal. No hay un orden. Cada texto tiene marcas que lo llevan a otro punto del corpus, y se puede entrar por cualquier lado.</p>
+
+  <h2>las marcas</h2>
+  <ul>
+    <li><span class="mk diag">diagonal</span>: te lleva a otro pasaje, en otro texto o en el mismo.</li>
+    <li><span class="mk hoj">hojear</span>: abre otro pasaje al costado, sin irte del que estás leyendo.</li>
+    <li><span class="mk nota">nota</span> y <span class="mk marg">marginalia</span>: anotaciones sobre un pasaje.</li>
+  </ul>
+  <p>Se pueden mostrar todas, solo las diagonales o ninguna (◈ marcas), y el comportamiento del mouse se cambia en ⚙ lectura.</p>
+
+  <h2>la marea</h2>
+  <p>Algunos textos se van un tiempo con la marea. No figuran en el índice ni se pueden abrir: quedan bajo el agua, al fondo, como formas borrosas. Cada uno vuelve solo, en su fecha, y mientras tanto su página dice cuándo.</p>
+  <p>A veces se hunde una sola parte de un libro. Esa parte aparece en la lista, apagada y con su fecha de regreso; las demás se leen con normalidad.</p>
+  <p>De vez en cuando, desde el fondo suben fragmentos deformados: son frases de diagonales. Las estelas que quedan flotando se pueden tocar, y te llevan al otro extremo de la diagonal. No dicen de qué texto salieron.</p>
+
+  <h2>otras lecturas</h2>
+  <p>En ⚙ lectura, dentro de cada texto:</p>
+  <ul>
+    <li><b>oír mal a propósito</b>: toda palabra de la lista de homófonos se lee como su par.</li>
+    <li><b>sismógrafo</b>: una franja al costado que sube donde el texto se espesa.</li>
+    <li><b>partitura</b>: el texto suena; cada palabra es una nota, más aguda cuanto más rara es en el corpus.</li>
+    <li><b>parientes</b>: tocar una palabra muestra su familia y en qué textos aparece cada pariente.</li>
+    <li><b>mismizar ∞</b>: recompone un párrafo con los parientes de sus palabras, hasta dejarlo en loop: en unos segundos se queda quieto, en una figura que es siempre la misma para ese párrafo.</li>
+  </ul>
+
+  <h2 id="intenciones">qué prender según lo que buscás</h2>
+  <p>Todo prendido a la vez no se lee: las marcas, los colores y los efectos se tapan entre sí. Por eso, de entrada, solo están las marcas y nada se mueve. En ⚙ lectura, arriba, se elige para qué venís y se prende lo que sirve para eso; abajo, en «a medida», se ajusta una por una.</p>
+  <ul class="intenciones">
+    <li><b>leer de corrido</b>: el texto solo, sin marcas. Para la primera lectura, o para leer largo.</li>
+    <li><b>leer en diagonal</b> (lo de entrada): diagonales, notas y marginalias marcadas; nada se anima. Tocar una marca la abre.</li>
+    <li><b>saltar de texto en texto</b>: solo las diagonales; lo que está lejos de donde leés se apaga y los pasajes marcados que dejás atrás quedan como una estela tenue a los costados. Con ⤳ recorrido se avanza de diagonal en diagonal.</li>
+    <li><b>estudiar el texto</b>: resalta el glosario y los nodos, prende el sismógrafo y deja tocar una palabra para ver su familia.</li>
+    <li><b>jugar con el texto</b>: oír mal a propósito, mismizar ∞, palabras de a una y color sintético. Mejor de a un párrafo.</li>
+  </ul>
+  <p>Una regla para ajustar a mano: una cosa que tiña el texto (color sintético, resaltar términos) y una que lo mueva (palabras de a una, oír mal, mismizar) a la vez, no más. La partitura, la letra y el interlineado se pueden sumar a cualquiera. Lo que elijas queda guardado en este navegador.</p>
+
+  <h2>qué se guarda de tu paso</h2>
+  <p>Sin cuentas, sin cookies y sin servicios de terceros que te sigan. En tu navegador se guarda <a href="huella.html">tu huella</a>: por dónde pasaste, en qué orden y cuánto. Solo la ves vos.</p>
+  <p>Mientras la huella no esté pausada (y tu navegador no pida «no rastrear»), sale algo de ahí: el paso de un texto a otro y, por cada texto, cuántos segundos estuviste y qué hiciste adentro, junto con la hora entera, tu zona aproximada y el clima de esa zona. No sale tu nombre, tu IP ni nada que una dos visitas tuyas. Lo ve solo la autora y sirve para estudiar cómo se lee la obra. Se puede pausar o borrar en <a href="huella.html">mi huella</a>.</p>
+
+  <h2>dejar una frase</h2>
+  <p>Al seleccionar un pasaje aparece «✎ dejar una frase». Lo que escribas sale cifrado de tu navegador y solo la autora puede leerlo.</p>
+
+  <h2>comentar</h2>
+  <p>Para comentar cualquier cosa, en cualquier página, mantené apretado el clic (o el dedo, en el celular) sobre un lugar que no sea un enlace: se abre un cuadro. No pide datos tuyos. Es privado salvo que tildes «que se publique»: entonces la autora lo lee y, si lo aprueba, aparece en <a href="comentarios.html">comentarios</a>, aparte de los textos y con la firma, si la dejaste.</p>
+</main>
+<script src="comentar.js"></script>
+</body>
+</html>

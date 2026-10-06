@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>acceso</title>
+<script src="autor.js"></script>
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<style>
+:root {
+  --bg: #080808; --bg-alt: #111111; --page: #0d0d0d;
+  --ink: #f5f5f5; --ink-soft: #d0d0d0; --ink-muted: #8a8a8a; --ink-ghost: #505050;
+  --rule: #292929; --mark: #3b82f6; --mark-lt: #60a5fa; --green: #22c55e; --red: #ef4444;
+  --font-body: 'Newsreader', Georgia, serif; --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); min-height: 100vh; }
+.wrap { max-width: 560px; margin: 0 auto; padding: 56px 16px 80px; }
+h1 { font-weight: 300; font-style: italic; font-size: 32px; margin-bottom: 8px; }
+.sub { font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 28px; }
+p, li { font-size: 15px; line-height: 1.6; color: var(--ink-soft); }
+ol { padding-left: 20px; margin: 10px 0 22px; }
+li { margin-bottom: 6px; }
+code { font-family: var(--font-mono); font-size: 12px; background: var(--bg-alt); padding: 1px 5px; border-radius: 2px; }
+label { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 6px; }
+input { width: 100%; background: var(--page); border: 1px solid var(--rule); color: var(--ink); padding: 10px 12px; font-family: var(--font-mono); font-size: 13px; border-radius: 3px; }
+input:focus { outline: none; border-color: var(--mark); }
+.fila { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+button, .btn { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; padding: 10px 14px; border: 1px solid var(--rule); border-radius: 3px; background: var(--page); color: var(--ink-soft); cursor: pointer; text-decoration: none; }
+button.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+#estado { font-family: var(--font-mono); font-size: 12px; line-height: 1.7; margin-top: 18px; min-height: 22px; }
+.ok { color: var(--green); } .mal { color: var(--red); }
+details { margin-top: 26px; border-top: 1px solid var(--rule); padding-top: 16px; }
+summary { cursor: pointer; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>acceso de propietaria</h1>
+  <div class="sub">taller y publicación desde la web o el celular</div>
+
+  <div id="ya" hidden>
+    <p class="ok">✓ Este navegador ya tiene acceso de propietaria.</p>
+    <div class="fila">
+      <a class="btn" href="uploader-v1.html">abrir el taller</a>
+      <a class="btn" href="index.html">ir al índice</a>
+      <button id="btn-probar">probar permisos del token</button>
+      <button id="btn-salir">quitar el acceso de este navegador</button>
+    </div>
+  </div>
+
+  <div id="form">
+    <p>Pegá un token de GitHub con permiso de escritura sobre el repositorio del sitio. Queda guardado solo en este navegador; en cada dispositivo (compu, celular) se pega una vez.</p>
+    <div style="margin-top:18px;">
+      <label for="token">token</label>
+      <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+    </div>
+    <div class="fila">
+      <button class="primary" id="btn-entrar">entrar</button>
+    </div>
+  </div>
+  <div id="estado"></div>
+
+  <details>
+    <summary>cómo sacar el token (una vez)</summary>
+    <ol>
+      <li>En GitHub: <b>Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token</b>.</li>
+      <li><b>Repository access</b>: <i>Only select repositories</i> → <code>p314b</code>.</li>
+      <li><b>Permissions → Repository</b>: <code>Contents</code> = Read and write, <code>Actions</code> = Read and write (lo demás, sin acceso).</li>
+      <li>Vencimiento: el que prefieras. Copiá el token y pegalo acá.</li>
+    </ol>
+    <p>Con ese token, el botón <b>⚡ publicar</b> del taller guarda la obra en el repo y lanza la publicación (GitHub corre <code>generar_obra.py</code>, <code>recalcular_subgrafo.py</code>, los de la matriz y <code>publicar.py</code>, y Cloudflare actualiza el sitio). En la web aparecen solo las obras con el tilde "Mostrar en el sitio web" y, de ellas, solo los capítulos publicados. Si perdés un dispositivo, revocá el token en GitHub.</p>
+  </details>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+function mostrarYa() { $('ya').hidden = false; $('form').hidden = true; }
+if (window.P314B.modo === 'local') {
+  $('form').hidden = true;
+  $('estado').innerHTML = '<span class="ok">Estás en tu máquina: el modo propietaria ya está activo, no hace falta token.</span>';
+} else {
+  window.P314B.listo.then(ok => { if (ok) mostrarYa(); });
+}
+/* Diagnóstico del token, permiso por permiso. Ojo: "permissions.push"
+   del repo es el permiso de TU CUENTA, no del token; un token
+   fine-grained sin "Contents" pasa ese chequeo y después GitHub
+   responde 403 al leer o guardar. Por eso se prueba cada cosa. */
+async function diagnosticar(t) {
+  const base = 'https://api.github.com/repos/' + P314B.repo.owner + '/' + P314B.repo.repo;
+  const h = { headers: { 'Authorization': 'Bearer ' + t, 'Accept': 'application/vnd.github+json' } };
+  const pruebas = [
+    ['el token es válido y ve el repo p314b', base],
+    ['Contents (leer los archivos de las obras)', base + '/contents/sitio/corpus.json?ref=main'],
+    ['Actions (lanzar la publicación)', base + '/actions/workflows'],
+  ];
+  const res = [];
+  for (const [que, url] of pruebas) {
+    let st = 0;
+    try { st = (await fetch(url, h)).status; } catch (e) { st = -1; }
+    res.push({ que, ok: st >= 200 && st < 300, st });
+    if (!res[0].ok) break;
+  }
+  return res;
+}
+function pintarDiagnostico(res) {
+  const filas = res.map(r => '<div class="' + (r.ok ? 'ok' : 'mal') + '">' + (r.ok ? '✓ ' : '✗ ') + r.que +
+    (r.ok ? '' : ' — GitHub ' + (r.st === -1 ? 'sin conexión' : r.st)) + '</div>').join('');
+  const falla = res.find(r => !r.ok);
+  let ayuda = '';
+  if (falla) {
+    ayuda = falla === res[0]
+      ? '<p class="mal" style="margin-top:10px">El token no sirve para este repo: venció, lo revocaste, o en "Repository access" no elegiste p314b. Sacá uno nuevo (abajo dice cómo).</p>'
+      : '<p class="mal" style="margin-top:10px">Al token le falta ese permiso. En GitHub: Settings → Developer settings → Fine-grained tokens → tu token → Edit → Permissions: <b>Contents = Read and write</b> y <b>Actions = Read and write</b> → Update. Después tocá "probar" otra vez (no hace falta pegarlo de nuevo si no cambió).</p>';
+  } else {
+    ayuda = '<p class="ok" style="margin-top:10px">Lectura OK. Para guardar y publicar, Contents y Actions tienen que estar en <b>Read and write</b> (eso GitHub no deja probarlo sin escribir; si al publicar sale 403, es eso).</p>';
+  }
+  $('estado').innerHTML = filas + ayuda;
+  return !falla;
+}
+$('btn-probar').addEventListener('click', async () => {
+  const t = localStorage.getItem('p314b_gh_token');
+  if (!t) return;
+  $('estado').textContent = 'probando…';
+  pintarDiagnostico(await diagnosticar(t));
+});
+$('btn-entrar').addEventListener('click', async () => {
+  const t = $('token').value.trim();
+  if (!t) return;
+  $('estado').textContent = 'verificando…';
+  try {
+    const res = await diagnosticar(t);
+    if (!pintarDiagnostico(res)) return;
+    P314B.guardarToken(t);
+    $('token').value = '';
+    $('estado').innerHTML += '<div class="ok">✓ Listo. Este navegador tiene acceso de propietaria.</div>';
+    setTimeout(() => location.reload(), 2500);
+  } catch (e) {
+    $('estado').innerHTML = '<span class="mal">No se pudo verificar: ' + e.message + '</span>';
+  }
+});
+$('btn-salir').addEventListener('click', () => {
+  P314B.olvidarToken();
+  location.reload();
+});
+</script>
+</body>
+</html>

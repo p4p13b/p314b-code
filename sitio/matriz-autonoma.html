@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<script src="comun.js"></script>
+<script src="autor.js" data-herramienta></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>matriz autónoma — p314b</title>
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<style>
+/* Mismo aspecto que matriz.html y matriz-anexo.html. La página no calcula
+   nada: lee matriz/autonoma.json (lo escribe matriz/autonoma.py) y, para
+   contrastar, tus instrumentos y conceptos diagonales. */
+:root {
+  --bg:#080808; --bg-alt:#111111; --page:#0d0d0d;
+  --ink:#f5f5f5; --ink-soft:#d0d0d0; --ink-muted:#8a8a8a; --ink-ghost:#505050;
+  --rule:#292929; --mark:#3b82f6; --mark-lt:#60a5fa; --mark-bg:rgba(59,130,246,0.10);
+  --amber:#eab308; --amber-bg:rgba(234,179,8,0.12); --green:#22c55e; --violet:#a78bfa;
+  --font-body:'Newsreader', Georgia, serif; --font-mono:'IBM Plex Mono', ui-monospace, monospace;
+  --radius:3px; color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);}
+body{font-family:var(--font-body);font-size:16px;line-height:1.55;}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;}
+a{color:var(--mark-lt);}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;border-bottom:1px solid var(--rule);font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;}
+.nav a{color:var(--ink-muted);text-decoration:none;margin-left:18px;}
+.nav a:hover,.nav a:focus-visible{color:var(--ink);}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 24px 80px;}
+.eyebrow{font-family:var(--font-mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:8px;}
+h1{font-weight:300;font-size:clamp(30px,4vw,44px);line-height:1.1;margin-bottom:12px;}
+h2{font-weight:400;font-size:24px;margin-bottom:10px;}
+.lede{max-width:760px;color:var(--ink-soft);font-size:17px;}
+.lede code,.nota code{font-family:var(--font-mono);font-size:12px;background:var(--bg-alt);padding:1px 5px;border-radius:2px;}
+.nota{font-size:14px;line-height:1.6;color:var(--ink-muted);max-width:760px;margin-bottom:14px;}
+#estado{font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);margin:18px 0;}
+#error{display:none;border:1px solid #ef4444;background:#2a1210;color:#ffd9d4;padding:12px 14px;border-radius:var(--radius);font-family:var(--font-mono);font-size:12px;margin:16px 0;}
+.seccion{margin-top:44px;border-top:1px solid var(--rule);padding-top:24px;}
+
+/* los cuatro orígenes */
+.origenes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:24px 0 0;}
+.origenes > div{border:1px solid var(--rule);border-top-width:3px;border-radius:var(--radius);background:var(--page);padding:12px 14px;min-width:0;}
+.origenes h3{font-family:var(--font-mono);font-weight:500;font-size:11px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+.origenes .n{font-family:var(--font-mono);font-size:22px;color:var(--ink);font-variant-numeric:tabular-nums;}
+.origenes p{font-size:13.5px;color:var(--ink-soft);line-height:1.45;margin-top:4px;}
+.origenes code{font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);}
+.o-autora{border-top-color:var(--green) !important;} .o-autora h3{color:var(--green);}
+.o-mi{border-top-color:var(--amber) !important;} .o-mi h3{color:var(--amber);}
+.o-mc{border-top-color:var(--mark-lt) !important;} .o-mc h3{color:var(--mark-lt);}
+.o-lector{border-top-color:var(--ink-ghost) !important;opacity:.75;} .o-lector h3{color:var(--ink-muted);}
+@media (max-width:860px){.origenes{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (max-width:480px){.origenes{grid-template-columns:1fr;}}
+
+.ctrl{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);margin:6px 0 12px;}
+.ctrl button{border:1px solid var(--rule);border-radius:2px;padding:3px 9px;color:var(--ink-muted);}
+.ctrl button[aria-pressed="true"]{border-color:var(--mark);background:var(--mark-bg);color:var(--ink);}
+.ctrl label{display:inline-flex;gap:6px;align-items:center;cursor:pointer;}
+
+.tablero{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start;}
+@media (max-width:900px){.tablero{grid-template-columns:1fr;}}
+.cats{display:flex;flex-wrap:wrap;gap:6px;}
+.cat{border:1px solid var(--rule);border-radius:2px;padding:4px 9px;background:var(--page);text-align:left;font-size:15px;color:var(--ink-soft);}
+.cat small{font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);margin-left:6px;}
+.cat.sonoro{border-style:dashed;}
+.cat.tuya{box-shadow:inset 3px 0 0 var(--green);}
+.cat[aria-pressed="true"]{border-color:var(--mark-lt);background:var(--mark-bg);color:var(--ink);}
+.cat:focus-visible{outline:1px solid var(--mark-lt);}
+.leyenda{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);margin-top:10px;display:flex;flex-wrap:wrap;gap:4px 16px;}
+.leyenda i{display:inline-block;width:14px;height:10px;border:1px solid var(--ink-muted);vertical-align:-1px;margin-right:4px;}
+.leyenda i.d{border-style:dashed;} .leyenda i.t{box-shadow:inset 3px 0 0 var(--green);}
+
+.panel{border:1px solid var(--rule);border-radius:var(--radius);background:var(--page);padding:16px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;}
+.panel h3{font-weight:400;font-size:24px;line-height:1.2;margin-bottom:2px;}
+.panel .tipo{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mark-lt);margin-bottom:10px;}
+.panel dl{display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 10px;font-size:14px;margin:10px 0;}
+.panel dt{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);padding-top:3px;}
+.panel dd{min-width:0;color:var(--ink-soft);}
+.panel blockquote{border-left:2px solid var(--rule);padding:4px 10px;margin:8px 0;font-size:14px;color:var(--ink-soft);}
+.panel blockquote cite{display:block;font-family:var(--font-mono);font-size:10px;font-style:normal;color:var(--ink-muted);margin-top:3px;}
+.panel blockquote b{color:var(--ink);font-weight:500;}
+.panel .vacio{color:var(--ink-muted);font-size:14px;}
+.chip{display:inline-block;font-family:var(--font-mono);font-size:11px;background:var(--bg-alt);border:1px solid var(--rule);border-radius:2px;padding:0 6px;margin:0 4px 4px 0;}
+.chip.tuya{color:var(--green);border-color:color-mix(in oklab,var(--green) 50%,transparent);}
+.barra{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:6px;align-items:center;font-size:13.5px;margin:2px 0;}
+.barra span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.barra i{display:block;height:6px;background:var(--mark);border-radius:1px;}
+
+table.rel{border-collapse:collapse;width:100%;font-size:14px;}
+table.rel th,table.rel td{padding:6px 10px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top;}
+table.rel th{font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-muted);font-weight:500;}
+table.rel td.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap;}
+table.rel td a.c{font-family:var(--font-mono);font-size:12px;margin-right:6px;}
+.marca{display:inline-block;font-family:var(--font-mono);font-size:10.5px;padding:0 6px;border-radius:2px;border:1px solid var(--rule);white-space:nowrap;}
+.marca.ya{color:var(--green);border-color:color-mix(in oklab,var(--green) 50%,transparent);}
+.marca.no{color:var(--mark-lt);border-color:color-mix(in oklab,var(--mark-lt) 50%,transparent);}
+.tw{overflow-x:auto;}
+
+.suyas{display:flex;flex-wrap:wrap;gap:5px;}
+.suyas span{font-size:14.5px;border:1px solid color-mix(in oklab,var(--green) 40%,transparent);border-radius:2px;padding:1px 7px;color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <span>corpus</span>
+  <div><a href="index.html">obras</a><a href="matriz.html">matriz</a><a href="matriz-anexo.html">anexo</a></div>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">infraestructura · matriz</div>
+  <h1>matriz autónoma</h1>
+  <p class="lede">Lo que el corpus relaciona solo, sin tus instrumentos, emergentes ni diagonales en el cálculo. Las categorías se nombran con una palabra de tus propios textos. Todo lo de esta página es <b>derivado, no declarado</b>: vive aparte (<code>matriz/autonoma.json</code>) y no toca nada tuyo. Se cruza con lo tuyo solo al final, para marcar dónde coincide.</p>
+
+  <div id="error"></div>
+  <div id="estado">cargando matriz/autonoma.json…</div>
+
+  <div class="origenes" id="origenes" hidden>
+    <div class="o-autora"><h3>tus definiciones</h3><div class="n" id="n-autora">—</div><p>Declarado por vos: diagonales, emergentes, instrumentos y lo que aceptaste en el taller.</p><code>origen: autora</code></div>
+    <div class="o-mi"><h3>matriz desde tus instrumentos</h3><div class="n" id="n-mi">—</div><p>Propuestas que se parecen al perfil de tus instrumentos. Proponen; deciden vos.</p><code>origen: matriz:instrumentos</code></div>
+    <div class="o-mc"><h3>matriz desde el corpus</h3><div class="n" id="n-mc">—</div><p>Categorías y relaciones que salen solo de los textos. Esta página.</p><code>origen: matriz:corpus</code></div>
+    <div class="o-lector"><h3>lectores</h3><div class="n">0</div><p>Lo que propongan los visitantes con su recorrido. Todavía sin datos.</p><code>origen: lector</code></div>
+  </div>
+
+  <section class="seccion" id="sec-cats" hidden>
+    <h2>categorías que emergen</h2>
+    <p class="nota" id="nota-cats"></p>
+    <div class="ctrl" role="group" aria-label="Filtrar categorías">
+      <button data-modo="" aria-pressed="true">todas</button>
+      <button data-modo="de sentido" aria-pressed="false">de sentido</button>
+      <button data-modo="sonoro" aria-pressed="false">sonoras</button>
+      <label><input type="checkbox" id="solo-nuevas"> solo las que no coinciden con lo tuyo</label>
+    </div>
+    <div class="tablero">
+      <div>
+        <div class="cats" id="cats"></div>
+        <div class="leyenda"><span><i></i>de sentido</span><span><i class="d"></i>sonora (riman)</span><span><i class="t"></i>coincide con algo tuyo</span><span>número: cuántas veces sobre el azar</span></div>
+      </div>
+      <aside class="panel" id="panel" aria-live="polite"><p class="vacio">Elegí una categoría para ver sus palabras, en qué obras está y pasajes donde aparece.</p></aside>
+    </div>
+  </section>
+
+  <section class="seccion" id="sec-rel" hidden>
+    <h2>relaciones entre obras</h2>
+    <p class="nota" id="nota-rel"></p>
+    <div class="ctrl"><label><input type="checkbox" id="solo-no-tendidas" checked> solo las que no tendiste</label></div>
+    <div class="tw"><table class="rel"><thead><tr><th>obras</th><th>por las categorías</th><th>peso</th><th>vos</th></tr></thead><tbody id="rel"></tbody></table></div>
+  </section>
+
+  <section class="seccion" id="sec-suyas" hidden>
+    <h2>tus definiciones, para contrastar</h2>
+    <p class="nota">Tus instrumentos y conceptos diagonales, tal como están en tus archivos. No entran en el cálculo de arriba; en verde, los que alguna categoría del corpus toca.</p>
+    <div class="suyas" id="suyas"></div>
+  </section>
+
+  <section class="seccion">
+    <h2>cómo se calcula</h2>
+    <p class="nota">El diseño (los tres orígenes y los criterios) está en <code>matriz/AUTONOMA.md</code>; las fórmulas, en el encabezado de <code>matriz/autonoma.py</code>. Se recalcula con el workflow «Matriz» o a mano, desde <code>sitio/</code>: <code>python3 matriz/autonoma.py</code>.</p>
+  </section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = P314.esc;
+const fmt = (v, d) => v == null ? '—' : Number(v).toFixed(d).replace('.', ',');
+let A, modo = '', sel = null;
+
+async function leer(ruta) {
+  const r = await fetch(ruta, {cache:'no-store'});
+  if (!r.ok) throw new Error(ruta + ': HTTP ' + r.status);
+  return r.json();
+}
+const titulo = o => ((A.obras || {})[o] || {}).titulo || o;
+const urlObra = o => 'obras/' + encodeURIComponent(((A.obras || {})[o] || {}).taller || o) + '.html';
+const catDe = id => A.categorias.find(c => c.id === id);
+const anio = f => f == null ? '' : String(Math.floor(f));
+
+async function cargar() {
+  try { A = await leer('matriz/autonoma.json'); }
+  catch (e) {
+    $('error').style.display = 'block';
+    $('error').textContent = 'No se pudo leer matriz/autonoma.json (' + e.message + '). Se genera con: python3 matriz/autonoma.py (desde sitio/).';
+    $('estado').textContent = '';
+    return;
+  }
+  const [ins, dia, prop] = await Promise.all([
+    leer('matriz/instrumentos.json').catch(() => null),
+    leer('diagonales.json').catch(() => null),
+    leer('matriz/propuestas.json').catch(() => null),
+  ]);
+  const m = A.meta || {};
+  const cuando = (m.generado || '').replace('T', ' ').slice(0, 16);
+  $('estado').textContent = `calculado ${cuando} · ${m.pasajes} pasajes en castellano de ${m.obras} obras · ${m.vocabulario} palabras · ${m.asociaciones} asociaciones`;
+
+  // orígenes
+  const tendidas = A.relaciones.filter(r => r.autora.diagonales || r.autora.aceptadas).length;
+  const instrumentos = ((ins && ins.instrumentos) || []).filter(i => i.estatuto === 'autor');
+  const conceptos = Object.values((dia && dia.conceptos) || {});
+  $('n-autora').textContent = `${instrumentos.length} instr. · ${conceptos.length} conceptos`;
+  $('n-mi').textContent = prop ? `${(prop.propuestas || []).length} propuestas` : '—';
+  $('n-mc').textContent = `${A.categorias.length} cat. · ${A.relaciones.length} rel.`;
+  $('origenes').hidden = false;
+
+  // categorías
+  const tuyas = A.categorias.filter(c => c.coincide_con_autora.length).length;
+  $('nota-cats').textContent = `${A.categorias.length} grupos de palabras que el corpus junta más de lo que daría el azar, en pasajes de tres obras o más. ${tuyas} coinciden con un instrumento o concepto tuyo; las otras ${A.categorias.length - tuyas} no las nombraste. Ordenadas por cuánto atraviesan el corpus.`;
+  document.querySelectorAll('[data-modo]').forEach(b => b.addEventListener('click', () => {
+    modo = b.dataset.modo;
+    document.querySelectorAll('[data-modo]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    pintarCats();
+  }));
+  $('solo-nuevas').addEventListener('change', pintarCats);
+  $('sec-cats').hidden = false;
+  pintarCats();
+
+  // relaciones
+  $('nota-rel').textContent = `${A.relaciones.length} pares de obras que comparten al menos dos categorías; ${A.relaciones.length - tendidas} unen obras que nunca uniste con una diagonal ni aceptaste en el taller. Esas son trayectorias que la matriz ve y vos no tendiste: no son propuestas para aceptar, son para mirar.`;
+  $('solo-no-tendidas').addEventListener('change', pintarRel);
+  $('sec-rel').hidden = false;
+  pintarRel();
+
+  // tuyas
+  const tocadas = new Set(A.categorias.flatMap(c => c.coincide_con_autora));
+  const items = instrumentos.map(i => ({n: i.etiqueta || i.id, k: 'instrumento: ' + (i.etiqueta || i.id)}))
+    .concat(conceptos.map(c => ({n: c.nombre, k: 'concepto diagonal: ' + c.nombre})));
+  if (items.length) {
+    $('suyas').innerHTML = items.map(x => `<span style="${tocadas.has(x.k) ? 'color:var(--green)' : ''}">${esc(x.n)}</span>`).join('');
+    $('sec-suyas').hidden = false;
+  }
+}
+
+function pintarCats() {
+  const nuevas = $('solo-nuevas').checked;
+  const cs = A.categorias.filter(c => (!modo || c.modo === modo) && (!nuevas || !c.coincide_con_autora.length));
+  $('cats').innerHTML = cs.map(c => `<button class="cat${c.modo === 'sonoro' ? ' sonoro' : ''}${c.coincide_con_autora.length ? ' tuya' : ''}" data-cat="${esc(c.id)}" aria-pressed="${c.id === sel}" title="${esc(c.formas.join(', '))}">${esc(c.nombre)}<small>${fmt(c.sobre_azar, 0)}× · ${Object.keys(c.obras).length} obras</small></button>`).join('') || '<p class="vacio">Ninguna con este filtro.</p>';
+  $('cats').querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => ver(b.dataset.cat)));
+}
+
+function ver(id) {
+  const c = catDe(id); if (!c) return;
+  sel = id;
+  document.querySelectorAll('.cat').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.cat === id)));
+  const obras = Object.entries(c.obras);
+  const max = Math.max(...obras.map(x => x[1]));
+  const resaltar = (t, ks) => {
+    let h = esc(t);
+    // marca las formas del grupo que aparecen en el fragmento
+    c.formas.forEach(f => { if (f && f.length > 2) h = h.replace(new RegExp('(^|[^\\p{L}])(' + f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')(?=[^\\p{L}]|$)', 'giu'), '$1<b>$2</b>'); });
+    return h;
+  };
+  $('panel').innerHTML = `
+    <h3>${esc(c.nombre)}</h3>
+    <div class="tipo">matriz:corpus · ${esc(c.modo)}</div>
+    <dl>
+      <dt>palabras</dt><dd>${c.formas.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</dd>
+      <dt>nombre</dt><dd>${esc(c.nombre_origen)}</dd>
+      <dt>sobre el azar</dt><dd>${fmt(c.sobre_azar, 1)} veces · ${c.pasajes} pasajes · cohesión ${fmt(c.cohesion, 2)}</dd>
+      <dt>período</dt><dd>${anio(c.desde)}${c.hasta && anio(c.hasta) !== anio(c.desde) ? '–' + anio(c.hasta) : ''}</dd>
+      <dt>con lo tuyo</dt><dd>${c.coincide_con_autora.length ? c.coincide_con_autora.map(x => `<span class="chip tuya">${esc(x)}</span>`).join('') : '<span style="color:var(--ink-muted)">no coincide con nada tuyo</span>'}</dd>
+    </dl>
+    <div class="eyebrow">obras (parte de sus pasajes)</div>
+    ${obras.map(([o, v]) => `<div class="barra"><span><a href="${urlObra(o)}" target="_blank">${esc(titulo(o))}</a></span><i style="width:${Math.max(4, 70 * v / max)}px"></i></div>`).join('')}
+    <div class="eyebrow" style="margin-top:14px">pasajes</div>
+    ${c.ejemplos.map(e => `<blockquote>${resaltar(e.texto || '')}…<cite>${esc(titulo(e.obra))}${e.fecha ? ' · ' + anio(e.fecha) : ''} · ${esc(e.claves.join(', '))}</cite></blockquote>`).join('')}`;
+}
+
+function pintarRel() {
+  const solo = $('solo-no-tendidas').checked;
+  const rs = A.relaciones.filter(r => !solo || (!r.autora.diagonales && !r.autora.aceptadas));
+  $('rel').innerHTML = rs.map(r => {
+    const ya = r.autora.diagonales || r.autora.aceptadas;
+    const marca = ya ? `<span class="marca ya">ya las uniste · ${r.autora.diagonales} diag.</span>` : '<span class="marca no">no las uniste</span>';
+    return `<tr><td><a href="${urlObra(r.a)}" target="_blank">${esc(titulo(r.a))}</a> · <a href="${urlObra(r.b)}" target="_blank">${esc(titulo(r.b))}</a></td>
+      <td>${r.categorias.slice(0, 6).map(id => `<a href="#sec-cats" class="c" data-ir="${esc(id)}">${esc((catDe(id) || {}).nombre || id)}</a>`).join('')}${r.categorias.length > 6 ? `<span style="color:var(--ink-muted)">+${r.categorias.length - 6}</span>` : ''}</td>
+      <td class="num">${fmt(r.peso, 3)}</td><td>${marca}</td></tr>`;
+  }).join('') || '<tr><td colspan="4" style="color:var(--ink-muted)">Ninguna.</td></tr>';
+  $('rel').querySelectorAll('[data-ir]').forEach(a => a.addEventListener('click', () => ver(a.dataset.ir)));
+}
+
+cargar();
+</script>
+</body>
+</html>

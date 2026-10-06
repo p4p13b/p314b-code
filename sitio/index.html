@@ -1,0 +1,2840 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>corpus</title>
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<style>
+:root {
+  --bg:        #080808;
+  --bg-alt:    #111111;
+  --bg-deep:   #000000;
+  --page:      #0d0d0d;
+
+  --ink:       #f5f5f5;
+  --ink-soft:  #d0d0d0;
+  --ink-muted: #8a8a8a;
+  --ink-ghost: #505050;
+
+  --rule:      #292929;
+
+  --mark:      #3b82f6;
+  --mark-lt:   #60a5fa;
+  --mark-dk:   #1d4ed8;
+  --mark-bg:   rgba(59,130,246,0.10);
+  --mark-bg2:  rgba(59,130,246,0.18);
+
+  --green:     #22c55e;
+  --red:       #ef4444;
+  --font-body: 'Newsreader', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius:    3px;
+  --nav-h:     52px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--mark-lt); }
+button { font-family: inherit; border: none; background: none; cursor: pointer; color: inherit; padding: 0; }
+
+/* ─── NAV ─── */
+.nav {
+  position: sticky; top: 0; z-index: 20;
+  height: var(--nav-h);
+  background: color-mix(in oklab, var(--bg) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border-bottom: 1px solid var(--rule);
+  padding: 0 44px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 24px;
+}
+.nav-logo {
+  font-family: var(--font-mono);
+  font-size: 11px; letter-spacing: 0.3em;
+  text-transform: uppercase; font-weight: 500;
+  color: var(--ink);
+  position: relative; padding-left: 16px;
+}
+.nav-logo::before {
+  content: ''; position: absolute; left: 0; top: 50%;
+  width: 8px; height: 1px; background: var(--mark);
+  transform: translateY(-50%) rotate(-38deg);
+}
+.nav-tools {
+  display: flex; align-items: center; gap: 4px;
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.10em; text-transform: uppercase;
+}
+.nav-tools a {
+  color: var(--ink-muted);
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  transition: color 0.14s, background 0.14s, border-color 0.14s;
+}
+.nav-tools a:hover {
+  color: var(--ink);
+  background: var(--page);
+  border-color: var(--rule);
+}
+.nav-tools button {
+  color: var(--ink-muted);
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  transition: color 0.14s, background 0.14s, border-color 0.14s;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.nav-tools button:hover {
+  color: var(--ink);
+  background: var(--page);
+  border-color: var(--rule);
+}
+#btn-clear-local:hover { color: var(--red); }
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 50%;
+  background: var(--red);
+  color: var(--page);
+  font-size: 8.5px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* ─── HERO ───
+   El motivo "diagonal" (nombre del sistema de lectura) se vuelve
+   textura: una sola línea fina que cruza el hero de punta a punta,
+   apenas visible, sin gradientes ni ruido. */
+.hero {
+  position: relative;
+  padding: 72px 44px 22px;
+  max-width: 1220px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 48px;
+  border-bottom: 1px solid var(--rule);
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  left: -10%; right: -10%; top: 38%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--rule) 15%, var(--rule) 85%, transparent);
+  transform: rotate(-2.6deg);
+  pointer-events: none;
+}
+.hero-left { min-width: 0; position: relative; z-index: 1; }
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 9.5px; letter-spacing: 0.26em;
+  text-transform: uppercase; color: var(--ink-muted);
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.hero-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 16px; height: 1px;
+  background: var(--mark);
+  transform: rotate(-30deg);
+}
+.hero-heading {
+  font-size: clamp(58px, 9vw, 120px);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 0.88;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  font-variation-settings: 'opsz' 72;
+}
+.hero-heading em {
+  font-style: normal;
+  color: var(--ink-ghost);
+  font-weight: 200;
+}
+
+
+/* Título del sitio: la frase en fonética, con la tipografía de «textos».
+   Las cuatro letras de color son las que dicen «pepi» por dentro: p, ɛ,
+   d (la p dada vuelta) e i. Un parpadeo lento, solo si el sistema no pide
+   menos movimiento. A la izquierda queda un box vacío para el logo. */
+.hero-left { display: flex; align-items: flex-end; gap: 40px; }
+.hero-logo { flex: none; width: 188px; min-height: 96px; }
+.hero-fonetica {
+  margin: 0; font-family: var(--font-body), 'Charis SIL', 'Gentium Plus', 'DejaVu Serif', serif;
+  font-size: clamp(18px, 2.5vw, 35px); font-weight: 300; font-style: italic;
+  line-height: 1.2; letter-spacing: -0.01em; color: var(--ink);
+  font-variation-settings: 'opsz' 72; white-space: pre;
+}
+.hero-fonetica .f-p { color: var(--green); }
+.hero-fonetica .f-e { color: #a78bfa; }
+.hero-fonetica .f-d { color: var(--red); }
+.hero-fonetica .f-i { color: var(--mark-lt); }
+.hero-fonetica .f-dp { color: var(--ink-ghost); }
+.hero-fonetica { display: grid; }
+.hero-fonetica .fon, .hero-fonetica .es { grid-area: 1 / 1; }
+.hero-fonetica .es { font-style: italic; }
+.hero-fonetica .c { transition: opacity .7s ease; }
+.hero-fonetica .c.off { opacity: .07; }
+.hero-fonetica .f-d { display: inline-block; transition: opacity .7s ease, transform 1s ease; transform-origin: 50% 58%; }
+.hero-fonetica .f-d.vuelta { transform: rotate(180deg); }
+
+/* Hero stats block */
+.hero-stats {
+  display: flex; flex-direction: column;
+  align-items: flex-end; gap: 8px;
+  padding-left: 44px;
+  border-left: 1px solid var(--rule);
+  position: relative; z-index: 1;
+}
+.hero-stat-num {
+  font-family: var(--font-body);
+  font-size: clamp(52px, 6vw, 84px);
+  font-weight: 300; font-style: italic;
+  font-variation-settings: 'opsz' 72;
+  line-height: 0.9;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.hero-stat-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-muted);
+  text-align: right;
+}
+
+/* ─── FILTERS — tabs subrayados, no cápsulas rellenas ─── */
+.filters {
+  max-width: 1220px; margin: 0 auto;
+  padding: 22px 44px;
+  display: flex; align-items: center; gap: 26px;
+  font-family: var(--font-mono);
+  border-bottom: 1px solid var(--rule);
+  flex-wrap: wrap;
+}
+.filter-btn {
+  font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 4px 0 10px;
+  border: none; border-bottom: 2px solid transparent;
+  color: var(--ink-muted);
+  transition: color 0.14s ease, border-color 0.14s ease;
+  background: transparent;
+}
+.filter-btn:hover { color: var(--ink-soft); }
+.filter-btn.active { color: var(--ink); border-bottom-color: var(--mark); }
+.filter-count {
+  font-size: 8.5px; opacity: 0.6;
+  margin-left: 3px;
+}
+
+/* ─── TRES ZONAS ───
+   Centro: lo escrito en la plataforma (principal arriba, base debajo).
+   Izquierda: la base que todavía está en PDF (lo que falta transcribir).
+   Derecha: el resto del corpus, en PDF. */
+.indice3 { display: block; max-width: 1500px; margin: 0 auto; }
+.indice3 .centro { min-width: 0; }
+.indice3 .filters, .indice3 .grid-section { max-width: none; }
+.lado { padding: 30px 18px 80px; font-family: var(--font-mono); }
+.lado-tit { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 4px; }
+.lado-sub { font-size: 9px; letter-spacing: 0.06em; color: var(--ink-muted); margin-bottom: 18px; line-height: 1.5; }
+.lado-cat { font-size: 9.5px; letter-spacing: 0.04em; color: var(--ink-muted); margin: 16px 0 6px; }
+.lado-item { display: block; width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid var(--rule); padding: 6px 0 6px 10px; margin-bottom: 4px; cursor: pointer; color: var(--ink-soft); transition: border-color .15s, color .15s; }
+.lado-item:hover { color: var(--ink); border-left-color: var(--red); }
+.lado-item .t { font-family: var(--font-display, var(--font-body)); font-style: italic; font-size: 15px; line-height: 1.25; display: block; }
+.lado-item .m { font-size: 8.5px; letter-spacing: 0.08em; color: var(--ink-muted); text-transform: uppercase; }
+.lado-izq .lado-item { border-left-color: color-mix(in oklab, var(--mark) 45%, var(--rule)); }
+.lado-izq .lado-item:hover { border-left-color: var(--mark); }
+.lado-vacio { font-size: 9.5px; color: var(--ink-muted); font-style: italic; }
+/* Textos en PDF: abajo del material de la plataforma, con su título, o
+   mezclados con él si se tilda «incorporar PDFs». Siempre marcados. */
+.pdf-seccion { margin-top: 46px; }
+.filters-pdf { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted); border-left: 1px dashed var(--line-ctl, var(--rule)); padding-left: 12px; margin-left: 4px; align-self: center; }
+.pdf-seccion-tit { display: flex; align-items: baseline; gap: 12px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); padding-bottom: 10px; border-bottom: 1px dashed var(--line-ctl, var(--rule)); margin-bottom: 8px; }
+.pdf-seccion-tit small { font-size: 10px; letter-spacing: 0.08em; text-transform: none; color: var(--ink-muted); }
+.incl-pdf { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-soft); padding: 6px 9px; border: 1px dashed var(--line-ctl, var(--rule)); border-radius: 3px; cursor: pointer; user-select: none; }
+.incl-pdf input { margin: 0; accent-color: var(--mark-lt); }
+.es-pdf-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink); border: 1px dashed var(--ink-soft); padding: 1px 6px; border-radius: 3px; margin-left: 6px; }
+.mosaic-tile.es-pdf, .obra-row.es-pdf { background-image: linear-gradient(135deg, color-mix(in oklab, var(--ink) 4%, transparent), transparent 60%); }
+.mosaic-tile.es-pdf .mosaic-titulo, .obra-row.es-pdf .obra-titulo { font-style: normal; }
+.centro-sep { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-muted); padding: 26px 0 10px; border-bottom: 1px solid var(--rule); margin-bottom: 6px; grid-column: 1 / -1; }
+.serie-tag { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mark); margin-left: 8px; }
+.series-toggle { display: inline-flex; margin-right: 10px; }
+.series-toggle[hidden] { display: none; }
+@media (max-width: 900px) {
+  .lado { border-top: 1px solid var(--rule); padding: 24px 20px; }
+}
+
+/* ─── GRID ─── */
+.grid-section {
+  max-width: 1220px; margin: 0 auto;
+  padding: 40px 44px 110px;
+}
+.grid-label{
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--ink-muted);
+  display: flex; align-items: center; gap: 14px;
+}
+.grid-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--rule);
+}
+.grid-label-row{ display:flex; align-items:center; gap:22px; margin-bottom:26px; }
+.grid-label-row .grid-label{ flex:1; margin-bottom:0; }
+.view-toggle{ display:flex; gap:2px; font-family:var(--font-mono); flex-shrink:0; }
+.view-toggle-btn{
+  font-size:9px; letter-spacing:0.12em; text-transform:uppercase;
+  padding:5px 11px; border:1px solid var(--rule); color:var(--ink-muted);
+  transition:all 0.14s;
+}
+.view-toggle-btn:first-child{ border-radius:2px 0 0 2px; }
+.view-toggle-btn:last-of-type{ border-radius:0 2px 2px 0; }
+.view-toggle-btn + .view-toggle-btn{ border-left:none; }
+.orden-select{ margin-left:10px; font-family:var(--font-mono); font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; background:var(--bg); color:var(--ink-muted); border:1px solid var(--rule); border-radius:2px; padding:5px 6px; cursor:pointer; }
+.orden-select:hover{ color:var(--ink); border-color:var(--ink-soft); }
+
+@media(max-width:720px){
+  .grid-label-row{ flex-wrap:wrap; gap:12px; }
+  .grid-label-row .grid-label{ flex-basis:100%; }
+  .view-toggle{ flex-wrap:wrap; row-gap:8px; }
+  .orden-select{ margin-left:0; }
+}
+.view-toggle-btn:hover{ color:var(--ink-soft); }
+.view-toggle-btn.active{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+
+/* ─── MOSAICO ─── sin cuadrantes: cada tesela crece según el peso del
+   texto, y el primer criterio de peso es la relacionalidad (sus anclas
+   diagonales según su rol, los textos con que se cruza; ver teselas.py),
+   después las palabras. Arriba el título, en el medio una frase cerrada
+   del propio texto (al azar en cada visita), abajo palabras y categoría. */
+.obras-mosaic{
+  display:flex; flex-wrap:wrap; align-items:stretch;
+  border-top:1px solid var(--rule); border-left:1px solid var(--rule);
+}
+/* La última fila no se estira: este hueco se lleva el sobrante. */
+.obras-mosaic::after{ content:''; flex:12 1 0; }
+.mosaic-tile{
+  border-right:1px solid var(--rule); border-bottom:1px solid var(--rule);
+  background:var(--page); padding:18px 22px 16px; display:flex; flex-direction:column; gap:14px;
+  cursor:pointer; transition:background 0.16s; position:relative; overflow:hidden;
+  flex:var(--crece, 1) 1 var(--base, 200px); min-height:var(--alto, 150px); min-width:0;
+}
+.mosaic-tile:hover{ background:var(--bg-alt); }
+.mosaic-tile::after{
+  content:''; position:absolute; top:0; left:0; width:2px; height:100%;
+  background:var(--mark); opacity:0; transition:opacity 0.18s;
+}
+.mosaic-tile:hover::after{ opacity:1; }
+.mosaic-titulo{
+  font-family:var(--font-body); font-style:italic; color:var(--ink);
+  line-height:1.15; letter-spacing:-0.01em; font-size:var(--tit, 16px);
+}
+.mosaic-serie{ display:block; font-family:var(--font-mono); font-style:normal; font-size:8.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--mark); margin-top:6px; }
+.mosaic-cita{
+  margin:auto 0; font-family:'Cormorant Garamond', var(--font-body); font-size:var(--cita, 14px);
+  line-height:1.4; color:var(--ink-soft); white-space:pre-line; overflow-wrap:anywhere;
+}
+.mosaic-cita::before{ content:'«'; color:var(--ink-ghost); }
+.mosaic-cita::after{ content:'»'; color:var(--ink-ghost); }
+.mosaic-pie{
+  font-family:var(--font-mono); font-size:9.5px; color:var(--ink-muted);
+  display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline; margin-top:auto;
+}
+.mosaic-pie .cat{ color:var(--mark-lt); letter-spacing:.06em; }
+.mosaic-pie .rel{ color:var(--ink-ghost); }
+@media (max-width:860px){
+  .mosaic-tile{ flex-basis:calc(50% - 1px); flex-grow:1; }
+  .mosaic-tile.pesada{ flex-basis:100%; }
+}
+@media (max-width:480px){
+  .mosaic-tile{ flex-basis:100%; }
+}
+
+/* ─── LISTADO — un renglón por obra, numerado como índice de libro.
+   El número (contador CSS) y el acento diagonal al hover retoman el
+   vocabulario visual del propio sistema de lectura sin tocar el
+   HTML que genera el JS. ─── */
+.obras-list { display: flex; flex-direction: column; border-top: 1px solid var(--rule); counter-reset: obra; }
+.obra-row {
+  position: relative;
+  display: grid; grid-template-columns: 1fr auto;
+  gap: 32px; padding: 28px 30px 28px 96px;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer; transition: background 0.16s;
+  counter-increment: obra;
+}
+.obra-row:hover { background: var(--page); }
+.obra-row::before {
+  content: counter(obra, decimal-leading-zero);
+  position: absolute; left: 32px; top: 30px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em;
+  color: var(--ink-ghost);
+}
+.obra-row::after {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--mark); opacity: 0; transition: opacity 0.18s;
+}
+.obra-row:hover::after { opacity: 1; }
+.obra-col-left { display: flex; flex-direction: column; gap: 7px; }
+.obra-cat {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.04em;
+  color: var(--mark-lt); border: 1px solid color-mix(in oklab, var(--mark) 45%, transparent);
+  padding: 2px 7px; border-radius: 3px; display: inline-block; width: fit-content;
+}
+.obra-cat-none { color: var(--ink-ghost); border-color: var(--rule); }
+.obra-pdf-badge {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em;
+  background: var(--green); color: var(--page); padding: 2px 6px;
+  border-radius: 3px; margin-left: 6px;
+}
+.obra-titulo { font-family: var(--font-body); font-style: italic; font-size: 22px; letter-spacing: -0.01em; color: var(--ink); }
+.obra-subtitulo { font-size: 13px; color: var(--ink-soft); font-style: italic; }
+.obra-stats-row {
+  display: flex; gap: 16px; margin-top: 6px; flex-wrap: wrap;
+  font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-muted);
+}
+.obra-stats-row b { color: var(--ink-soft); font-weight: 500; }
+
+
+.obra-col-right { display: flex; flex-direction: column; justify-content: center; gap: 10px; align-items: flex-end; }
+.obra-action {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em;
+  color: var(--ink-soft); border: 1px solid var(--rule); padding: 6px 14px;
+  border-radius: var(--radius); transition: all 0.14s;
+}
+.obra-action:hover { border-color: var(--mark); color: var(--ink); background: var(--mark-bg); }
+
+@media (max-width: 860px) {
+  .obra-row { grid-template-columns: 1fr; gap: 14px; padding-left: 56px; }
+  .obra-row::before { left: 24px; }
+    .obra-col-right { align-items: flex-start; }
+}
+
+/* ─── ARCHIVO — dropdown de categorías libres ─── */
+.archivo-dd { position: relative; }
+.archivo-btn {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em;
+  color: var(--ink-soft); padding: 6px 4px;
+}
+.archivo-btn:hover { color: var(--ink); }
+.archivo-menu {
+  display: none; position: absolute; right: 0; top: 100%; margin-top: 8px;
+  min-width: 220px; background: var(--page); border: 1px solid var(--rule);
+  border-radius: var(--radius); box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+  padding: 8px; z-index: 100; flex-direction: column; gap: 2px;
+}
+.archivo-menu.open { display: flex; }
+.archivo-menu-label {
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--ink-muted); padding: 4px 8px;
+}
+.archivo-menu-item {
+  text-align: left; padding: 7px 8px; font-size: 12px; color: var(--ink);
+  border-radius: 4px;
+}
+.archivo-menu-item:hover { background: var(--bg-alt); }
+.archivo-menu-empty { padding: 6px 8px; font-size: 11px; color: var(--ink-ghost); font-style: italic; }
+.archivo-menu-sep { height: 1px; background: var(--rule); margin: 6px 4px; }
+.archivo-menu-muted { color: var(--ink-ghost); font-size: 10.5px; }
+.archivo-menu-muted:hover { background: var(--bg-alt); color: var(--ink-muted); }
+
+/* ─── BUSCADOR ─── */
+.search-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);z-index:80;opacity:0;pointer-events:none;transition:opacity 0.18s;}
+.search-overlay.open{opacity:1;pointer-events:auto;}
+.search-modal{position:fixed;top:12vh;left:50%;transform:translateX(-50%) translateY(-10px);width:min(640px,92vw);max-height:72vh;background:var(--page);border:1px solid var(--rule);border-radius:6px;box-shadow:0 24px 80px rgba(0,0,0,0.5);z-index:90;opacity:0;pointer-events:none;transition:opacity 0.18s, transform 0.18s;display:flex;flex-direction:column;overflow:hidden;}
+.search-modal.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}
+.search-input-row{display:flex;align-items:center;gap:10px;padding:18px 20px;border-bottom:1px solid var(--rule);}
+#search-input{flex:1;background:transparent;border:none;outline:none;color:var(--ink);font-family:var(--font-body);font-style:italic;font-size:18px;}
+#search-input::placeholder{color:var(--ink-ghost);}
+.search-close{font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;color:var(--ink-muted);border:1px solid var(--rule);padding:4px 9px;border-radius:2px;text-transform:uppercase;flex-shrink:0;}
+.search-close:hover{color:var(--ink);border-color:var(--ink-soft);}
+.search-status{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-ghost);padding:10px 20px 0;letter-spacing:0.04em;}
+.search-results{overflow-y:auto;padding:6px 0 14px;}
+.search-empty{font-family:var(--font-mono);font-size:11px;color:var(--ink-ghost);padding:24px 20px;font-style:italic;}
+.search-result{display:block;padding:13px 20px;border-bottom:1px solid var(--rule);transition:background 0.12s;cursor:pointer;}
+.search-result:hover{background:var(--bg-alt);}
+.search-result-obra{font-family:var(--font-mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--mark-lt);margin-bottom:6px;}
+.search-result-snippet{font-size:13.5px;line-height:1.5;color:var(--ink-soft);font-style:italic;}
+.search-result-snippet mark{background:var(--mark-bg2);color:var(--ink);padding:0 1px;border-radius:1px;font-style:normal;}
+
+/* ─── obra-tipo-dot — reusado en el panel de detalle ─── */
+.obra-tipo-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--mark); flex-shrink: 0;
+}
+.obra-tipo-dot.libro        { background: var(--green); }
+.obra-tipo-dot.ensayo       { background: var(--mark); }
+.obra-tipo-dot.articulo     { background: var(--red); }
+.obra-tipo-dot.texto_suelto { background: var(--ink-ghost); }
+
+/* ─── STATS BAR ─── */
+.stats-bar {
+  background: var(--bg-alt);
+  border-top: 1px solid var(--rule);
+  padding: 16px 44px;
+  display: flex; align-items: center; gap: 0;
+  font-family: var(--font-mono);
+}
+.stats-item {
+  display: flex; align-items: baseline; gap: 9px;
+  padding: 0 28px 0 0;
+  margin-right: 28px;
+  border-right: 1px solid var(--rule);
+}
+.stats-item:last-child { border-right: none; }
+.stats-item strong {
+  font-size: 22px; color: var(--ink);
+  font-family: var(--font-body); font-style: italic; font-weight: 300;
+  letter-spacing: -0.02em;
+  font-variation-settings: 'opsz' 24;
+}
+.stats-item span {
+  font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* ─── DETAIL PANEL ─── */
+.detail-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 50; opacity: 0; pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+.detail-overlay.open { opacity: 1; pointer-events: auto; }
+
+.detail-panel {
+  position: fixed; right: 0; top: 0; bottom: 0;
+  width: min(520px, 96vw);
+  background: var(--page);
+  border-left: 1px solid var(--rule);
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(.22,.61,.36,1);
+  z-index: 60;
+  box-shadow: -16px 0 60px rgba(0,0,0,0.35);
+}
+.detail-panel.open { transform: translateX(0); }
+
+/* panel header */
+.detail-header {
+  padding: 36px 40px 30px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg-alt);
+  position: sticky; top: 0; z-index: 2;
+}
+.detail-close {
+  position: absolute; top: 20px; right: 20px;
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em;
+  text-transform: uppercase; padding: 5px 10px;
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  color: var(--ink-muted);
+  transition: all 0.14s;
+  background: var(--page);
+}
+.detail-close:hover { color: var(--ink); border-color: var(--ink-soft); }
+
+.detail-tipo {
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--ink-muted);
+  margin-bottom: 12px; display: flex; align-items: center; gap: 7px;
+}
+.detail-titulo {
+  font-size: 32px; font-weight: 300; font-style: italic;
+  line-height: 1.06; letter-spacing: -0.015em;
+  margin-bottom: 6px; text-wrap: balance;
+  font-variation-settings: 'opsz' 36;
+}
+.detail-subtitulo {
+  font-size: 14px; color: var(--ink-soft);
+  font-style: italic; line-height: 1.5;
+  margin-top: 4px;
+}
+
+/* panel body */
+.detail-body { padding: 30px 40px 44px; }
+
+.detail-section { margin-bottom: 30px; }
+.detail-section-label {
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--ink-muted);
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.detail-section-label::after {
+  content: ''; flex: 1; height: 1px; background: var(--rule);
+}
+
+.detail-chapters { display: flex; flex-direction: column; }
+.detail-ch {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+  display: grid; grid-template-columns: 52px 1fr auto;
+  gap: 10px; align-items: baseline;
+}
+.detail-ch-num {
+  font-family: var(--font-mono); font-size: 9px;
+  color: var(--ink-ghost); letter-spacing: 0.06em;
+}
+.detail-ch-title { font-style: italic; font-size: 14.5px; color: var(--ink); }
+/* Estructura de un PDF: rango de páginas y sangría por nivel (título › parte › capítulo › sección) */
+.detail-ch.pdf { grid-template-columns: 70px 1fr auto; }
+.detail-ch.pdf .detail-ch-title { padding-left: calc(var(--nivel, 1) * 14px); }
+.detail-ch.pdf.nivel-0 .detail-ch-title { font-style: normal; }
+.detail-ch-nivel { font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-muted); font-style: normal; margin-left: 8px; }
+.detail-ch-diag {
+  font-family: var(--font-mono); font-size: 8.5px;
+  color: var(--mark-lt); white-space: nowrap;
+}
+
+.detail-part-label {
+  font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-muted);
+  padding: 16px 0 6px; border-bottom: 1px solid var(--rule);
+  margin-bottom: 0;
+}
+
+.detail-actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding-top: 30px;
+  border-top: 1px solid var(--rule);
+}
+.btn-primary {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 11px 22px;
+  background: var(--ink); color: var(--bg);
+  border: 1px solid var(--ink); border-radius: var(--radius);
+  transition: all 0.14s ease; cursor: pointer;
+ }
+.btn-primary:hover { background: var(--ink-soft); border-color: var(--ink-soft); }
+.btn-secondary {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 11px 22px;
+  background: transparent; color: var(--ink-soft);
+  border: 1px solid var(--rule); border-radius: var(--radius);
+  transition: all 0.14s ease; cursor: pointer;
+}
+.btn-secondary:hover { color: var(--ink); border-color: var(--ink-soft); background: var(--bg-alt); }
+.detail-peligro { display: flex; gap: 14px; justify-content: flex-end; margin-top: 18px; padding-top: 12px; border-top: 1px dashed var(--rule); }
+/* Eliminar posteos: panel de la autora con todas las obras del taller. */
+.btn-limpiar { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--red); background: none; border: 1px solid color-mix(in oklab, var(--red) 55%, transparent); padding: 5px 10px; border-radius: 2px; cursor: pointer; }
+.btn-limpiar:hover { background: color-mix(in oklab, var(--red) 12%, transparent); }
+.limpiar-fondo { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 300; display: none; align-items: flex-start; justify-content: center; padding: 6vh 16px 16px; overflow: auto; }
+.limpiar-fondo.open { display: flex; }
+.limpiar { background: var(--page, var(--bg)); border: 1px solid var(--rule); border-radius: 4px; width: min(860px, 100%); box-shadow: 0 24px 80px rgba(0,0,0,.5); display: flex; flex-direction: column; max-height: 88vh; }
+.limpiar-cab { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 14px 18px; border-bottom: 1px solid var(--rule); }
+.limpiar-cab h2 { margin: 0; font-size: 20px; font-weight: 500; }
+.limpiar-cab button, .limpiar-pie button, .limpiar-filtros button { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .06em; cursor: pointer; border: 1px solid var(--rule); background: none; color: var(--ink-soft); padding: 5px 10px; border-radius: 2px; }
+.limpiar-ayuda { padding: 10px 18px 0; font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; }
+.limpiar-filtros { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 18px; align-items: center; font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted); }
+.limpiar-filtros button.activo { border-color: var(--ink-soft); color: var(--ink); }
+.limpiar-lista { overflow: auto; padding: 0 18px; flex: 1; }
+.limpiar-fila { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--rule); cursor: pointer; }
+.limpiar-fila:hover { background: var(--bg-alt); }
+.limpiar-fila .t { font-size: 15px; } .limpiar-fila .m { font-family: var(--font-mono); font-size: 10px; color: var(--ink-muted); margin-top: 2px; }
+.limpiar-fila .f { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.limpiar-fila .web { color: var(--green, #4ade80); } .limpiar-fila .noweb { color: var(--ink-ghost); }
+.limpiar-pie { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px 18px; border-top: 1px solid var(--rule); font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); }
+.limpiar-pie .sep { flex: 1; }
+.limpiar-pie button.rojo { border-color: var(--red); color: var(--red); }
+.limpiar-pie button.rojo.confirmar { background: var(--red); color: var(--bg); }
+.limpiar-pie button:disabled { opacity: .4; cursor: default; }
+.btn-peligro { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-ghost); background: none; border: none; border-bottom: 1px solid transparent; cursor: pointer; padding: 2px 0; }
+.btn-peligro:hover { color: var(--ink-soft); border-bottom-color: currentColor; }
+.btn-peligro.fuerte:hover { color: var(--red, #ef4444); }
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  grid-column: 1 / -1;
+  padding: 90px 20px;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+}
+.empty-state-heading {
+  font-size: 28px; font-weight: 300; font-style: italic;
+  color: var(--ink-ghost);
+  font-variation-settings: 'opsz' 30;
+}
+.empty-state-sub {
+  font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-ghost);
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 720px) {
+  /* En el celular, taller y matriz quedan en archivo ▾ (modo propietaria). */
+  .nav { padding: 0 16px; gap: 10px; }
+  .nav-tools a.solo-autor { display: none; }
+  .nav { padding: 0 20px; }
+  .hero { padding: 48px 20px 18px; grid-template-columns: 1fr; }
+  .hero-left { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .hero-logo { width: 120px; min-height: 64px; }
+  .hero-fonetica { font-size: clamp(15px, 4.4vw, 22px); }
+  .hero-stats { align-items: flex-start; padding-left: 0; border-left: none; border-top: 1px solid var(--rule); padding-top: 20px; }
+  .filters { padding: 16px 20px; flex-wrap: wrap; }
+  .grid-section { padding: 24px 20px 60px; }
+  .stats-bar { padding: 12px 20px; gap: 0; flex-wrap: wrap; }
+  .stats-item { padding: 4px 16px 4px 0; margin: 4px 16px 4px 0; }
+}
+/* ─── PDF viewer en detail panel ─── */
+.detail-pdf-viewer {
+  margin: 14px 0;
+  border: 1px solid var(--rule); border-radius: 3px; overflow: hidden;
+  background: var(--bg-alt);
+}
+.detail-pdf-canvas {
+  display: flex; justify-content: center;
+  padding: 12px; max-height: 420px; overflow-y: auto;
+  background: #e8e4da;
+}
+.detail-pdf-canvas canvas { max-width: 100%; height: auto; display: block; box-shadow: 0 2px 12px rgba(20,17,14,0.15); }
+.detail-pdf-nav {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+  padding: 8px 14px; border-top: 1px solid var(--rule);
+  font-family: var(--font-mono); font-size: 10px; color: var(--ink-muted);
+  background: var(--bg-alt);
+}
+.detail-pdf-nav button {
+  padding: 3px 11px; border: 1px solid var(--rule); border-radius: 2px;
+  color: var(--ink-soft); font-family: var(--font-mono); font-size: 10px;
+  background: var(--page); cursor: pointer; transition: all 0.12s;
+}
+.detail-pdf-nav button:hover:not(:disabled) { color: var(--ink); border-color: var(--ink-soft); }
+.detail-pdf-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.detail-pdf-chapter-sel {
+  margin-bottom: 10px; display: flex; gap: 6px; flex-wrap: wrap;
+  font-family: var(--font-mono); font-size: 9px;
+}
+.detail-pdf-chapter-sel button {
+  padding: 3px 9px; border: 1px solid var(--rule); border-radius: 2px;
+  color: var(--ink-muted); background: var(--page); font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 0.08em; cursor: pointer; transition: all 0.12s;
+}
+.detail-pdf-chapter-sel button.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.detail-pdf-upload-hint {
+  font-family: var(--font-mono); font-size: 9px; color: var(--ink-muted);
+  padding: 10px 14px; border: 1px dashed var(--rule); border-radius: 2px;
+  text-align: center; margin-bottom: 10px; cursor: pointer; transition: all 0.14s;
+}
+.detail-pdf-upload-hint:hover { border-color: var(--mark); color: var(--mark-dk); }
+.seguir-leyendo{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:22px 44px 0;padding:10px 0 10px 14px;border-left:2px solid var(--mark);font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);}
+.seguir-leyendo[hidden]{display:none;}
+.seguir-leyendo .seguir-k{text-transform:uppercase;letter-spacing:.14em;font-size:11px;}
+.seguir-leyendo a{color:var(--ink);text-decoration:none;}
+.seguir-leyendo a:hover{color:var(--mark-lt);}
+.seguir-leyendo em{font-family:var(--font-body);font-size:17px;}
+.seguir-leyendo .seguir-donde{color:var(--ink-soft);}
+.seguir-leyendo .seguir-cerrar{margin-left:auto;color:var(--ink-muted);font-size:16px;line-height:1;padding:4px 8px;background:none;border:0;cursor:pointer;}
+.seguir-leyendo .seguir-cerrar:hover{color:var(--ink);}
+@media (max-width:700px){.seguir-leyendo{margin:16px 20px 0;}}
+
+/* Transición entre páginas del sitio (al seguir una diagonal a otro texto,
+   al volver al corpus): un fundido corto. Solo donde el navegador la
+   soporta y si no se pidió menos movimiento; si no, todo sigue igual. */
+@media (prefers-reduced-motion: no-preference){
+  @view-transition{navigation:auto;}
+  ::view-transition-old(root){animation:p314b-sale .18s ease-in both;}
+  ::view-transition-new(root){animation:p314b-entra .32s ease-out both;}
+}
+@keyframes p314b-sale{to{opacity:0;}}
+@keyframes p314b-entra{from{opacity:0;transform:translateY(10px);}}
+
+/* «Saltar al texto»: invisible hasta que se llega con Tab. */
+.saltar{position:absolute;left:12px;top:-60px;z-index:200;background:var(--ink);color:var(--bg);padding:10px 14px;font-family:var(--font-mono);font-size:13px;text-decoration:none;border-radius:3px;}
+.saltar:focus{top:10px;}
+#textos:focus,#book-page:focus,#pdf-centro:focus{outline:none;}
+/* Foco de teclado visible: quien navega con Tab ve dónde está. */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--mark);outline-offset:2px;}
+
+/* Mareas: como una story. Alta: un anillo que gira despacio, sin palabras.
+   Baja: el texto sigue a la vista, apagado, y no abre. */
+@property --marea-ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.marea-alta { position: relative; }
+.marea-alta::after { content: ''; position: absolute; inset: -3px; border-radius: 6px; padding: 1.5px; pointer-events: none;
+  background: conic-gradient(from var(--marea-ang), #f58529, #dd2a7b, #8134af, #515bd4, #f58529);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: marea-gira 7s linear infinite; opacity: .9; }
+@keyframes marea-gira { to { --marea-ang: 360deg; } }
+.marea-baja { opacity: .3; filter: grayscale(1); cursor: not-allowed; }
+.marea-baja:hover { opacity: .38; }
+/* una parte hundida sola (el resto del libro sigue): se ve, no abre */
+.marea-hundida { opacity: .32; filter: grayscale(1) blur(.3px); cursor: not-allowed; }
+.marea-hundida:hover { opacity: .4; }
+@media (prefers-reduced-motion: reduce) { .marea-alta::after { animation: none; } }
+/* Cooldown: lo que se llevó la marea queda al fondo del índice, bajo el
+   agua. La altura sube con cuántos textos hay. Para un visitante no hay
+   texto que leer (solo la forma de cada entrada) ni nada que tocar. */
+.marea-fondo { position: relative; display: block; width: 100%; margin: 64px 0 0; padding: 0; overflow: hidden; background: var(--bg); color: #c9cfe6; isolation: isolate; }
+.marea-fondo[hidden] { display: none; }
+.marea-fondo-lienzo { display: block; width: 100%; height: 0; touch-action: pan-y; }
+.marea-fondo-lista { list-style: none; margin: 0; padding: 6px max(18px, 4vw) 28px; background: #02030a; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 0 28px; }
+.marea-fondo-lista[hidden] { display: none; }
+.marea-fondo-toggle { position: absolute; top: 10px; right: max(14px, 3vw); z-index: 2; font: 10px/1 var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: #7d86a8; background: rgba(2,3,10,.55); border: 1px solid #1a2450; border-radius: 3px; padding: 7px 10px; cursor: pointer; }
+.marea-fondo-toggle[hidden] { display: none; }
+.marea-fondo-estelas { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; z-index: 3; }
+.marea-fondo-estelas:focus-within { width: auto; height: auto; clip: auto; left: 14px; top: 10px; background: #0b0d22; padding: 8px 10px; border-radius: 4px; }
+.marea-fondo-estelas a { display: block; font: italic 14px/1.5 var(--font-body); color: #d9dcf0; }
+.marea-fondo-toggle:hover, .marea-fondo-toggle:focus-visible { color: #d9dcf0; border-color: #3a4a90; outline: none; }
+.marea-fondo-lista button { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: 8px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 8px; border-bottom: 1px solid #0d1430; cursor: pointer; color: #d9dcf0; }
+.marea-fondo-punto { width: 8px; height: 8px; border-radius: 50%; background: var(--c, #8a5cf0); box-shadow: 0 0 10px var(--c, #8a5cf0); }
+.marea-fondo-titulo { font: italic 17px/1.25 var(--font-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.marea-fondo-vuelve { font: 10px/1 var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: #7d86a8; white-space: nowrap; }
+.marea-fondo-lista button:hover, .marea-fondo-lista button.es-foco { background: #0b1638; color: #fff; }
+.marea-fondo-lista button:focus-visible { outline: 1px solid #6f96ff; outline-offset: -1px; }
+.detail-marea { margin-top: 18px; padding-top: 12px; border-top: 1px dashed var(--rule); font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); display: flex; flex-direction: column; gap: 8px; }
+.detail-marea .dm-fila { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.detail-marea input, .detail-marea select { font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 3px; padding: 5px 7px; }
+.detail-marea input[type=number] { width: 4.5em; }
+.detail-marea button { font: inherit; font-size: 11px; color: var(--ink); background: transparent; border: 1px solid var(--rule); border-radius: 3px; padding: 6px 10px; cursor: pointer; }
+.detail-marea button:hover { border-color: var(--ink-soft); }
+.detail-marea .dm-estado b { color: var(--ink); font-weight: 500; }
+</style>
+<script src="vendor/pdfjs-3.11.174/pdf.min.js"></script>
+<script src="comun.js"></script>
+<script src="autor.js"></script>
+<script src="publicar.js"></script>
+<script src="mareas.js"></script>
+
+<style id="p314b-estandar">
+/* Estándar de controles (propuesta 30/09): 4 niveles, bordes ≥3:1, texto ≥4.5:1. Va al final para ganar sin tocar lo anterior. */
+:root{--line-ctl:color-mix(in oklab,var(--ink) 42%,var(--bg));--ctl-sz:13px;}
+.nav-volver,.nav-logo[href]{text-decoration:none;}
+:root{--ink-ghost:#7a7a7a;}
+
+.nav-logo{color:var(--ink);}
+.nav-tools{font-size:var(--ctl-sz);letter-spacing:0;text-transform:none;gap:8px;}
+.nav-tools a,.nav-tools button,.archivo-btn{font-size:var(--ctl-sz);letter-spacing:0;text-transform:none;color:var(--ink);padding:7px 12px;min-height:34px;border:1px solid var(--line-ctl);border-radius:3px;}
+.nav-tools a:hover,.nav-tools button:hover,.archivo-btn:hover{border-color:var(--ink);background:var(--page);color:var(--ink);}
+.archivo-btn{color:var(--mark-lt);border-style:dashed;border-color:var(--mark-lt);}
+.archivo-menu-item{font-size:var(--ctl-sz);}
+#btn-limpiar{display:none!important;}
+.nav-tools .solo-autor{color:var(--mark-lt);border:1px dashed var(--mark-lt);}
+.nav-tools .solo-autor:hover{color:var(--ink);border-color:var(--ink);}
+.obra-diag-badge{font-family:var(--font-mono);font-size:11px;color:var(--mark-lt);border:1px solid var(--mark-lt);padding:1px 6px;border-radius:3px;margin-left:6px;}
+.obra-cat{font-size:11px;letter-spacing:.04em;}
+.grid-label-row{flex-wrap:wrap;row-gap:10px;}
+.view-toggle{flex-wrap:wrap;row-gap:6px;justify-content:flex-start;min-width:0;max-width:100%;}
+.view-toggle select{max-width:100%;}
+.series-toggle{display:inline-flex;flex-wrap:wrap;gap:0;}
+.archivo-menu-sep{height:1px;background:var(--rule);margin:6px 4px;}
+.archivo-menu-peligro{color:var(--red);}
+.archivo-menu-peligro:hover{background:color-mix(in oklab,var(--red) 14%,transparent);}
+.btn-primary,.btn-secondary{font-size:var(--ctl-sz);letter-spacing:0;text-transform:none;padding:10px 18px;}
+.btn-secondary{color:var(--ink);border-color:var(--line-ctl);}
+.btn-peligro{font-size:12px;letter-spacing:0;text-transform:none;color:#f87171;border:1px solid color-mix(in oklab,#f87171 70%,transparent);border-radius:3px;padding:6px 10px;}
+.btn-peligro:hover{background:color-mix(in oklab,#f87171 14%,transparent);color:#fca5a5;border-color:#f87171;}
+.filter-btn{font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--ink-soft);}
+.view-toggle-btn{font-size:12px;letter-spacing:0;text-transform:none;padding:6px 9px;color:var(--ink-soft);border-color:var(--line-ctl);}
+.view-toggle-btn:hover{color:var(--ink);}
+.view-toggle-btn.active,.view-toggle-btn.active:hover{color:var(--bg);}
+@media (max-width:760px){.nav{overflow-x:auto;gap:12px;}.nav-tools a,.nav-tools button,.archivo-btn{min-height:44px;white-space:nowrap;}}
+</style>
+</head>
+<body>
+<a class="saltar" href="#textos">saltar a los textos</a>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html">corpus</a>
+  <div class="nav-tools">
+    <button id="btn-buscar" title="Buscar en todos los textos (/)">buscar ⌕</button>
+    <a href="mapa.html" title="Los textos publicados y las diagonales que los unen">mapa</a>
+    <a href="cadaver.html" title="Un texto nuevo en cada visita: una frase de cada texto, encadenadas">cadáver</a>
+    <a href="huella.html" title="Lo que leíste, en qué orden y cuánto (solo en este navegador)">mi huella</a>
+    <a href="ayuda.html" title="Qué es esto y cómo se lee: las marcas, la marea, las otras lecturas">ayuda</a>
+    <a href="uploader-v1.html" class="solo-autor">taller</a>
+    <a href="matriz.html" class="solo-autor">matriz relacional</a>
+    <a href="visitas.html" class="solo-autor">visitas</a>
+    <button id="btn-limpiar" hidden class="solo-autor btn-limpiar" title="Elegir posteos viejos y sacarlos de la web o mandarlos a la papelera">eliminar posteos</button>
+    <div class="archivo-dd">
+      <button id="btn-archivo" class="archivo-btn">✎ archivo ▾</button>
+      <div id="archivo-menu" class="archivo-menu"></div>
+    </div>
+  </div>
+</nav>
+
+<div class="limpiar-fondo" id="limpiar-fondo" role="dialog" aria-modal="true" aria-labelledby="limpiar-titulo">
+  <div class="limpiar">
+    <div class="limpiar-cab"><h2 id="limpiar-titulo">Eliminar posteos</h2><button id="limpiar-cerrar">cerrar ×</button></div>
+    <div class="limpiar-ayuda">Todos los textos del taller, del más viejo al más nuevo. Marcá los que quieras sacar. <b>Quitar de la web</b> las deja en el taller; <b>eliminar</b> las manda a la papelera del repo (se pueden recuperar) y las borra del sitio. Si otro texto publicado tiene una diagonal hacia uno de ellos, ese no se elimina y se avisa cuál.</div>
+    <div class="limpiar-filtros" id="limpiar-filtros">mostrar:
+      <button data-f="todas" class="activo">todas</button><button data-f="web">en la web</button><button data-f="noweb">solo en el taller</button>
+      <button data-f="texto">escritas</button><button data-f="pdf">PDF</button>
+    </div>
+    <div class="limpiar-lista" id="limpiar-lista"><div class="limpiar-ayuda">cargando…</div></div>
+    <div class="limpiar-pie"><span id="limpiar-cuenta">0 marcadas</span><span class="sep"></span>
+      <button id="limpiar-ocultar" disabled>quitar de la web</button>
+      <button id="limpiar-eliminar" class="rojo" disabled>eliminar</button>
+    </div>
+  </div>
+</div>
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-logo" id="hero-logo" aria-hidden="true"></div>
+    <h1 class="hero-fonetica" aria-label="textos"><span class="fon"><span class="f-dp">:</span> kajjˈo <span class="f-p">p</span>alˈaβɾa ˈo lˈɛŋɡwa,
+ dˈe lˈ<span class="f-e">ɛ</span>ŋɡwa, ˈi kaʎˈo
+ lˈɛŋɡwa <span class="f-d">d</span>ˈe ˈen ˈaβla
+ˈal ˌeskɾiβˈ<span class="f-i">i</span>ɾse sˈu aβlˈaɾ <span class="f-dp">:</span></span><span class="es" aria-hidden="true">cayó palabra o lengua,
+de lengua, y calló
+lengua de en habla
+al escribirse su hablar</span></h1>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat-num" id="total-obras">—</div>
+    <div class="hero-stat-label">textos en el corpus</div>
+  </div>
+</section>
+
+<script>
+/* Hero: las letras se apagan y prenden al azar. A veces queda solo
+   p ɛ p i (la d da vuelta) y a veces aparecen los versos en español. */
+(function () {
+  var h = document.querySelector('.hero-fonetica');
+  if (!h || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var fon = h.querySelector('.fon'), es = h.querySelector('.es');
+  function envolver(raiz) {
+    var tn = [], w = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT), n;
+    while ((n = w.nextNode())) tn.push(n);
+    tn.forEach(function (t) {
+      var padre = t.parentNode;
+      if (padre.classList.contains('c')) return;
+      var colored = /^f-/.test(padre.className);
+      if (colored) { padre.classList.add('c'); return; }
+      var fr = document.createDocumentFragment();
+      Array.from(t.nodeValue).forEach(function (ch) {
+        if (/\s/.test(ch)) { fr.appendChild(document.createTextNode(ch)); return; }
+        var sp = document.createElement('span'); sp.className = 'c'; sp.textContent = ch; fr.appendChild(sp);
+      });
+      padre.replaceChild(fr, t);
+    });
+  }
+  envolver(fon); envolver(es);
+  var cf = Array.from(fon.querySelectorAll('.c')), ce = Array.from(es.querySelectorAll('.c'));
+  ce.forEach(function (c) { c.classList.add('off'); });
+  var d = fon.querySelector('.f-d'), nucleo = Array.from(fon.querySelectorAll('.f-p,.f-e,.f-d,.f-i'));
+  var ocupado = false, vez = 0;
+  function azar(n) { return Math.floor(Math.random() * n); }
+  function mezclar(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = azar(i + 1), t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  function apagar(c, ms) { setTimeout(function () { c.classList.add('off'); }, ms); }
+  function prender(c, ms) { setTimeout(function () { c.classList.remove('off'); }, ms); }
+  setInterval(function () {
+    if (document.hidden || ocupado) return;
+    for (var k = 1 + azar(3); k > 0; k--) {
+      var c = cf[azar(cf.length)]; if (c.classList.contains('off')) continue;
+      c.classList.add('off'); prender(c, 500 + azar(1300));
+    }
+  }, 380);
+  function pepi() {
+    ocupado = true;
+    var otras = cf.filter(function (c) { return nucleo.indexOf(c) < 0; });
+    otras.forEach(function (c) { apagar(c, azar(700)); });
+    nucleo.forEach(function (c) { c.classList.remove('off'); });
+    setTimeout(function () { d.classList.add('vuelta'); }, 900);
+    setTimeout(function () {
+      d.classList.remove('vuelta');
+      otras.forEach(function (c) { prender(c, azar(700)); });
+      setTimeout(function () { ocupado = false; }, 1200);
+    }, 5200);
+  }
+  function versos() {
+    ocupado = true;
+    cf.forEach(function (c) { apagar(c, azar(700)); });
+    ce.forEach(function (c) { prender(c, 500 + azar(900)); });
+    setTimeout(function () {
+      ce.forEach(function (c) { apagar(c, azar(700)); });
+      cf.forEach(function (c) { prender(c, 500 + azar(700)); });
+      setTimeout(function () { ocupado = false; }, 1500);
+    }, 6000);
+  }
+  (function siguiente() {
+    setTimeout(function () {
+      if (!document.hidden && !ocupado) { (vez++ % 2 ? versos : pepi)(); }
+      siguiente();
+    }, 9000 + azar(7000));
+  })();
+})();
+</script>
+
+<div class="indice3">
+<div class="centro">
+<p class="seguir-leyendo" id="seguir-leyendo" hidden></p>
+<div class="filters" id="filters"></div>
+
+<div class="grid-section" id="textos" tabindex="-1">
+  <div class="grid-label-row">
+    <div class="grid-label" id="grid-label">cargando corpus…</div>
+    <div class="view-toggle" id="view-toggle">
+      <span class="series-toggle" id="series-toggle" hidden title="Los posteos extensos (de varias partes): cada parte como un posteo propio, o el texto entero como libro">
+        <button class="view-toggle-btn serie-btn" data-serie="partes">partes</button>
+        <button class="view-toggle-btn serie-btn" data-serie="libro">libro</button>
+        <select class="orden-select" id="partes-orden" title="cómo se reparten las partes en el índice" aria-label="Orden de las partes">
+          <option value="azar">al azar</option>
+          <option value="orden">en orden</option>
+        </select>
+      </span>
+      <label class="incl-pdf" title="Los textos en PDF junto con los demás, ordenados igual; sin tildar, van abajo, bajo «Textos en PDF»"><input type="checkbox" id="incluir-pdf"> incorporar PDFs</label>
+      <button class="view-toggle-btn active" data-view="lista">listado</button>
+      <button class="view-toggle-btn" data-view="mosaico">mosaico</button>
+      <select class="orden-select" id="orden" title="orden de los textos">
+        <option value="corpus">orden del corpus</option>
+        <option value="peso">por peso</option>
+        <option value="fecha">por fecha</option>
+        <option value="titulo">por título</option>
+      </select>
+    </div>
+  </div>
+  <div class="obras-list" id="obras-list"></div>
+  <div class="obras-mosaic" id="obras-mosaic" style="display:none;"></div>
+  <section class="pdf-seccion" id="pdf-seccion" hidden>
+    <div class="pdf-seccion-tit">Textos en PDF <small id="pdf-seccion-n"></small></div>
+    <div class="obras-list" id="pdf-list"></div>
+    <div class="obras-mosaic" id="pdf-mosaic" style="display:none;"></div>
+  </section>
+</div>
+</div>
+</div>
+
+<!-- Lo que se llevó la marea (cooldown): al fondo, bajo el agua -->
+<section class="marea-fondo" id="marea-fondo" hidden aria-label="textos que se llevó la marea">
+  <canvas class="marea-fondo-lienzo" id="mf-canvas" aria-hidden="true"></canvas>
+  <div class="marea-fondo-estelas" aria-label="diagonales en el agua"></div>
+  <button type="button" class="marea-fondo-toggle" aria-expanded="false" hidden></button>
+  <ol class="marea-fondo-lista" aria-label="en la marea, por fecha de vuelta" hidden></ol>
+</section>
+
+<!-- Stats bar -->
+<div class="stats-bar" id="stats-bar" style="display:none;">
+  <div class="stats-item"><strong id="st-palabras">—</strong><span>palabras</span></div>
+  <div class="stats-item"><strong id="st-capitulos">—</strong><span>unidades textuales</span></div>
+  <div class="stats-item"><strong id="st-diagonales">—</strong><span>diagonales</span></div>
+</div>
+
+<!-- Detail panel -->
+<div class="detail-overlay" id="overlay"></div>
+<aside class="detail-panel" id="detail-panel">
+  <div class="detail-header">
+    <button class="detail-close" id="detail-close">cerrar ×</button>
+    <div id="detail-header-content"></div>
+  </div>
+  <div class="detail-body" id="detail-content"></div>
+</aside>
+
+<!-- Buscador -->
+<div class="search-overlay" id="search-overlay"></div>
+<div class="search-modal" id="search-modal">
+  <div class="search-input-row">
+    <input type="text" id="search-input" placeholder="Buscar en todos los textos…" autocomplete="off">
+    <button class="search-close" id="search-close">esc</button>
+  </div>
+  <div class="search-status" id="search-status"></div>
+  <div class="search-results" id="search-results"></div>
+</div>
+
+<script>
+let corpus = null;
+let TESELAS = null; // teselas.json: peso relacional y frases (ver pesoDe)
+let activeFilter = 'all';
+const leerPref = (k, d) => { try { return localStorage.getItem(k) || d; } catch (e) { return d; } };
+const guardarPref = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+let viewMode = leerPref('p314b_vista', 'lista');
+// «lámina» ya no es un modo del listado: quien la tenía guardada vuelve al listado.
+if (viewMode !== 'mosaico') viewMode = 'lista';
+let ordenModo = leerPref('p314b_orden', 'corpus');
+let modoSeries = leerPref('p314b_series', 'partes');
+// Textos en PDF: aparte, abajo (por defecto), o con los demás.
+let incluirPdf = leerPref('p314b_incluir_pdf', '0') === '1';
+
+// ─── zonas del índice ───
+const seccionDe = o => o.seccion || (o.tipo_nodo === 'pdf' ? 'pdf' : 'principal');
+const esPdf = o => o.tipo_nodo === 'pdf';
+// Partes: cada posteo extenso (varios capítulos) se abre en un posteo por
+// parte, que lleva directo a ese capítulo; «libro» muestra la obra entera.
+// Las partes van al azar entre las demás obras (por defecto) o en orden.
+// Los posteos sueltos no se agrupan (su serie queda solo como etiqueta).
+let ordenPartes = leerPref('p314b_partes_orden', 'azar');
+const AZAR = new Map(); // posición al azar, fija mientras dure la visita
+const azarDe = id => { if (!AZAR.has(id)) AZAR.set(id, Math.random()); return AZAR.get(id); };
+const esExtensa = o => o.tipo_nodo !== 'pdf' && !o.diagonal && (o._chapters || []).length > 1;
+// Un PDF con estructura: cada entrada de nivel «parte» (en el taller) es
+// una unidad propia, que abre el mismo PDF limitado a sus páginas
+// (?parte=ID en el posteo-PDF; no se genera ningún archivo nuevo).
+const NIVELES_PDF = ['título', 'parte', 'capítulo', 'sección'];
+// (Con una sola parte, la que el taller pone por defecto, el PDF sigue entero.)
+function partesPdf(o) {
+  const pp = esPdf(o) ? (o._chapters || []).filter(c => c.nivel === 1 && c.paginaDesde && c.paginaHasta) : [];
+  return pp.length > 1 ? pp : [];
+}
+// «aparte»: los PDF que van abajo, bajo «Textos en PDF» (también cuentan
+// para mostrar el botón partes/libro).
+function aplicarSeries(lista, aparte = []) {
+  const hay = lista.concat(aparte).some(o => esExtensa(o) || partesPdf(o).length);
+  document.getElementById('series-toggle').hidden = !hay;
+  document.querySelectorAll('.serie-btn').forEach(b => b.classList.toggle('active', b.dataset.serie === modoSeries));
+  document.getElementById('partes-orden').hidden = modoSeries !== 'partes';
+  document.getElementById('partes-orden').value = ordenPartes;
+  if (!hay || modoSeries === 'libro') return lista;
+  const salida = [];
+  lista.forEach(o => {
+    const pp = partesPdf(o);
+    if (pp.length) {
+      pp.forEach((p, i) => salida.push(Object.assign({}, o, {
+        id: o.id + '--' + p.id, _padre: o.id, _parteIdx: i,
+        titulo: p.titulo || p.title || ('parte ' + (i + 1)), subtitulo: o.titulo,
+        // la parte y lo que tiene adentro (capítulos, secciones)
+        _chapters: o._chapters.filter(c => c === p || ((c.nivel != null ? c.nivel : 1) > 1
+          && c.paginaDesde >= p.paginaDesde && c.paginaDesde <= p.paginaHasta)),
+        _file: (o._file || o.id + '.html') + '?parte=' + encodeURIComponent(p.id),
+        _totalWords: p._palabras || 0, _totalDiags: p._diags || 0,
+        _pdfTotalPaginas: p.paginaHasta - p.paginaDesde + 1,
+        _parteTag: 'parte ' + (i + 1) + '/' + pp.length + ' · ' + o.titulo,
+      })));
+      return;
+    }
+    if (!esExtensa(o)) { salida.push(o); return; }
+    const chs = o._chapters, n = chs.length;
+    chs.forEach((ch, i) => salida.push(Object.assign({}, o, {
+      id: o.id + '--' + ch.id, _padre: o.id, _parteIdx: i,
+      titulo: ch.title || ch.titulo || ('parte ' + (i + 1)), subtitulo: o.titulo,
+      _chapters: [ch], _file: (o._file || o.id + '.html') + '#capitulo=' + encodeURIComponent(ch.id),
+      _totalWords: ch._palabras || 0, _totalDiags: ch._diags || 0,
+      _parteTag: 'parte ' + (i + 1) + '/' + n + ' · ' + o.titulo,
+    })));
+  });
+  return salida;
+}
+// Las partes al azar se reparten entre las demás obras sin mover el orden
+// de éstas; en orden, quedan juntas y en el orden de su obra.
+function juntarSeries(lista) {
+  const partes = lista.filter(o => o._padre), resto = lista.filter(o => !o._padre);
+  if (!partes.length) return lista;
+  if (ordenPartes === 'azar') {
+    const salida = resto.slice();
+    partes.slice().sort((a, b) => azarDe(a.id) - azarDe(b.id)).forEach(p => {
+      salida.splice(Math.floor(azarDe(p.id + '@') * (salida.length + 1)), 0, p);
+    });
+    return salida;
+  }
+  const salida = [], vistas = new Set();
+  lista.forEach(o => {
+    if (!o._padre) { salida.push(o); return; }
+    if (vistas.has(o._padre)) return;
+    vistas.add(o._padre);
+    partes.filter(x => x._padre === o._padre).sort((a, b) => a._parteIdx - b._parteIdx).forEach(x => salida.push(x));
+  });
+  return salida;
+}
+function etiquetaSerie(o) {
+  const t = o._parteTag || (o.serie ? 'serie ' + o.serie : '');
+  if (!parteFuera(o)) return t;
+  const v = MAREAS.vuelveDe(reglaParte(o));
+  return t + ' · bajo la marea' + (v ? ', vuelve el ' + fechaCorta(v) : '');
+}
+function renderLado(el, obras, titulo, sub) {
+  const porCat = {};
+  obras.forEach(o => { const c = o.categoria || 'sin categoría'; (porCat[c] = porCat[c] || []).push(o); });
+  const cats = Object.keys(porCat).sort((a, b) => a.localeCompare(b, 'es'));
+  el.innerHTML = '<div class="lado-tit">' + titulo + '</div><div class="lado-sub">' + sub + '</div>'
+    + (obras.length ? '' : '<div class="lado-vacio">nada por acá</div>');
+  cats.forEach(c => {
+    if (cats.length > 1) { const h = document.createElement('div'); h.className = 'lado-cat'; h.textContent = c; el.appendChild(h); }
+    porCat[c].sort((a, b) => String(a.titulo).localeCompare(String(b.titulo), 'es')).forEach(o => {
+      const b = document.createElement('button');
+      b.className = 'lado-item' + claseMarea(o);
+      const pags = o._pdfTotalPaginas ? o._pdfTotalPaginas + ' págs' : '';
+      b.innerHTML = '<span class="t">' + esc(o.titulo) + '</span><span class="m">pdf' + (pags ? ' · ' + pags : '') + '</span>';
+      b.addEventListener('click', () => openDetail(o));
+      el.appendChild(b);
+    });
+  });
+}
+function separadorCentro(cont, antesDeId, texto) {
+  const el = cont.querySelector('[data-id="' + CSS.escape(antesDeId) + '"]');
+  if (!el) return;
+  const d = document.createElement('div'); d.className = 'centro-sep'; d.textContent = texto;
+  el.parentNode.insertBefore(d, el);
+}
+
+// ─── modo propietaria ───
+// Lo decide autor.js: en tu máquina siempre; en la web o el celular,
+// solo con un token de GitHub verificado (acceso.html). Un visitante no
+// tiene forma de activarlo.
+let autorMode = !!(window.P314B && window.P314B.autor);
+if (window.P314B && !autorMode) {
+  window.P314B.listo.then(ok => {
+    if (ok && !autorMode) { autorMode = true; loadCorpus(); }
+  });
+}
+
+async function loadCorpus() {
+  // teselas.json (peso relacional y frases del mosaico): si falta, el
+  // mosaico sigue como antes, sin citas.
+  const teselas = fetch('teselas.json', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null).then(d => { TESELAS = d && d.obras || null; }).catch(() => {});
+  try {
+    const resp = await fetch('corpus.json', { cache: 'no-store' });
+    if (!resp.ok) throw new Error('no corpus.json');
+    const data = await resp.json();
+    if (data.obras) {
+      // El posteo de una diagonal no es una obra del índice: se llega a él
+      // por «Ir hacia la diagonal».
+      corpus = Object.assign({}, data, { obras: data.obras.filter(o => !o.diagonal) });
+    } else if (data.book && data.chapters) {
+      corpus = { obras: [normalizeBook(data)] };
+    } else {
+      corpus = { obras: [] };
+    }
+    mergeLocalStorage();
+  } catch(e) {
+    corpus = { obras: [] };
+    mergeLocalStorage();
+  }
+  await teselas;
+  normalizarCategorias(corpus.obras); render();
+}
+  // Misma categoría con distinta mayúscula, tilde, guion o espacios, o con una letra de
+  // más, de menos o cambiada («poeamario»): se muestra y filtra como una
+  // sola, la forma más usada. Solo en palabras de 6 letras o más, para no
+  // juntar categorías cortas distintas. No toca los datos.
+  function distanciaUno(a, b) {
+    if (a === b || Math.abs(a.length - b.length) > 1) return false;
+    let i = 0; while (i < a.length && a[i] === b[i]) i++;
+    if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1);
+    return a.length > b.length ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1);
+  }
+  // Clave de una categoría: sin mayúsculas, tildes, guiones ni espacios de
+  // más («Pre-teoría», «pre teoria» y «pre-teoría» son la misma).
+  const claveCategoria = c => String(c).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+  function normalizarCategorias(obras) {
+    const formas = {}, total = {};
+    (obras || []).forEach(o => {
+      if (!o.categoria || !String(o.categoria).trim()) { o.categoria = null; return; }
+      const f = String(o.categoria).trim().replace(/\s+/g, ' '), k = claveCategoria(f);
+      formas[k] = formas[k] || {}; formas[k][f] = (formas[k][f] || 0) + 1; total[k] = (total[k] || 0) + 1;
+    });
+    const destino = {};
+    Object.keys(formas).forEach(k => {
+      const mayor = k.length >= 6 && Object.keys(formas).filter(j => j.length >= 6 && total[j] > total[k] && distanciaUno(j, k))
+        .sort((x, y) => total[y] - total[x])[0];
+      destino[k] = mayor || k;
+    });
+    const eleg = {};
+    Object.keys(formas).forEach(k => { eleg[k] = Object.entries(formas[k]).sort((a, b) => b[1] - a[1])[0][0]; });
+    (obras || []).forEach(o => { if (o.categoria) o.categoria = eleg[destino[claveCategoria(o.categoria)]]; });
+  }
+
+function normalizeBook(data) {
+  const tipo = data.tipo || 'libro';
+  const chapters = data.chapters || [];
+  const totalDiags = chapters.reduce((a, c) => a + (c.diagonals || []).length, 0);
+  const totalWords = chapters.reduce((a, c) => a + (c.body || '').split(/\s+/).filter(Boolean).length, 0);
+  return {
+    id: slugify(data.book?.title || 'obra'),
+    tipo,
+    categoria: data.categoria || null, // libre — la asigna la autora, no un enum fijo
+    titulo: data.book?.title || 'Sin título',
+    subtitulo: data.book?.subtitle || null,
+    autor: data.book?.author || 'Pepi',
+    fecha_creacion: data.fecha_creacion || new Date().toISOString().slice(0,10),
+    _chapters: chapters,
+    _totalDiags: totalDiags,
+    _totalWords: totalWords,
+    _file: data._file || null,
+    // Métricas de pulenta: quedan en los datos de la obra pero el índice
+    // no las muestra (se retoman cuando las mediciones estén cerradas).
+    // listado deja el slot visible pero vacío en vez de romper.
+    _tokens: data._tokens ?? null,
+    _pulenta: data._pulenta || null, // { H, ttr, entropia, config }
+  };
+}
+
+let pendingSyncCount = 0; // cuántas obras vienen SOLO de localStorage, sin estar aún en corpus.json
+
+// Obras que el taller viejo ("Generar y descargar") guardó solo en el
+// localStorage de este navegador. Ya NO se mezclan con corpus.json: lo
+// publicado es lo que está en disco. A la autora se le avisa que existen
+// para que las exporte; un visitante nunca las ve.
+let obrasSoloLocales = [];
+
+function mergeLocalStorage() {
+  pendingSyncCount = 0;
+  obrasSoloLocales = [];
+  if (!autorMode) return;
+  try {
+    const stored = JSON.parse(localStorage.getItem('corpus_obras') || '[]');
+    obrasSoloLocales = stored.filter(item => !corpus.obras.some(o => o.id === item.id));
+    pendingSyncCount = obrasSoloLocales.length;
+  } catch(e) {}
+}
+
+/* ——————————————————————————————————————————
+   SINCRONIZACIÓN corpus.json ↔ localStorage
+   El uploader genera obras nuevas y las guarda solo en el
+   localStorage de ESE navegador (ver uploader-v1.html,
+   saveToLocalCorpus()). Eso hace que la tarjeta aparezca acá, pero
+   NO en corpus.json — y corpus.json es lo único que ve cualquier
+   otra persona que visite el sitio publicado. Este botón cierra
+   ese hueco: descarga el corpus.obras YA fusionado (disco +
+   localStorage) como un corpus.json listo para reemplazar el
+   archivo real y commitear. ——————————————————————————————————————————
+*/
+function updateSyncBadge() {
+  const badge = document.getElementById('sync-badge');
+  if (!badge) return;
+  if (pendingSyncCount > 0) {
+    badge.textContent = pendingSyncCount;
+    badge.style.display = 'inline-flex';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// "⚡ regenerar y publicar todo": corre los scripts sobre todas las obras
+// (en tu máquina con servidor.py, o en GitHub desde la web/el celular).
+async function publicarDesdeIndice() {
+  if (!window.Publicar) return;
+  if (!confirm('Regenerar todos los textos y publicar el sitio?')) return;
+  const ok = await window.Publicar.publicar(null, null);
+  if (ok) loadCorpus();
+}
+
+function exportarObrasSoloLocales() {
+  if (!obrasSoloLocales.length) { alert('No hay textos que estén solo en este navegador.'); return; }
+  const blob = new Blob([JSON.stringify({ obras: obrasSoloLocales }, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'obras-solo-en-este-navegador.json'; a.click();
+  URL.revokeObjectURL(url);
+  alert(
+    'Descargadas ' + obrasSoloLocales.length + ' ficha(s) de textos que solo existían en este navegador.\n\n' +
+    'Son un respaldo, no textos publicados: para publicarlos, abrí cada uno en el taller, ' +
+    '"↓ descargar .json" y corré generar_obra.py.'
+  );
+}
+
+function clearLocalDrafts() {
+  const stored = JSON.parse(localStorage.getItem('corpus_obras') || '[]');
+  if (!stored.length) { alert('No hay borradores locales para borrar.'); return; }
+  const ok = confirm(
+    'Vas a borrar ' + stored.length + ' borrador(es) guardado(s) en este ' +
+    'navegador.\n\nAsegurate de haber descargado y commiteado el ' +
+    'corpus.json actualizado ANTES de confirmar — si no lo hiciste, ' +
+    'perdés el registro de esos textos acá.\n\n¿Confirmás?'
+  );
+  if (!ok) return;
+  localStorage.removeItem('corpus_obras');
+  pendingSyncCount = 0;
+  obrasSoloLocales = [];
+  if (corpus) renderArchivoMenu(corpus.obras || []);
+  updateSyncBadge();
+  alert('Borradores locales eliminados.');
+}
+
+function slugify(s) {
+  return (s || 'obra').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'obra';
+}
+
+const TIPO_LABELS = {
+  libro: 'Libro',
+  ensayo: 'Ensayo',
+  articulo: 'Artículo',
+  texto_suelto: 'Texto suelto',
+};
+
+/* Categorías libres: se autogeneran de lo que cada obra declara en
+   .categoria — sin enum fijo. Se muestran las 5 más usadas + Todas;
+   el resto sigue existiendo (queda en el dato) aunque no tenga botón
+   propio en la barra de filtros. */
+function topCategorias(obras, max) {
+  const counts = {};
+  obras.forEach(o => { if (o.categoria) counts[o.categoria] = (counts[o.categoria]||0) + 1; });
+  return Object.entries(counts).sort((a,b) => b[1]-a[1]).slice(0, max).map(([cat]) => cat);
+}
+
+// Todas las categorías: primero las de lo escrito en la plataforma, después
+// (tras «en PDF») las que solo tienen textos en PDF.
+function renderFilters(obras) {
+  const escritas = topCategorias(obras.filter(o => !esPdf(o)), 99);
+  const soloPdf = topCategorias(obras.filter(esPdf), 99).filter(c => !escritas.includes(c));
+  const boton = c => '<button class="filter-btn' + (activeFilter===c?' active':'') + '" data-filter="' + escAttr(c) + '">' + esc(c) + '</button>';
+  const bar = document.getElementById('filters');
+  bar.innerHTML = '<button class="filter-btn' + (activeFilter==='all'?' active':'') + '" data-filter="all">Todos</button>' + '<button class="filter-btn' + (activeFilter==='__diags'?' active':'') + '" data-filter="__diags">con diagonales ⤳</button>' +
+    escritas.map(boton).join('') + (soloPdf.length ? '<span class="filters-pdf">en PDF</span>' + soloPdf.map(boton).join('') : '');
+  bar.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => { activeFilter = btn.dataset.filter; render(); });
+  });
+}
+
+function renderArchivoMenu(obras) {
+  const cats = [...new Set(obras.map(o => o.categoria).filter(Boolean))].sort();
+  const menu = document.getElementById('archivo-menu');
+  const adminHtml = autorMode
+    ? '<div class="archivo-menu-sep"></div>' +
+      '<div class="archivo-menu-label">autora</div>' +
+      '<a class="archivo-menu-item" href="uploader-v1.html">abrir el taller</a>' +
+      '<a class="archivo-menu-item" href="matriz.html">matriz relacional</a>' +
+      '<a class="archivo-menu-item" href="formula_helper.html">fórmulas</a>' +
+      '<a class="archivo-menu-item" href="tercero.html">experimento: tercero (Embriaguez · Aire)</a>' +
+      '<button class="archivo-menu-item" id="am-publicar">⚡ regenerar y publicar todo</button>' + '<div class="archivo-menu-sep"></div><button class="archivo-menu-item archivo-menu-peligro" id="am-limpiar">eliminar posteos…</button>' +
+      (window.P314B && window.P314B.modo === 'web' ? '<a class="archivo-menu-item archivo-menu-muted" href="acceso.html">acceso de este navegador</a>' : '') +
+      (pendingSyncCount
+        ? '<button class="archivo-menu-item" id="am-sync">↓ ' + pendingSyncCount + ' texto(s) solo en este navegador</button>' +
+          '<button class="archivo-menu-item archivo-menu-muted" id="am-clear">limpiar borradores locales</button>'
+        : '')
+    : '';
+  menu.innerHTML =
+    '<div class="archivo-menu-label">categorías</div>' +
+    (cats.length ? cats.map(c => '<button class="archivo-menu-item" data-filter="' + escAttr(c) + '">' + esc(c) + '</button>').join('')
+                 : '<div class="archivo-menu-empty">sin categorías asignadas</div>') +
+    adminHtml;
+  menu.querySelectorAll('[data-filter]').forEach(b =>
+    b.addEventListener('click', () => { activeFilter = b.dataset.filter; render(); menu.classList.remove('open'); }));
+  if (autorMode) {
+    menu.querySelector('#am-publicar')?.addEventListener('click', () => { menu.classList.remove('open'); publicarDesdeIndice(); }); menu.querySelector('#am-limpiar')?.addEventListener('click', () => { menu.classList.remove('open'); document.getElementById('btn-limpiar').click(); });
+    menu.querySelector('#am-sync')?.addEventListener('click', () => { exportarObrasSoloLocales(); menu.classList.remove('open'); });
+    menu.querySelector('#am-clear')?.addEventListener('click', () => { clearLocalDrafts(); menu.classList.remove('open'); });
+  }
+}
+document.getElementById('btn-archivo').addEventListener('click', e => {
+  e.stopPropagation();
+  document.getElementById('archivo-menu').classList.toggle('open');
+});
+document.addEventListener('click', () => document.getElementById('archivo-menu').classList.remove('open'));
+
+function escAttr(s) { return esc(s).replace(/"/g, '&quot;'); }
+function esc(s) { return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Seguir leyendo: la última obra que se leyó en este navegador (la
+// guardan las páginas de las obras). Solo si sigue en el corpus.
+function renderSeguirLeyendo(todas) {
+  const el = document.getElementById('seguir-leyendo');
+  let u = null;
+  try { u = JSON.parse(localStorage.getItem('p314b_ultima') || 'null'); } catch (e) {}
+  const archivos = new Set(todas.map(o => o._file || ((o._padre || o.id) + '.html')));
+  if (!u || !u.archivo || !archivos.has(u.archivo) || localStorage.getItem('p314b_ultima_cerrada') === String(u.t)) { el.hidden = true; return; }
+  const esc = P314.esc;
+  el.innerHTML = '<span class="seguir-k">seguís en</span> <a href="obras/' + encodeURIComponent(u.archivo) + '">' +
+    '<em>' + esc(u.titulo) + '</em>' + (u.donde ? '<span class="seguir-donde"> · ' + esc(u.donde) + '</span>' : '') + ' →</a>' +
+    '<button type="button" class="seguir-cerrar" aria-label="Ocultar este aviso" title="Ocultar">×</button>';
+  el.querySelector('.seguir-cerrar').addEventListener('click', () => {
+    try { localStorage.setItem('p314b_ultima_cerrada', String(u.t)); } catch (e) {}
+    el.hidden = true;
+  });
+  el.hidden = false;
+}
+
+// Mareas (mareas.json, hora de Argentina): como una story. En marea alta
+// el texto lleva un anillo, sin palabras; en marea baja sigue a la vista
+// pero inhabilitado (no abre). Cuando la marea cambia, el índice se
+// vuelve a pintar solo.
+let mareas = {}, mareaFirma = '';
+// (las partes de un posteo extenso llevan id «slug--capítulo» y _padre)
+// (la regla propia de una parte la lee reglaParte, más abajo)
+const reglaMarea = o => o._padre ? mareas[o._padre] || null : mareas[o.id] || mareas[(o._file || '').replace(/\.html$/, '')] || null;
+// Una parte se puede hundir sola («slug--capítulo» en mareas.json): se
+// queda en el índice, apagada y sin abrir, y el resto del libro sigue.
+const reglaParte = o => (o._padre && mareas[o.id]) || null;
+const parteFuera = o => { const r = reglaParte(o); return !!r && MAREAS.fuera(r); };
+function mareaDe(o) {
+  if (parteFuera(o)) return 'hundida';
+  const r = reglaMarea(o);
+  if (!r) return '';
+  return MAREAS.abierto(r) ? 'alta' : 'baja';
+}
+const claseMarea = o => { const m = mareaDe(o); return m ? ' marea-' + m : ''; };
+const firmaMareas = () => Object.keys(mareas).map(k => k + (MAREAS.abierto(mareas[k]) ? '+' : '-')).join(',');
+MAREAS.cargar('').then(m => { mareas = m || {}; mareaFirma = firmaMareas(); if (corpus && corpus.obras) render(); });
+setInterval(() => { const f = firmaMareas(); if (f !== mareaFirma) { mareaFirma = f; if (corpus && corpus.obras) render(); } }, 30000);
+
+// Cooldown («vuelve» en mareas.json): el texto se va con la marea hasta esa
+// fecha y vuelve solo. Lo pone la autora desde el panel de cada texto.
+const fueraDe = o => { const r = reglaMarea(o); return !!r && MAREAS.fuera(r); };
+const horaAR = d => { const a = new Date(d.getTime() - 3 * 3600 * 1000); return a.toISOString().slice(0, 16); };   // «2026-10-10T18:30»
+const fechaCorta = d => d.toLocaleString('es-AR', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' });
+function renderMareaFondo(lista) {
+  const sec = document.getElementById('marea-fondo');
+  if (!sec) return;
+  aguaParar();
+  const A = AGUA;
+  A.sec = sec;
+  A.lienzo = sec.querySelector('.marea-fondo-lienzo');
+  A.ctx = A.lienzo.getContext('2d');
+  A.lista = sec.querySelector('.marea-fondo-lista');
+  A.toggle = sec.querySelector('.marea-fondo-toggle');
+  A.obras = (lista || []).slice().sort((a, b) => (a._totalWords || 0) - (b._totalWords || 0));
+  A.foco = null;
+  A.estelas = A.estelas.filter(e => A.obras.some(o => o.id === e.obra));
+  if (!A.obras.length) { A.estelas = []; sec.hidden = true; A.capas = []; A.lista.innerHTML = ''; return; }
+  sec.hidden = false;
+  sec.classList.toggle('es-autora', !!autorMode);
+  const css = getComputedStyle(sec);
+  A.letra = css.getPropertyValue('--font-body').trim() || 'Georgia, serif';
+  A.mono = css.getPropertyValue('--font-mono').trim() || 'monospace';
+  const raices = A.obras.map(o => Math.sqrt(o._totalWords || 400));
+  A.pmin = Math.min(...raices); A.pmax = Math.max(...raices);
+  aguaPreparar();
+  aguaMedir(true);
+  aguaListaAutora();
+  aguaArrancar();
+}
+
+const MAREA_HOMO = { a: 'áàâä4ª', e: 'éèêë3', i: 'íìïy1', o: 'óòôö0º', u: 'úùüvw', b: 'vβ', v: 'bw', c: 'kçq', k: 'cq', q: 'kc', s: 'zçß5', z: 'sç', g: 'jq', j: 'gx', y: 'iÿ', h: 'ʰ\'`', n: 'ñm', m: 'nŋ', r: 'ŕřl', l: 'łı1', t: 'ŧ7d', d: 'tð', p: 'þb', f: 'ƒv', x: 'jχ', w: 'vu' };
+const MAREA_RUIDO = '·∙:⁘∴※⌁~≈+×°˚⁖';
+const MAREA_HORIZONTE = 365;   // días: a esta distancia (o más) un posteo es casi invisible
+
+function faltaVuelve(o) {
+  let vuelve = null;
+  try { vuelve = MAREAS.vuelveDe(reglaMarea(o)); } catch (e) {}
+  const falta = vuelve ? Math.max(0, vuelve - Date.now()) : MAREA_HORIZONTE * 864e5;
+  return { vuelve, falta };
+}
+
+function variantesTitulo(titulo, rnd) {
+  rnd = rnd || Math.random;
+  let base = Array.from(String(titulo || '').toLowerCase().trim()).slice(0, 26);
+  if (!base.length) base = Array.from('· · ·');
+  const pos = base.map((ch, k) => ch.trim() ? k : -1).filter(k => k >= 0);
+  for (let k = pos.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [pos[k], pos[j]] = [pos[j], pos[k]]; }
+  const fijas = new Set(pos.slice(0, Math.max(Math.min(2, pos.length), Math.ceil(pos.length * .4))));
+  const opciones = (ch, estricta) => {
+    const raiz = ch.normalize('NFD')[0];
+    const op = Array.from(MAREA_HOMO[raiz] || MAREA_RUIDO).filter(x => x !== ch && (!estricta || x.normalize('NFD')[0] !== raiz));
+    return op.length ? op : Array.from(MAREA_RUIDO);
+  };
+  return [0, 1, 2].map(() => base.map((ch, k) => {
+    if (!ch.trim()) return ch;
+    const fija = fijas.has(k);
+    if (fija || rnd() < .5) { const op = opciones(ch, fija); return op[Math.floor(rnd() * op.length)]; }
+    return ch;
+  }));
+}
+
+// ondas: [amplitud px, largo (×1000 px), velocidad (ciclos/s)]; deriva: px/s; furia: 0–1, turbulencia que empuja y hace chocar
+const MAREAS_TIPOS = [
+  { nombre: 'calma',        dur: [10, 16], deriva: 6,   furia: 0,   ondas: [[3, .9, .2], [1.5, .37, .35]] },
+  { nombre: 'mar de fondo', dur: [12, 18], deriva: 12,  furia: .15, ondas: [[9, 1.6, .16], [2, .5, .45]] },
+  { nombre: 'temporal',     dur: [6, 10],  deriva: 70,  furia: 1,   ondas: [[16, .8, .5], [7, .33, .9], [3, .15, 1.4]] },
+  { nombre: 'oleaje largo', dur: [12, 18], deriva: 20,  furia: .2,  ondas: [[13, 2.2, .2], [3, .7, .32]] },
+  { nombre: 'resaca',       dur: [7, 11],  deriva: -48, furia: .7,  ondas: [[9, 1.1, -.35], [4, .4, -.7]] },
+  { nombre: 'cruzada',      dur: [9, 14],  deriva: 4,   furia: .45, ondas: [[6, .9, .32], [6, .85, -.28], [1.5, .3, .6]] },
+  { nombre: 'remolino',     dur: [6, 10],  deriva: -20, furia: .9,  ondas: [[11, .6, -.4], [6, .9, .55], [2.5, .2, 1.2]] },
+  { nombre: 'marejadilla',  dur: [8, 12],  deriva: 18,  furia: .3,  ondas: [[5, .5, .55], [3, .31, .8], [2, 1.4, .2]] }
+];
+
+const AGUA = { capas: [], obras: [], raf: 0, visible: false, listo: false, quieto: false, de: null, a: null, t0: 0, cambio: 0, desp: 0, ult: 0, inicio: 0, inundado: false, foco: null, W: 0, H: 0, yS: 0, dpr: 1, sc: 1, lon: 1, pmin: 0, pmax: 0, ondas: [], frags: [], proxFrag: 4, estelas: [], proxDiag: 4 };
+
+function aguaParar() {
+  if (AGUA.raf) cancelAnimationFrame(AGUA.raf);
+  AGUA.raf = 0;
+}
+
+function aguaArrancar() {
+  const A = AGUA;
+  if (A.raf || !A.ctx || !A.capas.length) return;
+  if (A.quieto) { aguaCuadro(0); return; }
+  if (!A.visible || document.hidden) return;
+  A.ult = 0;
+  const bucle = ts => { A.raf = requestAnimationFrame(bucle); aguaCuadro(ts); };
+  A.raf = requestAnimationFrame(bucle);
+}
+
+function aguaPreparar() {
+  const A = AGUA;
+  if (A.listo) return;
+  A.listo = true;
+  if (document.fonts && document.fonts.load) document.fonts.load('19px "Almendra Display"').catch(() => {});
+  const mq = matchMedia('(prefers-reduced-motion: reduce)');
+  A.quieto = mq.matches;
+  const alCambiar = () => { A.quieto = mq.matches; A.a = null; aguaParar(); aguaArrancar(); };
+  mq.addEventListener ? mq.addEventListener('change', alCambiar) : mq.addListener(alCambiar);
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(es => { A.visible = es[es.length - 1].isIntersecting; A.visible ? aguaArrancar() : aguaParar(); }, { rootMargin: '60px' }).observe(A.sec);
+  } else A.visible = true;
+  document.addEventListener('visibilitychange', () => { document.hidden ? aguaParar() : aguaArrancar(); });
+  let espera = 0, ancho = 0;
+  window.addEventListener('resize', () => { clearTimeout(espera); espera = setTimeout(() => { if (A.sec.clientWidth !== ancho) { ancho = A.sec.clientWidth; aguaMedir(false); } }, 150); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { AGUA.capas.forEach(capaHornear); if (!AGUA.raf) aguaArrancar(); });
+  const boton = e => e.target.closest && e.target.closest('button[data-i]');
+  A.lista.addEventListener('click', e => { const b = boton(e); if (b) openDetail(A.capas[+b.dataset.i].o); });
+  A.lista.addEventListener('mouseover', e => { const b = boton(e); if (b) aguaFoco(+b.dataset.i); });
+  A.lista.addEventListener('focusin', e => { const b = boton(e); if (b) aguaFoco(+b.dataset.i); });
+  A.lista.addEventListener('mouseleave', () => aguaFoco(null));
+  A.lista.addEventListener('focusout', () => aguaFoco(null));
+  const donde = e => { const r = A.lienzo.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  // el puntero no mueve nada. Solo señala: la autora, un posteo; cualquiera, una estela de diagonal
+  A.lienzo.addEventListener('pointermove', e => {
+    const [mx, my] = donde(e);
+    const est = estelaEn(mx, my);
+    A.estelas.forEach(x => { x.meta = x === est ? 1 : 0; });
+    let hit = null;
+    if (!est && autorMode) {
+      for (let k = A.capas.length - 1; k >= 0; k--) {
+        const c = A.capas[k], dx = (mx - c.px) / (c.w * .42), dy = (my - c.py) / (c.h * .4);
+        if (dx * dx + dy * dy < 1) { hit = c.i; break; }
+      }
+      if (hit !== A.foco) aguaFoco(hit);
+    }
+    A.lienzo.style.cursor = est || hit !== null ? 'pointer' : '';
+    if (!A.raf && (A.quieto || A.inundado)) aguaCuadro(A.ult * 1000);
+  });
+  A.lienzo.addEventListener('pointerleave', () => { A.estelas.forEach(x => { x.meta = 0; }); if (autorMode) aguaFoco(null); });
+  A.lienzo.addEventListener('click', e => {
+    const [mx, my] = donde(e), est = estelaEn(mx, my);
+    if (est) { const v = destinosVivos(est.d); if (v.length) location.href = v[Math.floor(Math.random() * v.length)].href; return; }
+    if (autorMode && A.foco !== null) openDetail(A.capas[A.foco].o);
+  });
+  A.toggle.addEventListener('click', () => {
+    let on = !A.lista.hidden ? false : true;
+    A.lista.hidden = !on; A.toggle.setAttribute('aria-expanded', String(on)); A.toggle.textContent = on ? 'ocultar lista' : 'ver lo que está en la marea';
+    try { localStorage.setItem('p314b-marea-lista', on ? '1' : '0'); } catch (e) {}
+  });
+}
+
+function aguaOnda(x, amp) {
+  const A = AGUA;
+  if (A.quieto) return;
+  A.ondas.push({ x, a: amp * A.sc, t0: A.ult });
+  if (A.ondas.length > 6) A.ondas.shift();
+}
+
+// Fragmentos: de vez en cuando una nube escupe una frase de su texto, que sube,
+// se lee un segundo sobre la superficie y se disuelve difuminada. Las frases
+// se eligen por peso: oraciones medianas con palabras poco comunes en el corpus.
+const FRAG_CACHE = {};
+let FRAG_IDF = null;
+function fragLimpiar(s) { return String(s || '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim(); }
+function fragPalabras(s) { return (s.toLowerCase().match(/[a-záéíóúüñ]{4,}/g) || []); }
+async function fragTextos() {
+  if (FRAG_IDF) return FRAG_IDF;
+  FRAG_IDF = { textos: {}, df: new Map(), n: 0 };
+  try {
+    const r = await fetch('busqueda.json', { cache: 'no-cache' });
+    if (r.ok) {
+      const obras = (await r.json()).obras || {};
+      for (const k in obras) {
+        FRAG_IDF.textos[k] = obras[k].map(c => fragLimpiar(c.texto));
+        obras[k].forEach(c => { FRAG_IDF.n++; new Set(fragPalabras(fragLimpiar(c.texto))).forEach(w => FRAG_IDF.df.set(w, (FRAG_IDF.df.get(w) || 0) + 1)); });
+      }
+    }
+  } catch (e) {}
+  return FRAG_IDF;
+}
+async function fragDeObra(o) {
+  const k = o._file;
+  if (!k) return [];
+  if (FRAG_CACHE[k]) return FRAG_CACHE[k];
+  const I = await fragTextos();
+  let capitulos = I.textos[k];
+  if (!capitulos || !capitulos.length) {   // servidor local sin busqueda.json: se baja la obra
+    try {
+      const html = await (await fetch('obras/' + k, { cache: 'no-store' })).text();
+      const m = /const CHAPTERS = (\[[\s\S]*\]);\s*\n\s*const ACCIONES/.exec(html);
+      capitulos = m ? JSON.parse(m[1]).map(ch => fragLimpiar(ch.body)) : [];
+    } catch (e) { capitulos = []; }
+  }
+  const idf = w => Math.log((I.n + 1) / ((I.df.get(w) || 0) + 1));
+  const frases = [];
+  capitulos.forEach(t => t.split(/(?<=[.!?…])\s+/).forEach(s => {
+    s = s.trim();
+    if (s.length < 24) return;
+    if (s.length > 90) { const corte = s.lastIndexOf(' ', 90); s = s.slice(0, corte > 40 ? corte : 90) + '…'; }
+    const pal = Array.from(new Set(fragPalabras(s)));
+    if (pal.length < 3) return;
+    frases.push({ s, peso: pal.reduce((a, w) => a + idf(w), 0) / Math.sqrt(pal.length) });
+  }));
+  frases.sort((a, b) => b.peso - a.peso);
+  return (FRAG_CACHE[k] = frases.slice(0, 16).map(x => x.s));
+}
+// Cómo sale una frase: con la letra rara (Almendra Display) y en una forma rara.
+// Ninguna sale recta ni del todo nítida: arco, ola, espiral, caída o dispersas, siempre medio borrosas.
+const FRAG_FORMAS = ['arco', 'ola', 'espiral', 'caida', 'dispersa'];
+function fragLetras(s, forma, fs, g) {
+  const L = Array.from(s), n = L.length, adv = L.map(ch => g.measureText(ch).width + fs * .06);
+  const total = adv.reduce((a, b) => a + b, 0), rnd = Math.random, out = [];
+  let acc = 0;
+  for (let i = 0; i < n; i++) {
+    const w = adv[i], u = acc + w / 2; acc += w;
+    let x = u - total / 2, y = 0, rot = 0, tam = 1;
+    if (forma === 'diagonal') { const an = -.32; x = (u - total / 2) * Math.cos(an); y = (u - total / 2) * Math.sin(an); rot = an; }
+    else if (forma === 'arco') { const R = total / .75, th = (u - total / 2) / R; x = R * Math.sin(th); y = R * (1 - Math.cos(th)); rot = th; }
+    else if (forma === 'ola') { const k = u / (fs * 7); y = Math.sin(k * 6.283) * fs * 1.1; rot = Math.cos(k * 6.283) * .55; }
+    else if (forma === 'caida') { x = (u - total / 2) * .78; y = (u - total / 2) * .22 + (i % 3) * fs * .5 + Math.sin(i * 1.7) * fs * .3; rot = Math.sin(i * 2.1) * .5 + .15; tam = 1 - .35 * (i / n); }
+    else if (forma === 'dispersa') { x = (u - total / 2) * .9 + (rnd() - .5) * fs * .8; y = (rnd() - .5) * fs * 3; rot = (rnd() - .5) * 1.4; tam = .75 + rnd() * .7; }
+    else if (forma === 'espiral') { const b = fs * 1.25 / 6.283; let th = 0, len = 0; const r0 = fs * .9; th = Math.sqrt((r0 / b) ** 2 + 2 * u / b) - r0 / b; const r = r0 + b * th; x = r * Math.cos(th - 1.57); y = r * Math.sin(th - 1.57); rot = th; }
+    out.push({ ch: L[i], x: x + (rnd() - .5) * fs * .35, y: y + (rnd() - .5) * fs * .5, rot: rot + (rnd() - .5) * .5, tam: tam * (.85 + rnd() * .3) });
+  }
+  return out;
+}
+function fragHornear(fr, fs) {
+  const A = AGUA, d = A.dpr, fuente = fs + 'px "Almendra Display", ' + A.letra;
+  const g0 = document.createElement('canvas').getContext('2d');
+  g0.font = fuente;
+  const gl = fragLetras(fr.s, fr.forma, fs, g0);
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  gl.forEach(q => { x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); });
+  const pad = fs * 1.6, w = Math.ceil(x1 - x0 + pad * 2), hh = Math.ceil(y1 - y0 + pad * 2), ox = pad - x0, oy = pad - y0;
+  const hacer = blur => {
+    const cv = document.createElement('canvas'); cv.width = Math.round(w * d); cv.height = Math.round(hh * d);
+    const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0);
+    g.font = fuente; g.textAlign = 'center'; g.textBaseline = 'middle';
+    gl.forEach(q => {
+      g.font = Math.round(fs * q.tam) + 'px "Almendra Display", ' + A.letra;
+      if (blur > .5) glifoDifuso(g, q.ch, ox + q.x, oy + q.y, q.rot, blur, 'rgba(240,232,255,.95)', d);
+      else { g.save(); g.translate(ox + q.x, oy + q.y); g.rotate(q.rot); g.shadowColor = rgba(fr.color, .8); g.shadowBlur = 8 * d; g.fillStyle = '#f6f1ff'; g.fillText(q.ch, 0, 0); g.restore(); }
+    });
+    return cv;
+  };
+  fr.cv = [hacer(7), hacer(3.2), hacer(1.6)]; fr.w = w; fr.h = hh; fr.ox = ox; fr.oy = oy;
+}
+function aguaEscupir(t) {
+  const A = AGUA;
+  if (A.quieto || !A.capas.length || A.frags.length >= 2) return;
+  const vivas = A.capas.filter(c => c.alfa > .05);
+  // siempre que se pueda, una diagonal; si no, una frase de peso
+  let cand = vivas.filter(c => (c.diags || []).some(d => destinosVivos(d).length)), diag = true;
+  // las frases de peso (partes del texto hundido) solo para la autora; el visitante recibe solo las diagonales
+  if (!cand.length && autorMode) { cand = vivas.filter(c => c.frases && c.frases.length); diag = false; }
+  if (!cand.length) return;
+  let r = Math.random() * cand.reduce((s, c) => s + c.alfa, 0), c = cand[0];
+  for (const x of cand) { r -= x.alfa; if (r <= 0) { c = x; break; } }
+  let s;
+  if (diag) {
+    const ds = c.diags.filter(d => destinosVivos(d).length);
+    s = ds[(c.fd = ((c.fd == null ? Math.floor(Math.random() * ds.length) : c.fd + 1)) % ds.length)].s;
+  } else s = c.frases[(c.fi = ((c.fi == null ? Math.floor(Math.random() * c.frases.length) : c.fi + 1 + Math.floor(Math.random() * 3))) % c.frases.length)];
+  const fr = { s, c, x0: c.px, y0: c.py, t0: t, color: c.color, forma: FRAG_FORMAS[Math.floor(Math.random() * FRAG_FORMAS.length)] };
+  fragHornear(fr, Math.round((fr.forma === 'espiral' ? 19 : 21) * A.sc));
+  A.frags.push(fr);
+}
+function aguaFragmentos(t, nivel, ola) {
+  const A = AGUA, ctx = A.ctx;
+  if (!A.quieto && t > A.proxFrag) { A.proxFrag = t + 3 + Math.random() * 4; aguaEscupir(t); }
+  const SUBE = 1.6, LEE = 1.7, SE_VA = 2;
+  A.frags = A.frags.filter(fr => {
+    const e = t - fr.t0;
+    if (e > SUBE + LEE + SE_VA) return false;
+    const mx = fr.w / 2 + 6, x = Math.max(mx, Math.min(A.W - mx, fr.x0));
+    const ys = Math.max(fr.h / 2 + 4, nivel + ola(x) - fr.h * .32 - 6 * A.sc);
+    let y, alfa, nit;   // nit: 0 muy borroso … 2 nítido
+    if (e < SUBE) { const k = suave(e / SUBE); y = fr.y0 + (ys - fr.y0) * k; alfa = k * .95; nit = 2 * k; if (e > SUBE - .25 && !fr.onda) { fr.onda = 1; aguaOnda(x, 5); } }
+    else if (e < SUBE + LEE) { y = ys; alfa = .95; nit = 2; }
+    else { const k = suave((e - SUBE - LEE) / SE_VA); y = ys - 10 * k * A.sc; alfa = .95 * (1 - k); nit = 2 * (1 - k); }
+    // nitidez: se mezcla entre tres versiones (muy borrosa, borrosa, nítida)
+    const i0 = Math.min(1, Math.floor(nit)), f1 = nit - i0;
+    ctx.save();
+    ctx.translate(x - fr.ox, y - fr.oy);
+    ctx.globalAlpha = Math.max(0, alfa) * (1 - f1);
+    ctx.drawImage(fr.cv[i0], 0, 0, fr.w, fr.h);
+    ctx.globalAlpha = Math.max(0, alfa) * f1;
+    ctx.drawImage(fr.cv[Math.min(2, i0 + 1)], 0, 0, fr.w, fr.h);
+    ctx.restore();
+    return true;
+  });
+}
+
+// Estelas: cada tanto una nube suelta una diagonal que nace en su texto (el
+// emergente, o la cita de origen si no hay). Queda fijada en el fondo como una
+// estela difuminada; al tocarla se va a la diagonal de destino. No dice de qué
+// texto salió: solo está ahí, y la sigue quien quiere.
+let ACC_P = null;
+function accionesCargar() {
+  return ACC_P || (ACC_P = fetch('acciones.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : {}).then(j => j.acciones || {}).catch(() => ({})));
+}
+// Una diagonal puede tener varios destinos (varios «diagonal» en la misma acción).
+// Es una sola estela; al tocarla se elige al azar uno de los destinos vivos.
+// Un destino en cooldown vale cero: no sale de las esferas. Sin ninguno vivo, la estela no sale (o se va).
+const destinosVivos = d => d.destinos.filter(x => !fueraDe(x.destObra));
+async function diagDeObra(o) {
+  const ac = await accionesCargar(), obras = (typeof corpus !== 'undefined' && corpus && corpus.obras) || [], res = [];
+  for (const a of Object.values(ac)) {
+    if (!a.origen || a.origen.obra !== o.id) continue;
+    const destinos = []; let texto = '';
+    for (const t of (a.tipos || [])) {
+      if (t.tipo !== 'diagonal' || !t.destino) continue;
+      const d = ac[t.destino], od = d && d.origen && obras.find(x => x.id === d.origen.obra);
+      if (!od || !od._file) continue;
+      destinos.push({ destObra: od, href: 'obras/' + encodeURIComponent(od._file) + '#accion=' + encodeURIComponent(t.destino) });
+      if (!texto && t.emergente) texto = t.emergente;
+    }
+    let s = fragLimpiar(texto || a.origen.fragmento || '');
+    if (!destinos.length || s.length < 12) continue;
+    if (s.length > 72) { const corte = s.lastIndexOf(' ', 72); s = s.slice(0, corte > 30 ? corte : 72) + '…'; }
+    res.push({ s, destinos, id: a.id });
+  }
+  return res;
+}
+function estelaHornear(e) {
+  const A = AGUA, d = A.dpr, sc = A.sc, fs = Math.round(19 * sc), fuente = fs + 'px "Almendra Display", ' + A.letra;
+  const g0 = document.createElement('canvas').getContext('2d');
+  g0.font = fuente;
+  e.tw = Math.min(A.W * .8, g0.measureText(e.d.s).width);
+  const w = Math.ceil(e.tw + 70), h = Math.ceil(fs * 3.2);
+  e.w = w; e.h = h;
+  const hacer = blur => {
+    const cv = document.createElement('canvas'); cv.width = Math.round(w * d); cv.height = Math.round(h * d);
+    const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0);
+    g.font = fuente; g.textAlign = 'center'; g.textBaseline = 'middle';
+    glifoDifuso(g, e.d.s, w / 2, h / 2, 0, blur, 'rgba(226,214,255,.95)', d);
+    glifoDifuso(g, e.d.s, w / 2, h / 2, 0, blur * 2.6, rgba(e.color, .8), d);
+    return cv;
+  };
+  e.cvB = hacer(3.6 * sc); e.cvN = hacer(1.1);
+  if (!e.rehecha && document.fonts && document.fonts.load) { e.rehecha = 1; document.fonts.load(fuente).then(() => estelaHornear(e)).catch(() => {}); }
+}
+function aguaEstelaNueva(t, quieto) {
+  const A = AGUA, vivas = A.estelas.filter(e => !e.va);
+  const usadas = new Set(A.estelas.map(e => e.d.id)), cand = [];
+  A.capas.forEach(c => (c.diags || []).forEach(d => { if (!usadas.has(d.id) && destinosVivos(d).length && (quieto || c.alfa > .05)) cand.push([c, d]); }));
+  if (!cand.length) return;
+  if (vivas.length >= 3) vivas[0].va = t || 1e-6;   // la más vieja se va
+  const [c, d] = cand[Math.floor(Math.random() * cand.length)];
+  let fx = .5, mejor = -1;
+  for (let k = 0; k < 8; k++) {
+    const x = .12 + Math.random() * .76, dist = Math.min(1, ...vivas.map(e => Math.abs(e.fx - x)));
+    if (dist > mejor) { mejor = dist; fx = x; }
+  }
+  const e = { d, fx, fd: .2 + Math.random() * .42, rot: -(.17 + Math.random() * .1), t0: quieto ? -1e9 : t, x0: c.px / A.W, y0: (c.py - A.yS) / Math.max(1, A.H - A.yS), va: 0, meta: 0, hov: 0, obra: c.o.id, color: c.color, ph: Math.random() * 6 };
+  estelaHornear(e);
+  A.estelas.push(e);
+  estelasSR();
+}
+function estelasSR() {
+  const box = AGUA.sec && AGUA.sec.querySelector('.marea-fondo-estelas');
+  if (box) box.innerHTML = AGUA.estelas.filter(e => !e.va).map(e => '<a href="' + escAttr((destinosVivos(e.d)[0] || e.d.destinos[0]).href) + '">' + esc(e.d.s) + '</a>').join('');
+}
+function estelaEn(mx, my) {
+  const A = AGUA;
+  for (let k = A.estelas.length - 1; k >= 0; k--) {
+    const e = A.estelas[k];
+    if (e.va || e.px == null) continue;
+    const dx = mx - e.px, dy = my - e.py, c = Math.cos(e.ang), s = Math.sin(e.ang);
+    if (Math.abs(dx * c + dy * s) < e.tw / 2 + 10 && Math.abs(-dx * s + dy * c) < 20) return e;
+  }
+  return null;
+}
+function aguaEstelas(t, dt, nivel) {
+  const A = AGUA, ctx = A.ctx;
+  if (!A.quieto && t > A.proxDiag) { A.proxDiag = t + 18 + Math.random() * 14; aguaEstelaNueva(t); }
+  let cambio = false;
+  A.estelas = A.estelas.filter(e => { if (e.va && t - e.va > 3) { cambio = true; return false; } return true; });
+  if (cambio) estelasSR();
+  A.estelas.forEach((e, i) => {
+    if (!e.va && t > (e.chk || 0)) { e.chk = t + 1; if (!destinosVivos(e.d).length) { e.va = t; estelasSR(); } }
+    const k = suave((t - e.t0) / 3.6), lim = A.H - nivel;
+    e.hov += (e.meta - e.hov) * Math.min(1, (dt || .05) * 8);
+    e.px = (e.x0 + (e.fx - e.x0) * k) * A.W + Math.sin(t * .11 + e.ph) * 7 * A.sc * k;
+    e.py = nivel + (e.y0 + (e.fd - e.y0) * k) * lim + Math.sin(t * .08 + e.ph * 2) * 4 * A.sc * k;
+    e.ang = e.rot * k;
+    // niebla: al principio aparece y se pierde, se transparenta con el fondo; con el tiempo se va fijando
+    const edad = Math.max(0, t - e.t0), amp = A.quieto ? 0 : .12 + .88 * Math.exp(-edad / 14);
+    const niebla = .5 + .5 * Math.sin(t * .9 + e.ph) * Math.sin(t * .37 + e.ph * 1.7) + .25 * Math.sin(t * 1.9 + e.ph * 3);
+    const veladura = 1 - amp * Math.min(1, Math.max(0, .55 - .45 * niebla)) * 1.6;
+    const sale = e.va ? Math.max(0, 1 - (t - e.va) / 3) : 1, base = (.08 + .62 * k) * sale * Math.max(.04, veladura);
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.translate(e.px, e.py); ctx.rotate(e.ang);
+    ctx.globalAlpha = base * (1 - e.hov);
+    ctx.drawImage(e.cvB, -e.w / 2, -e.h / 2, e.w, e.h);
+    if (e.hov > .01) { ctx.globalAlpha = Math.min(1, (.35 + .6 * e.hov) * sale) * e.hov; ctx.drawImage(e.cvN, -e.w / 2, -e.h / 2, e.w, e.h); }
+    ctx.restore();
+  });
+  ctx.globalAlpha = 1;
+}
+
+function aguaFoco(i) {
+  const A = AGUA;
+  A.foco = i;
+  A.lista.querySelectorAll('button[data-i]').forEach(b => b.classList.toggle('es-foco', +b.dataset.i === i));
+  if (!A.raf && (A.quieto || A.inundado)) aguaCuadro(A.ult * 1000);
+}
+
+function aguaListaAutora() {
+  const A = AGUA, ol = A.lista;
+  if (!autorMode) { ol.hidden = true; ol.innerHTML = ''; A.toggle.hidden = true; return; }
+  const orden = A.capas.slice().sort((a, b) => a.falta - b.falta);
+  ol.innerHTML = orden.map(c => '<li><button type="button" data-i="' + c.i + '">' +
+    '<span class="marea-fondo-punto"></span>' +
+    '<span class="marea-fondo-titulo">' + esc(c.o.titulo || 'sin título') + '</span>' +
+    '<span class="marea-fondo-vuelve">' + (c.vuelve ? 'vuelve ' + esc(fechaCorta(c.vuelve)) : '') + '</span></button></li>').join('');
+  ol.querySelectorAll('button[data-i]').forEach(b => b.style.setProperty('--c', A.capas[+b.dataset.i].css));
+  let on = false;
+  try { on = localStorage.getItem('p314b-marea-lista') === '1'; } catch (e) {}
+  ol.hidden = !on;
+  A.toggle.hidden = false;
+  A.toggle.setAttribute('aria-expanded', String(on));
+  A.toggle.textContent = on ? 'ocultar lista' : 'ver lo que está en la marea';
+}
+
+function aguaMedir(rehacer) {
+  const A = AGUA, sec = A.sec;
+  if (!sec || sec.hidden) return;
+  const W = sec.clientWidth || document.documentElement.clientWidth;
+  const sc = W < 640 ? .7 : 1, dpr = Math.min(2, window.devicePixelRatio || 1);
+  A.lon = Math.max(.45, Math.min(1, W / 1200));
+  if (rehacer || sc !== A.sc || dpr !== A.dpr) { A.sc = sc; A.dpr = dpr; A.capas = A.obras.map(capaPosteo); }
+  const n = A.capas.length, area = A.capas.reduce((s, c) => s + c.w * c.h, 0);
+  const H = Math.round(Math.max(380, Math.min(520, W * .38)));   // fija: no depende de cuántos posteos hay
+  A.W = W; A.H = H; A.yS = Math.round(50 * sc);
+  A.lienzo.width = Math.round(W * dpr);
+  A.lienzo.height = Math.round(H * dpr);
+  A.lienzo.style.height = H + 'px';
+  const g = A.ctx.createLinearGradient(0, A.yS - 12, 0, H);
+  g.addColorStop(0, '#0c1d44'); g.addColorStop(.12, '#081430'); g.addColorStop(.48, '#040918'); g.addColorStop(1, '#010105');
+  A.grad = g;
+  for (const c of A.capas) {
+    c.bx = ((c.i * .618034 + c.semilla * .3) % 1) * (W + c.w);
+    const arriba = A.yS + 30 * sc + c.h * .5, abajo = H - c.h * .42;
+    c.by = arriba + c.peso * Math.max(0, abajo - arriba) + (c.semilla - .5) * 50 * sc;
+    c.prof = Math.min(1, Math.max(0, (c.by - A.yS) / (H - A.yS)));
+    c.alfa = c.alfaBase * (.8 + .2 * (1 - c.prof)) + .2 * c.sube * (1 - c.lejos);
+  }
+  if (!A.raf && (A.quieto || A.inundado)) aguaCuadro(A.ult * 1000);
+}
+
+function semillaRnd(s) {
+  let a = 2166136261;
+  for (let k = 0; k < s.length; k++) a = Math.imul(a ^ s.charCodeAt(k), 16777619);
+  return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+
+// 0 = vuelve ya · 1 = falta el horizonte (meses) o más
+function lejania(falta) { return Math.min(1, Math.log1p(falta / 864e5) / Math.log1p(MAREA_HORIZONTE)); }
+
+function colorFalta(falta) {
+  const k = lejania(falta);
+  const fucsia = [246, 66, 188], violeta = [84, 66, 190];
+  return fucsia.map((v, j) => Math.round(v + (violeta[j] - v) * k));
+}
+
+function rgba(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+
+function capaPosteo(o, i) {
+  const A = AGUA, sc = A.sc, d = A.dpr;
+  const rnd = semillaRnd(String(o.id != null ? o.id : o.titulo) + '|' + (o._padre || ''));
+  const { vuelve, falta } = faltaVuelve(o);
+  const peso = A.pmax > A.pmin ? (Math.sqrt(o._totalWords || 400) - A.pmin) / (A.pmax - A.pmin) : .5;
+  const w = Math.round((120 + 160 * peso) * sc), h = Math.round(w * .66);
+  const cv = document.createElement('canvas');
+  cv.width = Math.round(w * d); cv.height = Math.round(h * d);
+  const color = colorFalta(falta), lejos = lejania(falta);
+  const c = { o, i, vuelve, falta, peso, lejos, w, h, cv, g: cv.getContext('2d'), color, css: rgba(color, 1), semilla: rnd(), fase: rnd() * 6.28, prox: 0, px: -999, py: -999,
+    masa: .6 + peso * 1.6, vel: .7 + rnd() * .6, dx: 0, dy: 0, vx: 0, vy: 0 };
+  c.alfaBase = .015 + .985 * Math.pow(1 - lejos, 1.4);
+  c.sube = Math.max(0, Math.min(1, 1 - falta / (6 * 864e5)));
+  c.vars = variantesTitulo(o.titulo, rnd);
+  c.sel = c.vars[0].map(() => Math.floor(rnd() * 3));
+  c.desen = c.vars[0].map(() => (1.4 + rnd() * 3.2) * (1 + lejos * .8));
+  c.manchas = Array.from({ length: 4 + Math.floor(rnd() * 3) }, () => ({ x: w * (.34 + rnd() * .32), y: h * (.42 + rnd() * .16), r: h * (.34 + rnd() * .14), a: .28 + rnd() * .16 }));
+  c.ruido = Array.from({ length: 5 + Math.floor(rnd() * 6) }, () => ({ ch: MAREA_RUIDO[Math.floor(rnd() * MAREA_RUIDO.length)], x: w * (.15 + rnd() * .7), y: h * (.18 + rnd() * .64), b: 1.5 + rnd() * 3, s: Math.round((7 + rnd() * 7) * sc) }));
+  c.g.font = 'italic 100px ' + A.letra;
+  const ancho = c.vars[0].reduce((s, ch) => s + c.g.measureText(ch).width * 1.08, 0) / 100;
+  c.fs = Math.max(8 * sc, Math.min((12 + 6 * peso) * sc, (w * .84) / Math.max(1, ancho)));
+  c.radio = w * .72;
+  capaHornear(c);
+  fragDeObra(o).then(fr => { c.frases = fr; });
+  diagDeObra(o).then(dg => { c.diags = dg; if (A.quieto && A.estelas.length < 2 && dg.length) { aguaEstelaNueva(A.ult, true); if (!A.raf) aguaCuadro(A.ult * 1000); } });
+  return c;
+}
+
+function glifoDifuso(g, ch, x, y, rot, blur, color, d) {
+  const off = 4000 / d;
+  g.save();
+  g.translate(x, y); g.rotate(rot);
+  g.shadowColor = color; g.shadowBlur = Math.max(0, blur) * d; g.shadowOffsetX = off * d; g.shadowOffsetY = 0;
+  g.fillText(ch, -off * Math.cos(rot), off * Math.sin(rot));
+  g.restore();
+}
+
+function capaHornear(c) {
+  const A = AGUA, g = c.g, d = A.dpr, w = c.w, h = c.h, col = c.color;
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, c.cv.width, c.cv.height);
+  g.setTransform(d, 0, 0, d, 0, 0);
+  g.shadowColor = 'transparent';
+  for (const m of c.manchas) {
+    const r0 = Math.min(m.r, m.x, w - m.x, m.y, h - m.y), rg = g.createRadialGradient(m.x, m.y, 0, m.x, m.y, r0);
+    rg.addColorStop(0, rgba(col, m.a)); rg.addColorStop(.5, rgba(col, m.a * .45)); rg.addColorStop(1, rgba(col, 0));
+    g.fillStyle = rg; g.fillRect(0, 0, w, h);
+  }
+  g.fillStyle = '#000'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  const claro = col.map(v => Math.round(v + (255 - v) * .5));
+  for (const r of c.ruido) { g.font = r.s + 'px ' + A.mono; glifoDifuso(g, r.ch, r.x, r.y, 0, r.b, rgba(claro, .6), d); }
+  const texto = c.sel.map((v, k) => c.vars[v][k]);
+  g.font = 'italic ' + c.fs.toFixed(1) + 'px ' + A.letra;
+  const anchos = texto.map(ch => g.measureText(ch).width * 1.08);
+  const R = c.radio, total = anchos.reduce((s, x) => s + x, 0);
+  const cx = w / 2, cy = h * .58 + R, nit = 1 - .45 * c.sube;
+  let a = -total / R / 2;
+  for (let k = 0; k < texto.length; k++) {
+    const am = a + anchos[k] / 2 / R;
+    if (texto[k].trim()) glifoDifuso(g, texto[k], cx + R * Math.sin(am), cy - R * Math.cos(am), am, c.desen[k] * nit, 'rgba(236,228,255,.78)', d);
+    a += anchos[k] / R;
+  }
+  g.shadowColor = 'transparent';
+}
+
+function capaCambiar(c) {
+  const pos = [];
+  c.vars[0].forEach((ch, k) => { if (ch.trim()) pos.push(k); });
+  if (!pos.length) return;
+  const k = pos[Math.floor(Math.random() * pos.length)];
+  c.sel[k] = (c.sel[k] + 1 + Math.floor(Math.random() * 2)) % 3;
+  capaHornear(c);
+}
+
+function suave(x) { x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
+function mareaAlAzar(prev) { const op = MAREAS_TIPOS.filter(m => m !== prev); return op[Math.floor(Math.random() * op.length)]; }
+function entre(r) { return r[0] + Math.random() * (r[1] - r[0]); }
+
+// La corriente: cada posteo tiene un ancla que la marea arrastra; alrededor del
+// ancla se desplaza (resorte), la turbulencia lo empuja y los posteos chocan.
+function aguaFisica(t, dt, furia) {
+  const A = AGUA, cs = A.capas;
+  for (const c of cs) {
+    c.vx += (-c.dx * 1.4 - c.vx * 1.6) * dt;
+    c.vy += (-c.dy * 1.8 - c.vy * 1.9) * dt;
+    if (furia > 0) {
+      c.vx += Math.sin(t * 1.9 + c.fase * 3 + c.ax * .008) * furia * 260 * dt / c.masa;
+      c.vy += Math.cos(t * 1.4 + c.fase * 2 + c.ax * .005) * furia * 110 * dt / c.masa;
+    }
+  }
+  for (let i = 0; i < cs.length; i++) {
+    const a = cs[i];
+    for (let j = i + 1; j < cs.length; j++) {
+      const b = cs[j];
+      let dx = (b.ax + b.dx) - (a.ax + a.dx), dy = ((b.ay + b.dy) - (a.ay + a.dy)) * 1.5;
+      const rr = (a.w + b.w) * .3, d2 = dx * dx + dy * dy;
+      if (d2 >= rr * rr || d2 < 1e-4) continue;
+      const d = Math.sqrt(d2), nx = dx / d, ny = dy / d, solape = rr - d, ma = 1 / a.masa, mb = 1 / b.masa, s = ma + mb;
+      a.dx -= nx * solape * ma / s * .5; a.dy -= ny * solape * ma / s * .33;
+      b.dx += nx * solape * mb / s * .5; b.dy += ny * solape * mb / s * .33;
+      const vn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+      if (vn < 0) { const imp = -1.6 * vn / s; a.vx -= imp * ma * nx; a.vy -= imp * ma * ny; b.vx += imp * mb * nx; b.vy += imp * mb * ny; }
+    }
+  }
+  const lim = 220 * A.sc;
+  for (const c of cs) {
+    c.dx = Math.max(-lim, Math.min(lim, c.dx + c.vx * dt));
+    c.dy = Math.max(-lim * .5, Math.min(lim * .5, c.dy + c.vy * dt));
+  }
+}
+
+function aguaCuadro(ts) {
+  const A = AGUA, ctx = A.ctx;
+  if (!ctx || !A.capas.length) return;
+  const t = A.quieto ? 6 : ts / 1000;
+  const dt = A.ult ? Math.min(.05, Math.max(0, t - A.ult)) : 0;
+  A.ult = t;
+  if (!A.a || A.quieto) { A.de = A.a = A.quieto ? MAREAS_TIPOS[0] : mareaAlAzar(null); A.t0 = -1e9; A.cambio = t + entre(A.a.dur); }
+  if (t >= A.cambio) { A.de = A.a; A.a = mareaAlAzar(A.de); A.t0 = t; A.cambio = t + entre(A.a.dur); }
+  const k = suave((t - A.t0) / 4);
+  const W = A.W, H = A.H, sc = A.sc;
+  if (!A.inicio) A.inicio = t;
+  const f = (A.quieto || A.inundado) ? 1 : suave((t - A.inicio) / 2.4);
+  if (f >= 1) A.inundado = true;
+  const nivel = H - (H - A.yS) * f;
+  A.nivel = nivel;
+  const ola = (x, cos) => mezclaMarea(A.de, A.a, k, x, t, cos) * sc;
+  const furia = A.quieto ? 0 : (1 - k) * A.de.furia + k * A.a.furia;
+  A.desp += ((1 - k) * A.de.deriva + k * A.a.deriva) * sc * dt;
+  A.ondas = A.ondas.filter(o => t - o.t0 < 4);
+  const onda = x => {
+    let y = 0;
+    for (const o of A.ondas) {
+      const e = t - o.t0, r = Math.abs(x - o.x);
+      if (r < 40 + e * 220) y += o.a * Math.exp(-e * 1.2) * Math.exp(-r / 320) * Math.sin(r * .045 - e * 7);
+    }
+    return y;
+  };
+  ctx.setTransform(A.dpr, 0, 0, A.dpr, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.clearRect(0, 0, W, H);
+  const linea = new Path2D(), paso = 6, amp = .3 + .7 * f;
+  for (let x = 0; x <= W + paso; x += paso) { const y = nivel + ola(x) * amp + onda(x); x ? linea.lineTo(x, y) : linea.moveTo(x, y); }
+  const agua = new Path2D(linea);
+  agua.lineTo(W + paso, H); agua.lineTo(0, H); agua.closePath();
+  ctx.fillStyle = A.grad;
+  ctx.fill(agua);
+  for (const c of A.capas) {
+    const span = W + c.w;
+    let x = c.bx + A.desp * c.vel * (1 - .55 * c.prof) * (1.25 - .5 * c.peso);
+    x = ((x % span) + span) % span - c.w / 2;
+    const att = Math.exp(-c.prof * 2.2);
+    let y = c.by + ola(x) * att * 1.3 + Math.sin(t * .35 + c.fase) * 3 * sc;
+    if (c.sube > 0) y += (nivel + ola(x) + c.h * .44 - y) * suave(c.sube);
+    c.ax = x + ola(x, true) * att * 1.6; c.ay = y;
+  }
+  if (!A.quieto && dt > 0) aguaFisica(t, dt, furia);
+  ctx.save();
+  ctx.clip(agua);
+  aguaEstelas(t, dt, nivel);
+  let foco = null;
+  for (const c of A.capas) {
+    c.px = c.ax + c.dx; c.py = Math.max(nivel + ola(c.ax) + c.h * .3, c.ay + c.dy);
+    if (!A.quieto && t > c.prox) { if (c.prox) capaCambiar(c); c.prox = t + 1.2 + Math.random() * 2.8; }
+    if (c.i === A.foco) { foco = c; continue; }
+    ctx.globalAlpha = Math.min(1, c.alfa);
+    ctx.drawImage(c.cv, c.px - c.w / 2, c.py - c.h / 2, c.w, c.h);
+  }
+  if (foco) {
+    const rg = ctx.createRadialGradient(foco.px, foco.py, 0, foco.px, foco.py, foco.w * .85);
+    rg.addColorStop(0, 'rgba(120,160,255,.18)'); rg.addColorStop(1, 'rgba(120,160,255,0)');
+    ctx.globalAlpha = 1; ctx.fillStyle = rg;
+    ctx.fillRect(foco.px - foco.w, foco.py - foco.w, foco.w * 2, foco.w * 2);
+    ctx.globalAlpha = Math.max(.5, foco.alfa);
+    ctx.drawImage(foco.cv, foco.px - foco.w / 2, foco.py - foco.h / 2, foco.w, foco.h);
+  }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 6; ctx.strokeStyle = 'rgba(110,150,255,.06)'; ctx.stroke(linea);
+  ctx.lineWidth = 1.2; ctx.strokeStyle = 'rgba(160,188,250,.8)'; ctx.stroke(linea);
+  aguaFragmentos(t, nivel, ola);
+  if (foco) aguaRotulo(foco);
+}
+
+function aguaRotulo(c) {
+  const ctx = AGUA.ctx, sc = AGUA.sc;
+  let tit = String(c.o.titulo || 'sin título');
+  if (tit.length > 34) tit = tit.slice(0, 33) + '…';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0,2,12,.9)'; ctx.shadowBlur = 10;
+  ctx.font = 'italic ' + Math.round(19 * sc) + 'px ' + AGUA.letra;
+  const mitad = ctx.measureText(tit).width / 2 + 12;
+  const px = Math.max(mitad, Math.min(AGUA.W - mitad, c.px));
+  ctx.fillStyle = '#f6f3ff';
+  ctx.fillText(tit, px, c.py - 7 * sc);
+  ctx.font = '500 ' + Math.round(10 * sc) + 'px ' + AGUA.mono;
+  ctx.fillStyle = 'rgba(214,208,255,.9)';
+  if (c.vuelve) ctx.fillText(('vuelve ' + fechaCorta(c.vuelve)).toUpperCase(), px, c.py + 14 * sc);
+  ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+}
+
+function olaTipo(tp, x, t, cos) {
+  let y = 0;
+  const L = 1000 * AGUA.lon;
+  for (let j = 0; j < tp.ondas.length; j++) {
+    const o = tp.ondas[j], fase = 6.2832 * (x / (o[1] * L) - o[2] * t) + j * 1.7;
+    y += o[0] * (cos ? Math.cos(fase) : Math.sin(fase));
+  }
+  return y;
+}
+
+function mezclaMarea(a, b, k, x, t, cos) {
+  if (a === b || k >= 1) return olaTipo(b, x, t, cos);
+  return (1 - k) * olaTipo(a, x, t, cos) + k * olaTipo(b, x, t, cos);
+}
+// Lee mareas.json (el del repo, si es la autora en la web), cambia el
+// «vuelve» de un texto y lo guarda; después republica, para que llegue a la web.
+async function guardarMarea(slug, vuelve) {
+  const P = window.P314B;
+  let d;
+  if (P && P.modo === 'web') d = JSON.parse(await P.leerArchivo('mareas.json'));
+  else d = await fetch('mareas.json', { cache: 'no-store' }).then(r => r.json());
+  d.textos = d.textos || {};
+  const r = Object.assign({}, d.textos[slug] || {});
+  if (vuelve) r.vuelve = vuelve; else delete r.vuelve;
+  if (Object.keys(r).length) d.textos[slug] = r; else delete d.textos[slug];
+  const txt = JSON.stringify(d, null, 2) + '\n';
+  if (P && P.modo === 'web') {
+    await P.escribirArchivo('mareas.json', txt, 'índice: marea de ' + slug + ' [skip ci]');
+  } else {
+    const resp = await fetch('api/mareas', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-P314B': '1' }, body: txt });
+    const j = await resp.json().catch(() => null);
+    if (!resp.ok || !j || !j.ok) throw new Error((j && j.error) || 'no se pudo guardar: abrí el sitio con python servidor.py (desde sitio/)');
+  }
+  mareas = d.textos; mareaFirma = firmaMareas();
+  render();
+  if (window.Publicar) window.Publicar.publicar(null);
+}
+function mareaHtml(obra) {
+  // una parte (modo «partes») se hunde sola; el libro, entero
+  const parte = !!obra._padre;
+  const r = parte ? reglaParte(obra) : reglaMarea(obra), v = r && MAREAS.vuelveDe(r), fuera = !!r && MAREAS.fuera(r);
+  const otras = r && Object.keys(r).some(k => !['vuelve', 'mensaje'].includes(k));
+  return `<div class="detail-marea">
+    <div class="detail-section-label">marea${parte ? ' de esta parte' : ''}</div>
+    <div class="dm-estado">${fuera ? (parte ? 'Esta parte está bajo la marea' : 'Se lo llevó la marea') + ': vuelve el <b>' + esc(fechaCorta(v)) + '</b> (hora de Argentina).' : 'En el sitio.'}${otras ? ' Además tiene horario (mareas.json).' : ''}${parte ? ' Se hunde solo esta parte; el resto del libro sigue.' : ''}</div>
+    <div class="dm-fila">mandar a la marea por <input type="number" id="dm-n" min="1" value="3"> <select id="dm-u"><option value="h">horas</option><option value="d" selected>días</option><option value="s">semanas</option></select> <button type="button" id="dm-por">mandar</button></div>
+    <div class="dm-fila">o hasta <input type="datetime-local" id="dm-hasta" value="${v ? horaAR(v) : ''}"> <button type="button" id="dm-hasta-ok">mandar</button></div>
+    ${fuera ? '<div class="dm-fila"><button type="button" id="dm-volver">devolverlo ya</button></div>' : ''}
+    <div class="dm-fila" id="dm-msg"></div>
+  </div>`;
+}
+function bindMarea(obra) {
+  const slug = obra.id, msg = document.getElementById('dm-msg');   // una parte: «slug--capítulo»
+  if (!msg) return;
+  const ir = async vuelve => {
+    msg.textContent = 'guardando…';
+    try { await guardarMarea(slug, vuelve); closeDetail(); }
+    catch (e) { msg.textContent = '✗ ' + e.message; }
+  };
+  document.getElementById('dm-por').addEventListener('click', () => {
+    const n = Math.max(1, parseInt(document.getElementById('dm-n').value, 10) || 1);
+    const h = { h: 1, d: 24, s: 168 }[document.getElementById('dm-u').value] * n;
+    ir(horaAR(new Date(Date.now() + h * 3600 * 1000)));
+  });
+  document.getElementById('dm-hasta-ok').addEventListener('click', () => {
+    const v = document.getElementById('dm-hasta').value;
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(v)) { msg.textContent = 'Elegí fecha y hora.'; return; }
+    if (new Date(v + ':00-03:00') <= new Date()) { msg.textContent = 'Esa hora ya pasó.'; return; }
+    ir(v);
+  });
+  const volver = document.getElementById('dm-volver');
+  if (volver) volver.addEventListener('click', () => ir(null));
+}
+function render() {
+  // lo que está en cooldown (se lo llevó la marea) sale de todas las zonas
+  // y queda al fondo, bajo el agua
+  const todas = (corpus.obras || []).filter(o => !fueraDe(o));
+  renderMareaFondo((corpus.obras || []).filter(fueraDe));
+  // Lo escrito en la plataforma y, abajo bajo «Textos en PDF» (o mezclados, si se tilda
+  // «incorporar PDFs»), los PDF del corpus.
+  const escritas = todas.filter(o => !esPdf(o));
+  const pdfsCentro = todas.filter(o => esPdf(o) && seccionDe(o) !== 'base');
+  const filtrar = l => activeFilter === 'all' ? l
+    : activeFilter === '__diags' ? l.filter(o => (o._totalDiags || 0) > 0)
+    : l.filter(o => o.categoria === activeFilter);
+  const obras = incluirPdf ? escritas.concat(pdfsCentro) : escritas;
+  const filtradas = filtrar(obras);
+  let pdfAparte = incluirPdf ? [] : filtrar(pdfsCentro);
+  let filtered = aplicarSeries(
+    filtradas.filter(o => seccionDe(o) !== 'base').concat(filtradas.filter(o => seccionDe(o) === 'base')), pdfAparte);
+  if (activeFilter === '__diags') filtered = filtered.filter(o => (o._totalDiags || 0) > 0);
+  if (modoSeries === 'partes') pdfAparte = aplicarSeries(pdfAparte, filtradas);
+  if (activeFilter === '__diags') pdfAparte = pdfAparte.filter(o => (o._totalDiags || 0) > 0);
+
+  document.getElementById('total-obras').textContent = todas.length || '0';
+  renderSeguirLeyendo(todas);
+  document.getElementById('incluir-pdf').checked = incluirPdf;
+  renderFilters(escritas.concat(pdfsCentro));
+  renderArchivoMenu(todas);
+
+  const label = document.getElementById('grid-label');
+  const nCentro = filtradas.length;
+  label.textContent = `${nCentro} texto${nCentro !== 1 ? 's' : ''} · ${activeFilter === 'all' ? 'todos' : activeFilter === '__diags' ? 'con diagonales' : activeFilter}`;
+
+  const listEl = document.getElementById('obras-list');
+  const mosaicEl = document.getElementById('obras-mosaic');
+  const mostrarVista = (l, m) => {
+    l.style.display = viewMode === 'lista' ? '' : 'none';
+    m.style.display = viewMode === 'mosaico' ? 'flex' : 'none';
+  };
+  mostrarVista(listEl, mosaicEl);
+  const pdfSec = document.getElementById('pdf-seccion');
+  const pdfL = document.getElementById('pdf-list'), pdfM = document.getElementById('pdf-mosaic');
+  mostrarVista(pdfL, pdfM);
+
+  // El orden elegido vale dentro de cada zona; las partes de una serie
+  // quedan juntas y en su orden.
+  const ordenZona = l => {
+    const orden = viewMode === 'mosaico' && ordenModo === 'corpus' ? [...l].sort((a, b) => pesoDe(b) - pesoDe(a)) : ordenar(l);
+    return juntarSeries(ordenModo === 'corpus' && viewMode !== 'mosaico' ? l : orden);
+  };
+  const porZona = z => ordenZona(filtered.filter(o => (seccionDe(o) === 'base') === (z === 'base')));
+  const pintar = (lista, l, m) => {
+    if (viewMode === 'lista') renderLista(lista, l);
+    else renderMosaico(lista, m);
+  };
+
+  if (obras.length === 0) {
+    const emptyHtml = `<div class="empty-state">
+      <div class="empty-state-heading">${autorMode ? 'corpus vacío' : 'todavía no hay textos publicados'}</div>
+      ${autorMode ? '<div class="empty-state-sub">cargá el primer texto en el taller y publicalo</div>' : ''}
+    </div>`;
+    listEl.innerHTML = emptyHtml;
+    mosaicEl.innerHTML = emptyHtml;
+  } else {
+    const ordenadas = porZona('principal').concat(porZona('base'));
+    pintar(ordenadas, listEl, mosaicEl);
+  }
+
+  pdfSec.hidden = !pdfAparte.length;
+  [pdfL, pdfM].forEach(el => { el.innerHTML = ''; });
+  if (pdfAparte.length) {
+    const pags = pdfAparte.reduce((a, o) => a + (o._pdfTotalPaginas || 0), 0);
+    document.getElementById('pdf-seccion-n').textContent = pdfAparte.length + ' texto' + (pdfAparte.length !== 1 ? 's' : '')
+      + (pags ? ' · ' + pags.toLocaleString('es') + ' páginas' : '');
+    pintar(ordenZona(pdfAparte), pdfL, pdfM);
+  }
+
+  const enCentro = escritas.concat(pdfsCentro);
+  const totalWords = enCentro.reduce((a,o) => a + (o._totalWords||0), 0);
+  const totalCaps  = enCentro.reduce((a,o) => a + ((o._chapters||[]).length), 0);
+  const totalDiags = enCentro.reduce((a,o) => a + (o._totalDiags||0), 0);
+  document.getElementById('st-palabras').textContent = totalWords.toLocaleString('es');
+  document.getElementById('st-capitulos').textContent = totalCaps;
+  document.getElementById('st-diagonales').textContent = totalDiags;
+  document.getElementById('stats-bar').style.display = 'flex';
+}
+document.getElementById('incluir-pdf').addEventListener('change', e => {
+  incluirPdf = e.target.checked;
+  guardarPref('p314b_incluir_pdf', incluirPdf ? '1' : '0');
+  render();
+});
+// Marca de PDF: se ve en las dos vistas, mezclados o aparte.
+function marcaPdf(obra) {
+  const pags = obra._pdfTotalPaginas;
+  return '<span class="es-pdf-tag">PDF' + (pags ? ' · ' + pags + ' págs' : '') + '</span>';
+}
+
+function renderLista(filtered, list = document.getElementById('obras-list')) {
+  list.innerHTML = '';
+
+  filtered.forEach(obra => {
+    const row = document.createElement('div');
+    row.className = 'obra-row' + (esPdf(obra) ? ' es-pdf' : '') + claseMarea(obra);
+    row.setAttribute('data-id', obra.id);
+
+    const chs = obra._chapters || [];
+    const diags = obra._totalDiags || 0;
+    const words = obra._totalWords || 0;
+
+    row.innerHTML = `
+      <div class="obra-col obra-col-left">
+        <div class="obra-tipo">
+          ${obra.categoria ? `<span class="obra-cat">${esc(obra.categoria)}</span>` : `<span class="obra-cat obra-cat-none">sin categoría</span>`}
+          ${esPdf(obra) ? marcaPdf(obra) : obra._hasPdf ? '<span class="obra-pdf-badge">PDF</span>' : ''} ${diags ? `<span class="obra-diag-badge" title="${diags} diagonal${diags === 1 ? '' : 'es'}">⤳ ${diags}</span>` : ''}
+          ${etiquetaSerie(obra) ? `<span class="serie-tag">${esc(etiquetaSerie(obra))}</span>` : ''}
+        </div>
+        <div class="obra-titulo">${esc(obra.titulo)}</div>
+        ${obra.subtitulo ? `<div class="obra-subtitulo">${esc(obra.subtitulo)}</div>` : ''}
+        <div class="obra-stats-row">
+          <span><b>${words.toLocaleString('es')}</b> palabras</span>
+          <span><b>${chs.length}</b> ${esPdf(obra) ? (chs.length === 1 ? 'parte' : 'partes') : 'unidades'}</span>
+          <span><b>${diags}</b> diagonales</span>
+        </div>
+      </div>
+      <div class="obra-col obra-col-right">
+        <button class="obra-action">abrir →</button>
+      </div>
+    `;
+
+    row.querySelector('.obra-action').addEventListener('click', e => { e.stopPropagation(); openDetail(obra); });
+    row.addEventListener('click', () => openDetail(obra));
+    list.appendChild(row);
+  });
+}
+
+// Después de ordenar, las partes de una serie vuelven a quedar juntas
+// (en el lugar de la primera) y en su orden.
+// Peso de un texto: primero su relacionalidad (teselas.json: anclas según
+// su rol, estructural o de transición, y los textos con que se cruza),
+// después las palabras, que suman poco y crecen despacio. Sin
+// teselas.json (todavía no se publicó con teselas.py), como antes.
+function teselaDe(obra) {
+  const t = TESELAS && TESELAS[obra._padre || obra.id];
+  if (!t) return null;
+  if (!obra._padre) return { rel: t.rel || 0, frases: Object.values(t.frases || {}).flat(), t };
+  const ch = (obra._chapters || [])[0] || {};
+  return { rel: (t.caps || {})[ch.id] || 0, frases: (t.frases || {})[ch.id] || [], t };
+}
+function pesoDe(obra) {
+  const palabras = obra._totalWords || 0;
+  if (!TESELAS) return palabras + (obra._totalDiags || 0) * 120;
+  const t = teselaDe(obra);
+  return (t ? t.rel : 0) + 1.2 * Math.log2(1 + palabras / 1000);
+}
+// Una frase del texto, al azar pero fija durante la visita, y que entre
+// entera en la tesela: nunca se recorta (si no entra ninguna, va sin cita).
+function citaDe(obra, maxPal) {
+  const t = teselaDe(obra);
+  const fs = t ? t.frases.filter(f => f.split(/\s+/).length <= maxPal) : [];
+  return fs.length ? fs[Math.floor(azarDe('cita:' + obra.id) * fs.length)] : '';
+}
+
+function ordenar(obras) {
+  const o = [...obras];
+  if (ordenModo === 'peso') o.sort((a, b) => pesoDe(b) - pesoDe(a));
+  else if (ordenModo === 'fecha') o.sort((a, b) => String(b.fecha_creacion || '').localeCompare(String(a.fecha_creacion || '')));
+  else if (ordenModo === 'titulo') o.sort((a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''), 'es'));
+  return o;
+}
+
+function renderMosaico(filtered, mosaic = document.getElementById('obras-mosaic')) {
+  mosaic.innerHTML = '';
+  const pesoMax = Math.max(1e-6, ...filtered.map(pesoDe));
+  // Por defecto, de la más densa a la más liviana (ver render). El tamaño
+  // es continuo (no hay tres tamaños fijos): ancho base, cuánto crece en
+  // la fila, alto mínimo y cuerpo de letra salen del mismo peso.
+  filtered.forEach(obra => {
+    const r = Math.sqrt(Math.max(0, pesoDe(obra)) / pesoMax);
+    const tile = document.createElement('div');
+    tile.className = 'mosaic-tile' + (r >= 0.5 ? ' pesada' : '') + (esPdf(obra) ? ' es-pdf' : '') + claseMarea(obra);
+    tile.dataset.id = obra.id;
+    tile.style.setProperty('--base', Math.round(180 + 340 * r) + 'px');
+    tile.style.setProperty('--crece', (1 + 3 * r).toFixed(2));
+    tile.style.setProperty('--alto', Math.round(150 + 150 * r) + 'px');
+    tile.style.setProperty('--tit', Math.round(16 + 14 * r) + 'px');
+    tile.style.setProperty('--cita', (14 + 4 * r).toFixed(1) + 'px');
+    const cita = citaDe(obra, Math.round(14 + 26 * r));
+    const diags = obra._totalDiags || 0;
+    const serie = etiquetaSerie(obra);
+    tile.innerHTML = `
+      <div class="mosaic-titulo">${esc(obra.titulo)}${serie ? '<span class="mosaic-serie">' + esc(serie) + '</span>' : ''}</div>
+      ${cita ? '<blockquote class="mosaic-cita">' + esc(cita) + '</blockquote>' : ''}
+      <div class="mosaic-pie"><span>${(obra._totalWords || 0).toLocaleString('es')} palabras</span><span class="cat">${esc(obra.categoria || 'sin categoría')}</span>${esPdf(obra) ? marcaPdf(obra) : obra._hasPdf ? '<span>PDF</span>' : ''}${diags ? '<span class="rel" title="' + diags + ' diagonal' + (diags === 1 ? '' : 'es') + '">⤳ ' + diags + '</span>' : ''}</div>
+    `;
+    tile.addEventListener('click', () => openDetail(obra));
+    mosaic.appendChild(tile);
+  });
+}
+
+// ─── PDF viewer state para el detail panel ───
+const detailPdfState = { docCache: {}, currentCh: null, currentPage: 1 };
+
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs-3.11.174/pdf.worker.min.js';
+}
+
+async function detailRenderPdfPage(chId, pdfName, pageNum) {
+  const canvasEl = document.getElementById('detail-pdf-canvas-inner');
+  const pageInfo = document.getElementById('detail-pdf-pageinfo');
+  const prevBtn = document.getElementById('detail-pdf-prev');
+  const nextBtn = document.getElementById('detail-pdf-next');
+  if (!canvasEl) return;
+
+  // Necesita que el archivo esté en obras/ junto al HTML
+  const pdfPath = pdfName;
+  try {
+    if (!detailPdfState.docCache[chId]) {
+      const loadingTask = pdfjsLib.getDocument(pdfPath);
+      detailPdfState.docCache[chId] = await loadingTask.promise;
+    }
+    const pdfDoc = detailPdfState.docCache[chId];
+    pageNum = Math.max(1, Math.min(pageNum, pdfDoc.numPages));
+    detailPdfState.currentPage = pageNum;
+
+    const page = await pdfDoc.getPage(pageNum);
+    const containerWidth = canvasEl.parentElement.clientWidth - 24;
+    const unscaled = page.getViewport({ scale: 1 });
+    const scale = containerWidth / unscaled.width;
+    const viewport = page.getViewport({ scale });
+
+    canvasEl.innerHTML = '';
+    const canvas = document.createElement('canvas');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    canvas.style.maxWidth = '100%';
+    canvasEl.appendChild(canvas);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+    if (pageInfo) pageInfo.textContent = `${pageNum} / ${pdfDoc.numPages}`;
+    if (prevBtn) prevBtn.disabled = pageNum <= 1;
+    if (nextBtn) nextBtn.disabled = pageNum >= pdfDoc.numPages;
+  } catch(err) {
+    canvasEl.innerHTML = `<div style="padding:16px;font-size:11px;color:var(--red);font-family:var(--font-mono);">No se pudo cargar el PDF.<br>Asegurá que <code>${pdfName}</code> esté en <code>sitio\\obras\\</code></div>`;
+    if (pageInfo) pageInfo.textContent = '— / —';
+  }
+}
+
+function openDetail(obra) {
+  // marea baja: como una story vencida, se ve pero no abre (la autora sí)
+  if ((mareaDe(obra) === 'baja' || mareaDe(obra) === 'hundida' || fueraDe(obra)) && !autorMode) return;
+  const panel = document.getElementById('detail-panel');
+  const overlay = document.getElementById('overlay');
+  const headerContent = document.getElementById('detail-header-content');
+  const content = document.getElementById('detail-content');
+
+  const chs = obra._chapters || [];
+  const diags = obra._totalDiags || 0;
+
+  // Resetear estado PDF
+  detailPdfState.currentCh = null;
+  detailPdfState.currentPage = 1;
+
+  // Header
+  headerContent.innerHTML = `
+    <div class="detail-tipo">
+      <span class="obra-tipo-dot ${obra.tipo}" style="width:6px;height:6px;border-radius:50%;display:inline-block;flex-shrink:0;"></span>
+      ${TIPO_LABELS[obra.tipo] || obra.tipo}
+      ${obra._hasPdf ? '<span class="obra-pdf-badge" style="margin-left:8px;">PDF</span>' : ''}
+    </div>
+    <div class="detail-titulo">${obra.titulo}</div>
+    ${obra.subtitulo ? `<div class="detail-subtitulo">${obra.subtitulo}</div>` : ''}
+  `;
+
+  // Capítulos con PDF
+  const pdfChs = chs.filter(c => c.pdfName);
+
+  // Sección estructura
+  const parts = {};
+  chs.forEach(c => {
+    const k = c.part || '';
+    if (!parts[k]) parts[k] = [];
+    parts[k].push(c);
+  });
+  let chaptersHtml = '';
+  // Un PDF no tiene capítulos escritos: su estructura son rangos de páginas
+  // con nivel (los marca el taller), y el nombre viene en «titulo».
+  if (esPdf(obra)) chs.forEach(c => {
+    const nivel = c.nivel != null ? c.nivel : 1, d = c._diags || 0;
+    chaptersHtml += `
+        <div class="detail-ch pdf nivel-${nivel}" style="--nivel:${nivel}">
+          <span class="detail-ch-num">p.${c.paginaDesde || '?'}–${c.paginaHasta || '?'}</span>
+          <span class="detail-ch-title">${esc(c.titulo || c.title || 'Sin título')}<span class="detail-ch-nivel">${NIVELES_PDF[nivel] || ''}</span></span>
+          <span class="detail-ch-diag">${d > 0 ? d + ' diag.' : ''}</span>
+        </div>`;
+  });
+  else Object.entries(parts).forEach(([part, chList]) => {
+    if (part) chaptersHtml += `<div class="detail-part-label">${part}</div>`;
+    chList.forEach(c => {
+      const d = (c.diagonals||[]).length;
+      const pdfMark = c.pdfName ? ' <span style="font-family:var(--font-mono);font-size:8px;color:var(--red);border:1px solid color-mix(in oklab,var(--red) 40%,var(--rule));padding:1px 4px;border-radius:2px;">PDF</span>' : '';
+      chaptersHtml += `
+        <div class="detail-ch">
+          <span class="detail-ch-num">Cap. ${c.number||'—'}</span>
+          <span class="detail-ch-title">${c.title||'Sin título'}${pdfMark}</span>
+          <span class="detail-ch-diag">${d > 0 ? d + ' diag.' : ''}</span>
+        </div>`;
+    });
+  });
+  
+  const slug = obra._padre || obra.id || slugify(obra.titulo);
+  const obraFile = obra._file ? `obras/${obra._file}` : `obras/${slug}.html`;
+
+  // Sección PDF viewer (si hay capítulos con PDF)
+  let pdfViewerHtml = '';
+  if (pdfChs.length > 0) {
+    const chSelBtns = pdfChs.map((c, i) =>
+      `<button class="detail-pdf-ch-btn${i===0?' active':''}" data-chid="${c.id}" data-pdfname="${c.pdfName||''}">${c.title||'Cap. '+(c.number||i+1)}</button>`
+    ).join('');
+    const multiSel = pdfChs.length > 1 ? `<div class="detail-pdf-chapter-sel" id="detail-pdf-ch-sel">${chSelBtns}</div>` : '';
+    pdfViewerHtml = `
+      <div class="detail-section">
+        <div class="detail-section-label">Visor PDF</div>
+        ${multiSel}
+        <div class="detail-pdf-viewer">
+          <div class="detail-pdf-canvas" id="detail-pdf-canvas-inner"></div>
+          <div class="detail-pdf-nav">
+            <button id="detail-pdf-prev">←</button>
+            <span id="detail-pdf-pageinfo">— / —</span>
+            <button id="detail-pdf-next">→</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  content.innerHTML = `
+    ${pdfViewerHtml}
+    <div class="detail-section">
+      <div class="detail-section-label">Estructura · ${chs.length} unidades · ${diags} diagonales</div>
+      <div class="detail-chapters">${chaptersHtml || '<div style="font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);padding:12px 0;">Sin unidades cargadas</div>'}</div>
+    </div>
+    <div class="detail-actions">
+      <button class="btn-primary" onclick="window.location.href='${obraFile}'">Leer →</button>
+      ${autorMode ? `<button class="btn-secondary" onclick="window.location.href='uploader-v1.html?load=${encodeURIComponent(obra._padre || obra.id)}'">Editar en taller</button>` : ''}
+    </div>
+    ${autorMode ? `<div class="detail-peligro">
+      <button class="btn-peligro" data-sacar="ocultar" title="Le saca el tilde 'mostrar en el sitio web'. Sigue en el taller.">quitar de la web</button>
+      <button class="btn-peligro fuerte" data-sacar="eliminar" title="Lo manda a papelera/ (recuperable) y lo borra del sitio.">eliminar texto</button>
+    </div>${mareaHtml(obra)}` : ''}
+  `;
+  if (autorMode) bindMarea(obra);
+
+  content.querySelectorAll('[data-sacar]').forEach(b => b.addEventListener('click', () => sacarObra(obra._padre ? (corpus.obras || []).find(x => x.id === obra._padre) || obra : obra, b.dataset.sacar)));
+
+  // Bind PDF viewer si hay PDFs
+  if (pdfChs.length > 0) {
+    const firstCh = pdfChs[0];
+    detailPdfState.currentCh = firstCh.id;
+    detailRenderPdfPage(firstCh.id, firstCh.pdfName, 1);
+
+    document.getElementById('detail-pdf-prev')?.addEventListener('click', () => {
+      detailRenderPdfPage(detailPdfState.currentCh, pdfChs.find(c=>c.id===detailPdfState.currentCh)?.pdfName, detailPdfState.currentPage - 1);
+    });
+    document.getElementById('detail-pdf-next')?.addEventListener('click', () => {
+      detailRenderPdfPage(detailPdfState.currentCh, pdfChs.find(c=>c.id===detailPdfState.currentCh)?.pdfName, detailPdfState.currentPage + 1);
+    });
+
+    // Selector de capítulo (multi-PDF)
+    document.querySelectorAll('.detail-pdf-ch-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.detail-pdf-ch-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        detailPdfState.currentCh = btn.dataset.chid;
+        detailPdfState.currentPage = 1;
+        detailRenderPdfPage(btn.dataset.chid, btn.dataset.pdfname, 1);
+      });
+    });
+  }
+
+  overlay.classList.add('open');
+  panel.classList.add('open');
+}
+
+async function sacarObra(obra, modo) {
+  const titulo = obra.titulo || obra.id;
+  if (modo === 'ocultar') {
+    if (!confirm(`¿Quitar «${titulo}» de la web?\n\nDeja de verse en el sitio; sigue en el taller y la podés volver a marcar cuando quieras.`)) return;
+  } else {
+    const r = prompt(`Eliminar «${titulo}».\n\nSe borra del sitio y del taller (queda una copia en papelera/ del repo, recuperable). Si otra obra publicada tiene una diagonal hacia esta, no se elimina y te dice cuál.\n\nPara confirmar, escribí: ${obra.id}`);
+    if (r === null) return;
+    if (r.trim() !== obra.id) { alert('No coincide: no se eliminó nada.'); return; }
+  }
+  const ok = await window.Publicar.sacar(obra.id, modo);
+  if (ok) { closeDetail(); loadCorpus(); }
+}
+
+// ── Eliminar posteos (autora) ──
+// Lista TODAS las obras del taller (corpus.json del repo, no solo lo
+// publicado), de la más vieja a la más nueva, para sacar varias a la vez.
+const LIMPIAR = { obras: [], marcadas: new Set(), filtro: 'todas', confirmando: null };
+async function corpusDelTaller() {
+  const P = window.P314B;
+  try {
+    if (P && P.modo === 'web' && P.leerArchivo && await P.listo) return JSON.parse(await P.leerArchivo('corpus.json'));
+  } catch (e) {}
+  const r = await fetch('corpus.json', { cache: 'no-store' });
+  return r.ok ? r.json() : { obras: [] };
+}
+async function abrirLimpiar() {
+  document.getElementById('limpiar-fondo').classList.add('open');
+  LIMPIAR.marcadas.clear(); LIMPIAR.confirmando = null;
+  const web = new Set((corpus && corpus.obras || []).map(o => o.id));
+  try {
+    const c = await corpusDelTaller();
+    // en la web: lo publicado (corpus de la web); en tu máquina, el tilde
+    // «mostrar en el sitio web» de cada obra
+    const enWeb = o => (window.P314B && window.P314B.modo === 'web') ? web.has(o.id) : o.en_linea === true;
+    LIMPIAR.obras = (c.obras || []).map(o => Object.assign({}, o, { _enWeb: enWeb(o) }))
+      .sort((a, b) => String(a.fecha_creacion || '').localeCompare(String(b.fecha_creacion || '')) || String(a.titulo || a.id).localeCompare(String(b.titulo || b.id)));
+  } catch (e) {
+    LIMPIAR.obras = [];
+    document.getElementById('limpiar-lista').innerHTML = '<div class="limpiar-ayuda">No se pudo leer la lista de obras del taller (' + esc(e.message) + ').</div>';
+    return;
+  }
+  pintarLimpiar();
+}
+function pintarLimpiar() {
+  const f = LIMPIAR.filtro;
+  const lista = LIMPIAR.obras.filter(o => f === 'todas' || (f === 'web' && o._enWeb) || (f === 'noweb' && !o._enWeb)
+    || (f === 'pdf' && o.tipo_nodo === 'pdf') || (f === 'texto' && o.tipo_nodo !== 'pdf'));
+  document.getElementById('limpiar-lista').innerHTML = lista.length ? lista.map(o => `<label class="limpiar-fila">
+      <input type="checkbox" data-id="${escAttr(o.id)}" ${LIMPIAR.marcadas.has(o.id) ? 'checked' : ''}>
+      <span><div class="t">${esc(o.titulo || o.id)}</div><div class="m">${esc(o.id)} · ${o.tipo_nodo === 'pdf' ? 'PDF' : ((o._chapters || []).length + ' partes')}${o.categoria ? ' · ' + esc(o.categoria) : ''}</div></span>
+      <span class="f">${esc(o.fecha_creacion || 'sin fecha')}<br><span class="${o._enWeb ? 'web' : 'noweb'}">${o._enWeb ? 'en la web' : 'solo en el taller'}</span></span>
+    </label>`).join('') : '<div class="limpiar-ayuda">No hay textos con este filtro.</div>';
+  const n = LIMPIAR.marcadas.size;
+  document.getElementById('limpiar-cuenta').textContent = n + (n === 1 ? ' marcada' : ' marcadas');
+  const oc = document.getElementById('limpiar-ocultar'), el = document.getElementById('limpiar-eliminar');
+  oc.disabled = el.disabled = !n;
+  oc.textContent = LIMPIAR.confirmando === 'ocultar' ? `confirmar: quitar ${n} de la web` : 'quitar de la web';
+  el.textContent = LIMPIAR.confirmando === 'eliminar' ? `confirmar: eliminar ${n}` : 'eliminar';
+  oc.classList.toggle('confirmar', LIMPIAR.confirmando === 'ocultar');
+  el.classList.toggle('confirmar', LIMPIAR.confirmando === 'eliminar');
+}
+async function accionLimpiar(modo) {
+  if (!LIMPIAR.marcadas.size) return;
+  // primer clic: pide confirmación en el mismo botón; segundo clic: hace
+  if (LIMPIAR.confirmando !== modo) { LIMPIAR.confirmando = modo; pintarLimpiar(); return; }
+  const slugs = [...LIMPIAR.marcadas];
+  LIMPIAR.confirmando = null;
+  document.getElementById('limpiar-fondo').classList.remove('open');
+  const ok = await window.Publicar.sacar(slugs, modo);
+  if (ok) loadCorpus();
+}
+document.getElementById('btn-limpiar').addEventListener('click', abrirLimpiar);
+document.getElementById('limpiar-cerrar').addEventListener('click', () => document.getElementById('limpiar-fondo').classList.remove('open'));
+document.getElementById('limpiar-fondo').addEventListener('click', e => { if (e.target.id === 'limpiar-fondo') e.target.classList.remove('open'); });
+document.getElementById('limpiar-lista').addEventListener('change', e => {
+  const id = e.target.dataset.id; if (!id) return;
+  if (e.target.checked) LIMPIAR.marcadas.add(id); else LIMPIAR.marcadas.delete(id);
+  LIMPIAR.confirmando = null; pintarLimpiar();
+});
+document.getElementById('limpiar-filtros').addEventListener('click', e => {
+  const b = e.target.closest('[data-f]'); if (!b) return;
+  LIMPIAR.filtro = b.dataset.f;
+  document.querySelectorAll('#limpiar-filtros [data-f]').forEach(x => x.classList.toggle('activo', x === b));
+  pintarLimpiar();
+});
+document.getElementById('limpiar-ocultar').addEventListener('click', () => accionLimpiar('ocultar'));
+document.getElementById('limpiar-eliminar').addEventListener('click', () => accionLimpiar('eliminar'));
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+document.getElementById('detail-close').addEventListener('click', closeDetail);
+document.getElementById('overlay').addEventListener('click', closeDetail);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDetail(); document.getElementById('limpiar-fondo').classList.remove('open'); } });
+
+document.getElementById('btn-sync-corpus')?.addEventListener('click', syncCorpusJson);
+document.getElementById('btn-clear-local')?.addEventListener('click', clearLocalDrafts);
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    render();
+  })
+});
+// ─── BUSCADOR — indexa el texto plano de cada obra ya publicada,
+// leyendo su .html directamente (mismo dato que ve el lector, sin
+// tocar los scripts .py). Best-effort: una obra que no se pueda leer
+// (server no corriendo, archivo faltante) se salta sin romper el resto.
+let searchIndex = null;
+let searchIndexBuilding = false;
+
+async function ensureSearchIndex() {
+  if (searchIndex || searchIndexBuilding) return;
+  if (!corpus) { document.getElementById('search-status').textContent = 'cargando corpus…'; return; }
+  searchIndexBuilding = true;
+  document.getElementById('search-status').textContent = 'indexando obras…';
+  // lo que se llevó la marea no se busca (para la autora, sí)
+  const obras = (corpus.obras || []).filter(o => autorMode || !fueraDe(o));
+  const entries = [];
+  // busqueda.json (lo arma publicar.py): el texto de todas las obras
+  // publicadas en un solo archivo. Las que no estén ahí (servidor local
+  // sobre sitio/, sin busqueda.json) se indexan bajando cada obra.
+  let pendientes = obras.filter(o => o._file);
+  try {
+    const resp = await fetch('busqueda.json', { cache: 'no-cache' });
+    if (resp.ok) {
+      const textos = (await resp.json()).obras || {};
+      pendientes = pendientes.filter(obra => {
+        if (!textos[obra._file]) return true;
+        textos[obra._file].forEach(ch => {
+          entries.push({ obraTitulo: obra.titulo, obraFile: obra._file, chId: ch.id, chTitulo: ch.titulo, texto: ch.texto });
+        });
+        return false;
+      });
+    }
+  } catch (e) { /* sin busqueda.json: se indexa obra por obra */ }
+  await Promise.all(pendientes.map(async obra => {
+    try {
+      const resp = await fetch(`obras/${obra._file}`, { cache: 'no-store' });
+      if (!resp.ok) return;
+      const html = await resp.text();
+      const m = /const CHAPTERS = (\[[\s\S]*\]);\s*\n\s*const ACCIONES/.exec(html);
+      if (!m) return;
+      const chs = JSON.parse(m[1]);
+      chs.forEach(ch => {
+        const plano = (ch.body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        if (plano) entries.push({ obraTitulo: obra.titulo, obraFile: obra._file, chId: ch.id, chTitulo: ch.title || 'Sin título', texto: plano });
+      });
+    } catch (e) { /* obra no accesible ahora mismo: se salta */ }
+  }));
+  searchIndex = entries;
+  searchIndexBuilding = false;
+  document.getElementById('search-status').textContent = entries.length
+    ? `${entries.length} unidad(es) indexada(s) de ${obras.length} obra(s).`
+    : 'No se pudo indexar ningún texto — ¿está corriendo el servidor local (python -m http.server)?';
+}
+
+function normalizarBusqueda(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function ejecutarBusqueda(q) {
+  const results = document.getElementById('search-results');
+  if (!q.trim()) { results.innerHTML = ''; return; }
+  if (!searchIndex) { results.innerHTML = '<div class="search-empty">indexando…</div>'; return; }
+  const qn = normalizarBusqueda(q);
+  const hits = [];
+  searchIndex.forEach(entry => {
+    const idx = normalizarBusqueda(entry.texto).indexOf(qn);
+    if (idx !== -1) hits.push({ entry, idx });
+  });
+  if (!hits.length) { results.innerHTML = '<div class="search-empty">sin resultados para "' + esc(q) + '"</div>'; return; }
+  results.innerHTML = hits.slice(0, 40).map(({ entry, idx }) => {
+    const desde = Math.max(0, idx - 50);
+    const hasta = Math.min(entry.texto.length, idx + q.length + 60);
+    const antes = esc(entry.texto.slice(desde, idx));
+    const match = esc(entry.texto.slice(idx, idx + q.length));
+    const despues = esc(entry.texto.slice(idx + q.length, hasta));
+    return `<a class="search-result" href="obras/${entry.obraFile}#capitulo=${encodeURIComponent(entry.chId)}&buscar=${encodeURIComponent(q.trim())}">
+      <div class="search-result-obra">${esc(entry.obraTitulo)} · ${esc(entry.chTitulo)}</div>
+      <div class="search-result-snippet">${desde > 0 ? '…' : ''}${antes}<mark>${match}</mark>${despues}${hasta < entry.texto.length ? '…' : ''}</div>
+    </a>`;
+  }).join('');
+}
+
+let searchDebounce = null;
+document.getElementById('search-input').addEventListener('input', e => {
+  clearTimeout(searchDebounce);
+  const q = e.target.value;
+  searchDebounce = setTimeout(() => ejecutarBusqueda(q), 120);
+});
+
+function openSearch() {
+  document.getElementById('search-overlay').classList.add('open');
+  document.getElementById('search-modal').classList.add('open');
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('search-status').textContent = '';
+  document.getElementById('search-input').focus();
+  ensureSearchIndex();
+}
+function closeSearch() {
+  document.getElementById('search-overlay').classList.remove('open');
+  document.getElementById('search-modal').classList.remove('open');
+}
+document.getElementById('btn-buscar').addEventListener('click', openSearch);
+document.getElementById('search-close').addEventListener('click', closeSearch);
+document.getElementById('search-overlay').addEventListener('click', closeSearch);
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT') { e.preventDefault(); openSearch(); }
+  if (e.key === 'Escape' && document.getElementById('search-modal').classList.contains('open')) closeSearch();
+});
+
+document.getElementById('view-toggle').addEventListener('click', e => {
+  const btn = e.target.closest('.view-toggle-btn[data-view]');
+  if (!btn) return;
+  viewMode = btn.dataset.view;
+  guardarPref('p314b_vista', viewMode);
+  document.querySelectorAll('.view-toggle-btn[data-view]').forEach(b => b.classList.toggle('active', b === btn));
+  render();
+});
+document.querySelectorAll('.view-toggle-btn[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === viewMode));
+document.getElementById('partes-orden').addEventListener('change', e => {
+  ordenPartes = e.target.value; guardarPref('p314b_partes_orden', ordenPartes); render();
+});
+document.getElementById('series-toggle').addEventListener('click', e => {
+  e.stopPropagation();
+  const b = e.target.closest('.serie-btn');
+  if (!b) return;
+  modoSeries = b.dataset.serie;
+  guardarPref('p314b_series', modoSeries);
+  render();
+});
+document.getElementById('orden').value = ordenModo;
+document.getElementById('orden').addEventListener('change', e => {
+  ordenModo = e.target.value;
+  guardarPref('p314b_orden', ordenModo);
+  render();
+});
+
+loadCorpus();
+</script>
+<script src="visita.js"></script>
+</body>
+</html>

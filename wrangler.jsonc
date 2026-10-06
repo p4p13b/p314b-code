@@ -1,0 +1,58 @@
+// Configuración de Cloudflare (Workers con archivos estáticos).
+// Publica SOLO la carpeta web/ (la arma sitio/publicar.py): nada del resto
+// del repo (datos-lee/, sitio/, borradores, .json fuente) queda en línea,
+// aunque el comando de deploy sea "npx wrangler deploy" a secas.
+//
+// El sitio vive en https://www.p314b.space y también responde en
+// https://p314b.space (sin www). Los dos son «custom domains»: en cada
+// deploy Cloudflare crea o mantiene su registro DNS y su certificado, sin
+// tocar el panel. Las direcciones *.workers.dev y las de vista previa
+// quedan apagadas para que no haya copias públicas del sitio fuera del
+// dominio (sin sus cabeceras de seguridad).
+//
+// Si un deploy falla por los dominios (p. ej. «hostname already in use»:
+// el nombre está conectado a otro Worker o proyecto de Pages, o tiene un
+// registro DNS propio), ver SEGURIDAD.md → «Dominio sin www».
+//
+// Ojo al pegar ejemplos del panel de Cloudflare: este archivo es JSON (con
+// comentarios), no TOML, y lleva TODO junto. Un bloque nuevo se agrega
+// adentro de las llaves, sin borrar lo demás.
+{
+  "name": "p314b",
+  "compatibility_date": "2026-09-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "www.p314b.space", "custom_domain": true },
+    { "pattern": "p314b.space", "custom_domain": true }
+  ],
+  // El Worker solo atiende /api/huella (la huella colectiva, ver
+  // worker/huella.js); todo lo demás son los archivos de web/, tal cual.
+  "main": "./worker/huella.js",
+  "assets": {
+    "directory": "./web",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"],
+    // Un enlace roto muestra web/404.html (con salida al índice), no la
+    // página genérica en inglés de Cloudflare.
+    "not_found_handling": "404-page"
+  },
+  // Donde se suma la huella colectiva: el espacio «p314b-huella», que
+  // creó solo el primer deploy (aprovisionamiento automático de
+  // Cloudflare, 03/10). El id queda fijo para que ningún deploy cree otro.
+  "kv_namespaces": [
+    { "binding": "HUELLA", "id": "fc7fe694346648f5b961a167a7c2c40c" }
+  ],
+  // Las ramas que no son main (las PR) se construyen con «npx wrangler
+  // preview», que exige este bloque aunque esté vacío. Con preview_urls en
+  // false esas vistas previas no quedan públicas.
+  "previews": {},
+  // Registros de visitas y errores (pestaña Observability del Worker).
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true,
+      "persist": true
+    }
+  }
+}

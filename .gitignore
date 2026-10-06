@@ -1,0 +1,15 @@
+# Índice privado de la matriz relacional (páginas completas de datos-lee y
+# vectores). Se regenera con sitio/matriz/indexar_pasajes.py y
+# proponer_cruces.py. No se versiona ni se publica.
+cache-matriz/
+
+__pycache__/
+*.pyc
+
+# Carpeta vieja de publicar.py (ahora escribe web/, que sí se versiona).
+_publico/
+
+
+# Páginas intermedias que arma generar_obra.py desde obras/<slug>.json; la
+# publicación las regenera siempre (el resultado versionado es web/obras/).
+sitio/obras/*.html

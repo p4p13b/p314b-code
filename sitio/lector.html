@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<script src="autor.js" data-herramienta></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lector — corpus</title>
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<script src="vendor/pdfjs-3.11.174/pdf.min.js"></script>
+<style>
+/* ——————————————————————————————————————————
+   lector.html — visor de PDF homogeneizado con el sistema de
+   diagonales del sitio (#reading-css-tpl en uploader-v1.html).
+   Mismas variables, mismas dimensiones de ala (--col-w: 260px),
+   mismo vocabulario visual (.wing, .citation-block, .diagonal-type).
+   Las alas son flexibles: cada ancla puede ser una nota personal
+   (marginalia) o un vínculo de diagonal hacia otro punto del
+   corpus/revista/canon — el mismo contenedor sirve para ambas.
+   —————————————————————————————————————————— */
+:root {
+  --bg: #fbfaf6; --page: #f4efe3; --page-edge: #e8e0cc;
+  --ink: #171310; --ink-soft: #4a3f33; --ink-muted: #8a7c5c;
+  --rule: #e2dbc8; --mark: #b8946a; --mark-dk: #8b6f3a;
+  --mark-bg-h: rgba(184,148,106,0.14); --mark-bg-p: rgba(139,111,58,0.20);
+  --green: #4a6b3d; --red: #8b3a2e; --emergente: #b8946a;
+  --font-body: 'Newsreader', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --col-w: 260px; --col-pad: 20px; --body-sz: 15px;
+}
+html[data-theme="dark"] {
+  --bg: #0f0d0a; --page: #1a1612; --page-edge: #241f18;
+  --ink: #ede6d4; --ink-soft: #c0b398; --ink-muted: #7d7058;
+  --rule: #2a2419; --mark: #c9a576; --mark-dk: #e0bf8a;
+  --mark-bg-h: rgba(201,165,118,0.12); --mark-bg-p: rgba(224,191,138,0.18);
+  --green: #7fa06a; --red: #c26a5a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--font-body);-webkit-font-smoothing:antialiased;min-height:100vh;overflow:hidden;height:100vh;}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+a{color:inherit;}
+
+.top-nav{position:sticky;top:0;z-index:50;background:color-mix(in oklab,var(--bg) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule);padding:12px 28px;display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;color:var(--ink-soft);}
+.top-nav .left,.top-nav .right{display:flex;gap:20px;align-items:center;}
+.book-title{color:var(--ink);font-weight:500;text-transform:uppercase;letter-spacing:0.14em;font-size:11px;}
+.chapter-label{color:var(--ink-muted);}
+.nav-btn{font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--rule);color:var(--ink-soft);transition:all 0.15s;border-radius:2px;}
+.nav-btn:hover{border-color:var(--ink-soft);color:var(--ink);}
+.nav-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+
+/* ——— LAYOUT: alas fijas de --col-w, centro flexible para el PDF ———
+   Dimensionalmente equivalentes a las alas del sistema de lectura
+   (mismo --col-w), pero el centro no se fija a --col-pg (640px)
+   porque acá el contenido es un canvas de PDF, no texto en columna. */
+.layout{display:grid;grid-template-columns:var(--col-w) 1fr var(--col-w);height:calc(100vh - 47px);position:relative;}
+.wing{background:var(--bg);display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+.wing-left{border-right:1px solid var(--rule);}
+.wing-right{border-left:1px solid var(--rule);}
+.wing-header{padding:14px 20px 10px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-muted);border-bottom:1px solid var(--rule);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;}
+.wing-scroll{flex:1;overflow-y:auto;padding:6px 0;}
+
+/* ——— ANCLA: unidad flexible de ala — nota personal O vínculo de
+   diagonal. Reusa el vocabulario visual de .citation-block y
+   .diagonal-type del sistema de lectura para que se sienta parte
+   del mismo sitio, no un widget aparte. ——— */
+.ancla{padding:12px 20px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .14s;}
+.ancla:hover{background:var(--mark-bg-h);}
+.ancla.active{background:var(--mark-bg-p);}
+.ancla-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.ancla-dot{width:6px;height:6px;border-radius:50%;background:var(--ink-muted);flex-shrink:0;}
+.ancla-dot.nota{background:var(--mark);}
+.ancla-dot.continuidad{background:var(--green);}
+.ancla-dot.fractura{background:var(--red);}
+.ancla-dot.emergente{background:var(--emergente);}
+.ancla-titulo{font-style:italic;font-size:14px;color:var(--ink-soft);line-height:1.3;}
+.ancla.active .ancla-titulo{color:var(--ink);}
+.ancla-page{font-family:var(--font-mono);font-size:9px;color:var(--ink-muted);margin-left:auto;flex-shrink:0;}
+.ancla-body{display:none;margin-top:8px;}
+.ancla.active .ancla-body{display:block;}
+.ancla-texto{font-size:13px;line-height:1.55;color:var(--ink-soft);font-style:italic;margin-bottom:8px;}
+.ancla-destino{font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);border-bottom:1px dotted var(--ink-muted);display:inline-block;transition:color .15s,border-color .15s;}
+.ancla-destino:hover{color:var(--mark-dk);border-bottom-color:var(--mark-dk);}
+.ancla-destino::before{content:"→ ";color:var(--mark);}
+.ancla-del{font-family:var(--font-mono);font-size:9px;color:var(--ink-muted);border-bottom:1px dotted var(--ink-muted);margin-top:6px;display:inline-block;}
+.ancla-del:hover{color:var(--red);}
+
+.wing-empty{padding:20px;font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);line-height:1.6;}
+
+/* ——— formularios de las alas ——— */
+.wing-form{padding:12px 20px;border-top:1px solid var(--rule);flex-shrink:0;}
+.wing-form textarea,.wing-form input,.wing-form select{width:100%;background:var(--page);border:1px solid var(--rule);color:var(--ink);padding:7px 8px;font-size:12px;font-family:var(--font-body);border-radius:2px;margin-bottom:6px;}
+.wing-form textarea{resize:none;height:56px;font-style:italic;}
+.wing-form label{font-family:var(--font-mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted);display:block;margin-bottom:3px;}
+.wing-submit{width:100%;background:var(--page);border:1px solid var(--rule);color:var(--ink-soft);padding:7px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;border-radius:2px;transition:all .14s;}
+.wing-submit:hover{color:var(--ink);border-color:var(--ink-soft);}
+
+/* ——— CENTRO: visor de PDF ——— */
+.center{background:var(--page-edge);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+
+.upload-zone{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--page);z-index:10;cursor:pointer;gap:14px;}
+.upload-zone.hidden{display:none;}
+.upload-zone input{display:none;}
+.upload-icon{width:40px;height:40px;border:1.5px solid var(--rule);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--ink-muted);}
+.upload-label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-muted);text-align:center;}
+.upload-label span{display:block;font-size:9px;margin-top:6px;letter-spacing:.08em;color:var(--ink-muted);opacity:.7;}
+
+.pdf-browser{margin-top:22px;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;width:min(320px,80vw);}
+.pdf-browser-label{font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-muted);text-align:center;margin-bottom:4px;}
+.pdf-browser-item{font-family:var(--font-body);font-style:italic;font-size:13px;color:var(--ink-soft);padding:8px 14px;border:1px solid var(--rule);border-radius:3px;background:var(--bg);text-align:left;transition:border-color .14s,color .14s;}
+.pdf-browser-item:hover{border-color:var(--mark);color:var(--ink);}
+
+.viewer-wrap{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:24px 16px 60px;}
+.pdf-page{margin-bottom:14px;box-shadow:0 2px 14px rgba(20,17,14,0.16);position:relative;background:#fff;}
+.pdf-page canvas{display:block;}
+.page-num-label{position:absolute;top:6px;right:8px;font-family:var(--font-mono);font-size:9px;color:var(--ink-muted);background:color-mix(in oklab, var(--bg) 85%, transparent);padding:2px 6px;border-radius:2px;}
+.page-highlight{position:absolute;inset:0;background:var(--mark-bg-p);pointer-events:none;opacity:0;transition:opacity .4s;}
+.page-highlight.on{opacity:1;}
+
+.nav-bar{display:none;padding:9px 16px;background:var(--bg);border-top:1px solid var(--rule);flex-shrink:0;align-items:center;gap:12px;justify-content:center;font-family:var(--font-mono);font-size:11px;}
+.nav-bar button{border:1px solid var(--rule);color:var(--ink-soft);padding:4px 12px;border-radius:2px;}
+.nav-bar button:hover{border-color:var(--ink-soft);color:var(--ink);}
+#page-info{color:var(--ink-muted);}
+
+.sel-toolbar{position:fixed;z-index:80;background:var(--ink);color:var(--bg);font-family:var(--font-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;border-radius:3px;display:none;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,.25);}
+.sel-toolbar button{color:var(--bg);}
+.sel-toolbar button:hover{color:var(--mark);}
+.sel-toolbar.show{display:flex;}
+
+@media(max-width:1100px){:root{--col-w:220px;}}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}.wing{display:none;}}
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <div class="left">
+    <span class="book-title" id="doc-title">Lector</span>
+    <span class="chapter-label" id="doc-meta"></span>
+  </div>
+  <div class="right">
+    <button class="nav-btn" id="btn-export">↓ exportar notas</button>
+    <label class="nav-btn" style="cursor:pointer;">
+      ↑ importar notas
+      <input type="file" id="import-input" accept="application/json" style="display:none">
+    </label>
+    <button class="nav-btn" id="btn-theme">◑ tema</button>
+    <a class="nav-btn" href="index.html">← corpus</a>
+  </div>
+</nav>
+
+<main class="layout" id="layout">
+
+  <!-- ALA IZQUIERDA: notas y diagonales, mezcladas, ordenadas por página -->
+  <aside class="wing wing-left">
+    <div class="wing-header">
+      <span>Notas y diagonales</span>
+      <span id="ancla-count">0</span>
+    </div>
+    <div class="wing-scroll" id="anclas-list"></div>
+    <div class="wing-form">
+      <label>Nueva ancla en p. <span id="form-page">—</span></label>
+      <select id="ancla-tipo">
+        <option value="nota">Nota personal</option>
+        <option value="continuidad">Diagonal — continuidad</option>
+        <option value="fractura">Diagonal — fractura</option>
+        <option value="emergente">Diagonal — emergente</option>
+      </select>
+      <textarea id="ancla-texto" placeholder="texto de la nota o de la cita…"></textarea>
+      <input type="text" id="ancla-destino" placeholder="destino (opcional): revista.html#03.2, obras/no-teoria.html, https://…">
+      <button class="wing-submit" id="btn-add-ancla">anclar a la página actual</button>
+    </div>
+  </aside>
+
+  <!-- CENTRO: visor de PDF -->
+  <div class="center">
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept="application/pdf">
+      <div class="upload-icon">↑</div>
+      <div class="upload-label">subir PDF<span>click para seleccionar</span></div>
+      <div id="pdf-browser" class="pdf-browser"></div>
+    </div>
+    <div class="viewer-wrap" id="viewer-wrap"></div>
+    <div class="nav-bar" id="nav-bar">
+      <button id="btn-prev">←</button>
+      <span id="page-info">—</span>
+      <button id="btn-next">→</button>
+    </div>
+  </div>
+
+  <!-- ALA DERECHA: índice de páginas con densidad de anclas -->
+  <aside class="wing wing-right">
+    <div class="wing-header">
+      <span>Índice</span>
+      <span id="pg-count">—</span>
+    </div>
+    <div class="wing-scroll" id="indice-list"></div>
+  </aside>
+
+</main>
+
+<div class="sel-toolbar" id="sel-toolbar">
+  <button id="sel-ancla-btn">+ anclar selección</button>
+</div>
+
+<script>
+/* ——————————————————————————————————————————
+   lector.html — estado y carga de PDF
+   Capa de texto real (pdf.js TextLayer) para selección nativa:
+   las anclas capturan el fragmento exacto, igual que las diagonales
+   del sitio anclan por string. El resaltado al hacer click en una
+   ancla es a nivel de página (igual que el artefacto original);
+   resaltar el sub-string exacto dentro de una capa de texto con
+   múltiples spans no es confiable sin un merge de rangos, así que
+   se declara la limitación en vez de fingir precisión que no hay.
+   —————————————————————————————————————————— */
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs-3.11.174/pdf.worker.min.js';
+}
+
+let pdfDoc = null, totalPages = 0, currentPage = 1;
+let pageWraps = [];
+let anclas = [];
+let activeAncla = null;
+let docKey = null;
+
+const $ = id => document.getElementById(id);
+
+function slugify(s) {
+  return (s || 'doc').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'doc';
+}
+
+(async function init() {
+  const params = new URLSearchParams(location.search);
+  const pdfParam = params.get('pdf');
+  if (pdfParam) {
+    docKey = slugify(pdfParam.split('/').pop().replace(/\.pdf$/i, ''));
+    $('doc-title').textContent = pdfParam.split('/').pop();
+    loadAnclasLocal();
+    await loadPdfFromUrl(pdfParam);
+    await tryLoadSidecar(pdfParam);
+    // ?p=N abre en esa página (lo usa el panel de propuestas de la matriz).
+    const pagina = parseInt(params.get('p'), 10);
+    if (pagina > 1) scrollToPage(pagina);
+  } else {
+    await loadPdfBrowser();
+  }
+  applyTheme(localStorage.getItem('lector-theme') || 'light');
+})();
+
+/* Sin ?pdf= en la URL: se ofrece, además de la carga manual, un
+   listado de los PDFs ya depositados en pdfs/ (vía pdfs/manifest.json
+   — un array simple de nombres de archivo). Si el manifiesto no
+   existe o está vacío, la zona de carga queda igual que antes: no
+   se rompe nada, solo se agrega la opción cuando hay algo que listar. */
+async function loadPdfBrowser() {
+  try {
+    const resp = await fetch('pdfs/manifest.json');
+    if (!resp.ok) return;
+    const data = await resp.json();
+    const files = Array.isArray(data) ? data : (data.pdfs || []);
+    if (!files.length) return;
+
+    const list = $('pdf-browser');
+    list.innerHTML = '<div class="pdf-browser-label">o elegí uno ya cargado</div>' +
+      files.map(f => {
+        const label = f.replace(/\.pdf$/i, '').replace(/[-_]+/g, ' ');
+        return '<button class="pdf-browser-item" data-file="' + escHtmlAttr(f) + '">' + escHtmlText(label) + '</button>';
+      }).join('');
+
+    list.querySelectorAll('.pdf-browser-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const file = btn.dataset.file;
+        location.href = location.pathname + '?pdf=pdfs/' + encodeURIComponent(file);
+      });
+    });
+  } catch (e) { /* sin manifiesto: la carga manual sigue disponible igual */ }
+}
+function escHtmlText(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escHtmlAttr(s) { return escHtmlText(s).replace(/"/g,'&quot;'); }
+
+$('file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  docKey = slugify(file.name.replace(/\.pdf$/i, ''));
+  $('doc-title').textContent = file.name;
+  loadAnclasLocal();
+  const reader = new FileReader();
+  reader.onload = ev => loadPdfFromData(ev.target.result);
+  reader.readAsArrayBuffer(file);
+});
+
+async function loadPdfFromUrl(url) {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('no encontrado (' + resp.status + ')');
+    const buf = await resp.arrayBuffer();
+    await loadPdfFromData(buf);
+  } catch (e) {
+    $('viewer-wrap').innerHTML = '<div class="upload-label" style="padding:40px;">No se pudo cargar <code>' + url + '</code>.<span>' + e.message + '</span></div>';
+  }
+}
+
+async function tryLoadSidecar(pdfPath) {
+  const sidecarUrl = pdfPath.replace(/\.pdf$/i, '.notas.json');
+  try {
+    const resp = await fetch(sidecarUrl);
+    if (!resp.ok) return;
+    const data = await resp.json();
+    if (Array.isArray(data.anclas)) {
+      anclas = data.anclas;
+      renderAnclas();
+      renderIndice();
+    }
+  } catch (e) { /* sin sidecar committeado: se sigue con lo local */ }
+}
+
+async function loadPdfFromData(data) {
+  if (typeof pdfjsLib === 'undefined') {
+    $('upload-zone').classList.add('hidden');
+    $('viewer-wrap').innerHTML = '<div class="upload-label" style="padding:40px;">No se pudo cargar pdf.js (¿sin conexión al CDN?).</div>';
+    return;
+  }
+  $('upload-zone').classList.add('hidden');
+  $('nav-bar').style.display = 'flex';
+  const wrap = $('viewer-wrap');
+  wrap.innerHTML = '';
+  pageWraps = [];
+
+  pdfDoc = await pdfjsLib.getDocument({ data }).promise;
+  totalPages = pdfDoc.numPages;
+  $('doc-meta').textContent = totalPages + ' págs.';
+
+  for (let i = 1; i <= totalPages; i++) {
+    const page = await pdfDoc.getPage(i);
+    const vp = page.getViewport({ scale: 1.35 });
+
+    const pageWrap = document.createElement('div');
+    pageWrap.className = 'pdf-page';
+    pageWrap.style.width = vp.width + 'px';
+    pageWrap.style.height = vp.height + 'px';
+    pageWrap.dataset.page = i;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = vp.width;
+    canvas.height = vp.height;
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport: vp }).promise;
+
+    /* Capa de texto real: selección nativa del navegador, invisible
+       pero posicionada exacto sobre el canvas. Esto es lo que hace
+       que una ancla capture un fragmento real, no solo "página N". */
+    const textLayerDiv = document.createElement('div');
+    textLayerDiv.style.cssText = 'position:absolute;inset:0;overflow:hidden;line-height:1;opacity:1;';
+    const textContent = await page.getTextContent();
+    pdfjsLib.renderTextLayer({
+      textContentSource: textContent,
+      container: textLayerDiv,
+      viewport: vp,
+      textDivs: []
+    });
+
+    const hl = document.createElement('div');
+    hl.className = 'page-highlight';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'page-num-label';
+    lbl.textContent = i;
+
+    pageWrap.appendChild(canvas);
+    pageWrap.appendChild(textLayerDiv);
+    pageWrap.appendChild(hl);
+    pageWrap.appendChild(lbl);
+    wrap.appendChild(pageWrap);
+    pageWraps.push(pageWrap);
+  }
+
+  wrap.addEventListener('scroll', onScroll);
+  document.addEventListener('mouseup', onSelectionEnd);
+  updatePageInfo();
+  renderIndice();
+}
+
+/* ——— navegación ——— */
+function onScroll() {
+  const wrap = $('viewer-wrap');
+  const mid = wrap.scrollTop + wrap.clientHeight / 2;
+  let closest = 1, minDist = Infinity;
+  pageWraps.forEach((w, i) => {
+    const center = w.offsetTop + w.offsetHeight / 2;
+    const dist = Math.abs(center - mid);
+    if (dist < minDist) { minDist = dist; closest = i + 1; }
+  });
+  currentPage = closest;
+  updatePageInfo();
+}
+
+function scrollToPage(n) {
+  if (!pageWraps.length) return;
+  n = Math.max(1, Math.min(totalPages, n));
+  currentPage = n;
+  pageWraps[n - 1].scrollIntoView({ behavior: 'smooth', block: 'start' });
+  updatePageInfo();
+}
+
+function updatePageInfo() {
+  $('page-info').textContent = totalPages ? currentPage + ' / ' + totalPages : '—';
+  $('form-page').textContent = totalPages ? currentPage : '—';
+}
+
+$('btn-prev').addEventListener('click', () => scrollToPage(currentPage - 1));
+$('btn-next').addEventListener('click', () => scrollToPage(currentPage + 1));
+
+/* ——— selección de texto → toolbar flotante → precarga el form ——— */
+function onSelectionEnd(e) {
+  const sel = window.getSelection();
+  const text = sel.toString().trim();
+  const toolbar = $('sel-toolbar');
+  if (!text || text.length < 3) { toolbar.classList.remove('show'); return; }
+
+  // ¿en qué página cayó la selección?
+  let node = sel.anchorNode;
+  while (node && !(node.classList && node.classList.contains('pdf-page'))) node = node.parentNode;
+  const page = node ? parseInt(node.dataset.page, 10) : currentPage;
+
+  toolbar.style.left = (e.clientX + 8) + 'px';
+  toolbar.style.top = (e.clientY + 8) + 'px';
+  toolbar.classList.add('show');
+  toolbar.dataset.texto = text;
+  toolbar.dataset.page = page;
+}
+
+$('sel-ancla-btn').addEventListener('click', () => {
+  const toolbar = $('sel-toolbar');
+  $('ancla-texto').value = toolbar.dataset.texto || '';
+  currentPage = parseInt(toolbar.dataset.page, 10) || currentPage;
+  updatePageInfo();
+  toolbar.classList.remove('show');
+  window.getSelection().removeAllRanges();
+  $('ancla-texto').focus();
+});
+
+document.addEventListener('mousedown', e => {
+  if (!e.target.closest('#sel-toolbar')) $('sel-toolbar').classList.remove('show');
+});
+
+/* ——— ANCLAS: nota personal o vínculo de diagonal, mismo contenedor.
+   tipo='nota' es marginalia privada; continuidad/fractura/emergente
+   son los mismos tres tipos que ya usan las diagonales del sitio,
+   con destino opcional (otra obra, la revista, una URL externa). ——— */
+function addAncla() {
+  const tipo = $('ancla-tipo').value;
+  const texto = $('ancla-texto').value.trim();
+  const destino = $('ancla-destino').value.trim();
+  if (!texto) return;
+
+  anclas.push({
+    id: 'an_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    tipo, texto, destino: destino || null,
+    page: currentPage,
+    creado: new Date().toISOString()
+  });
+
+  $('ancla-texto').value = '';
+  $('ancla-destino').value = '';
+  saveAnclasLocal();
+  renderAnclas();
+  renderIndice();
+}
+$('btn-add-ancla').addEventListener('click', addAncla);
+
+function removeAncla(id) {
+  anclas = anclas.filter(a => a.id !== id);
+  saveAnclasLocal();
+  renderAnclas();
+  renderIndice();
+  pageWraps.forEach(w => w.querySelector('.page-highlight').classList.remove('on'));
+}
+
+function selectAncla(id) {
+  activeAncla = activeAncla === id ? null : id;
+  renderAnclas();
+  pageWraps.forEach(w => w.querySelector('.page-highlight').classList.remove('on'));
+  if (activeAncla) {
+    const a = anclas.find(x => x.id === activeAncla);
+    if (a && a.page >= 1 && a.page <= pageWraps.length) {
+      pageWraps[a.page - 1].querySelector('.page-highlight').classList.add('on');
+      scrollToPage(a.page);
+    }
+  }
+}
+
+function renderAnclas() {
+  const list = $('anclas-list');
+  $('ancla-count').textContent = anclas.length;
+
+  if (!anclas.length) {
+    list.innerHTML = '<div class="wing-empty">Sin anclas todavía. Seleccioná texto en el PDF y "anclar selección", o cargá una directamente desde el formulario.</div>';
+    return;
+  }
+
+  const ordered = [...anclas].sort((a, b) => (a.page || 0) - (b.page || 0));
+  list.innerHTML = ordered.map(a => {
+    const activo = activeAncla === a.id;
+    const destinoHtml = a.destino
+      ? '<a class="ancla-destino" href="' + escHtml(a.destino) + '" target="_blank" rel="noopener">' + escHtml(a.destino) + '</a><br>'
+      : '';
+    return '<div class="ancla' + (activo ? ' active' : '') + '" data-id="' + a.id + '">'
+      + '<div class="ancla-head">'
+      + '<span class="ancla-dot ' + a.tipo + '"></span>'
+      + '<span class="ancla-titulo">' + escHtml(truncar(a.texto, 60)) + '</span>'
+      + '<span class="ancla-page">p.' + (a.page || '—') + '</span>'
+      + '</div>'
+      + '<div class="ancla-body">'
+      + '<div class="ancla-texto">"' + escHtml(a.texto) + '"</div>'
+      + destinoHtml
+      + '<span class="ancla-del" data-del="' + a.id + '">eliminar</span>'
+      + '</div></div>';
+  }).join('');
+
+  list.querySelectorAll('.ancla').forEach(el => {
+    el.addEventListener('click', e => {
+      if (e.target.dataset.del) return;
+      selectAncla(el.dataset.id);
+    });
+  });
+  list.querySelectorAll('[data-del]').forEach(el => {
+    el.addEventListener('click', e => { e.stopPropagation(); removeAncla(el.dataset.del); });
+  });
+}
+
+function truncar(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
+function escHtml(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+/* ——— ÍNDICE: una fila por página, con densidad de anclas ——— */
+function renderIndice() {
+  const list = $('indice-list');
+  $('pg-count').textContent = totalPages || '—';
+  if (!totalPages) { list.innerHTML = '<div class="wing-empty">Cargá un PDF para ver el índice de páginas.</div>'; return; }
+
+  let html = '';
+  for (let p = 1; p <= totalPages; p++) {
+    const enPagina = anclas.filter(a => a.page === p);
+    const dots = enPagina.slice(0, 4).map(a => '<span class="ancla-dot ' + a.tipo + '" style="margin-right:2px;"></span>').join('');
+    html += '<div class="ancla" data-goto="' + p + '" style="padding:8px 20px;">'
+      + '<div class="ancla-head" style="margin-bottom:0;">'
+      + '<span class="ancla-titulo" style="font-size:12px;color:var(--ink-muted);">p. ' + p + '</span>'
+      + '<span class="ancla-page" style="margin-left:auto;">' + dots + (enPagina.length ? enPagina.length : '') + '</span>'
+      + '</div></div>';
+  }
+  list.innerHTML = html;
+  list.querySelectorAll('[data-goto]').forEach(el =>
+    el.addEventListener('click', () => scrollToPage(parseInt(el.dataset.goto, 10))));
+}
+
+/* ——— PERSISTENCIA ———
+   localStorage es el borrador de trabajo (por navegador, no viaja
+   con el repo). Exportar/importar JSON es lo que hace que las
+   anclas sobrevivan a un git commit y se vean en Cloudflare para
+   cualquier visitante — igual que revista.json, esto es un archivo
+   de datos versionado, no estado efímero del navegador. */
+function saveAnclasLocal() {
+  if (!docKey) return;
+  try { localStorage.setItem('lector_anclas_' + docKey, JSON.stringify(anclas)); } catch (e) {}
+}
+function loadAnclasLocal() {
+  if (!docKey) return;
+  try {
+    const raw = localStorage.getItem('lector_anclas_' + docKey);
+    if (raw) { anclas = JSON.parse(raw); renderAnclas(); }
+  } catch (e) {}
+}
+
+$('btn-export').addEventListener('click', () => {
+  const payload = { docKey, exportado: new Date().toISOString(), anclas };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (docKey || 'lector') + '.notas.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+$('import-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (Array.isArray(data.anclas)) {
+        anclas = data.anclas;
+        saveAnclasLocal();
+        renderAnclas();
+        renderIndice();
+      }
+    } catch (err) { alert('JSON inválido.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+/* ——— TEMA ——— */
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('lector-theme', t);
+}
+$('btn-theme').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  applyTheme(cur === 'dark' ? 'light' : 'dark');
+});
+
+$('upload-zone').addEventListener('click', e => {
+  if (e.target.closest('#pdf-browser')) return;
+  $('file-input').click();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>comentarios — p314b</title>
+<meta name="description" content="Lo que dejaron quienes leen p314b y la autora aprobó, aparte de los textos, y la bitácora de cada mes.">
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<script src="comun.js"></script>
+<script src="autor.js"></script>
+<style>
+/* Comentarios: el apartado propio. Los comentarios públicos no se pegan a
+   los textos: se leen acá, con un enlace a la página de donde vinieron.
+   Llegan por el cuadro de comentar.js (clic sostenido en cualquier parte)
+   y los guarda worker/comentarios.js. La parte «solo-autor» es la cola de
+   revisión; la ve y la usa solo la autora, con su token. */
+:root{
+  --bg:#080808;--page:#0d0d0d;--ink:#f5f5f5;--ink-soft:#d0d0d0;--ink-muted:#8a8a8a;--rule:#292929;
+  --line-ctl:color-mix(in oklab,var(--ink) 42%,var(--bg));--mark:#3b82f6;--mark-lt:#60a5fa;--violet:#a78bfa;
+  --font-body:'Newsreader',Georgia,serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f6f4ef;--page:#fbfaf6;--ink:#141414;--ink-soft:#333;--ink-muted:#6b6b6b;--rule:#dcd8cf;--mark:#2563eb;--mark-lt:#1d4ed8;--violet:#7c3aed;}}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--bg);color:var(--ink);}
+body{font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
+a{color:inherit;}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;border-bottom:1px solid var(--rule);background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(10px);}
+.nav-btn,.btn{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-decoration:none;padding:7px 11px;min-height:34px;display:inline-flex;align-items:center;border:1px solid var(--line-ctl);border-radius:3px;background:transparent;cursor:pointer;}
+.nav-btn:hover,.btn:hover{border-color:var(--ink);}
+.btn[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in oklab,var(--ink) 8%,transparent);}
+:focus-visible{outline:2px solid var(--mark-lt);outline-offset:2px;}
+main{max-width:760px;margin:0 auto;padding:40px 24px 80px;}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-muted);margin:0 0 6px;}
+h1{font-style:italic;font-weight:300;font-size:clamp(44px,8vw,84px);line-height:1;margin:0 0 16px;letter-spacing:-.02em;}
+h2{font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-muted);font-weight:500;margin:44px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--rule);}
+.lede{font-size:18px;line-height:1.55;color:var(--ink-soft);max-width:62ch;margin:0 0 18px;}
+.aviso{font-family:var(--font-mono);font-size:13px;color:var(--ink-soft);line-height:1.7;}
+.com{margin:0;padding:18px 0;border-bottom:1px solid var(--rule);}
+.com blockquote{margin:0 0 8px;font-size:18px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere;}
+.com .pie{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted);display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;}
+.com .pie .firma{color:var(--ink-soft);}
+.com .acciones{display:flex;gap:8px;margin-top:10px;}
+.etq{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border:1px solid var(--line-ctl);border-radius:2px;}
+.etq.pendiente{border-color:var(--violet);color:var(--violet);}
+.etq.aprobado{border-color:var(--mark-lt);color:var(--mark-lt);}
+.tabla{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12.5px;}
+.tabla th,.tabla td{padding:7px 6px;border-bottom:1px solid var(--rule);text-align:right;}
+.tabla th:first-child,.tabla td:first-child{text-align:left;}
+.tabla th{font-weight:500;color:var(--ink-muted);font-size:11px;letter-spacing:.06em;}
+.envoltura{overflow-x:auto;}
+.rango{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+.nota{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted);line-height:1.7;margin-top:36px;}
+@media (max-width:700px){main{padding:28px 16px 60px;}.nav{padding:10px 16px;}}
+</style>
+</head>
+<body>
+<nav class="nav"><a class="nav-btn" href="index.html">← índice</a><a class="nav-btn" href="ayuda.html">ayuda</a></nav>
+<main>
+  <p class="eyebrow">p314b · de quienes leen</p>
+  <h1>comentarios</h1>
+  <p class="lede">Para dejar uno, mantené apretado el clic (o el dedo, en el celular) en cualquier lugar del sitio. Lo que se publica aparece acá, aparte de los textos, después de que la autora lo lee.</p>
+
+  <section class="solo-autor" aria-labelledby="t-cola">
+    <h2 id="t-cola">para revisar · solo vos</h2>
+    <div class="rango" id="meses-cola"></div>
+    <div id="cola"><p class="aviso">cargando…</p></div>
+  </section>
+
+  <h2>publicados</h2>
+  <div id="publicos"><p class="aviso">cargando…</p></div>
+
+  <h2>bitácora</h2>
+  <div class="envoltura" id="bitacora"><p class="aviso">cargando…</p></div>
+
+  <p class="nota">Ningún comentario pide datos de quien lo escribe. La firma, si hay, la eligió quien comentó y no está verificada. Los privados los lee solo la autora; los correos y teléfonos escritos en cualquier comentario se tachan antes de guardarse. La bitácora cuenta, mes a mes, qué pasó con los comentarios, sin horas ni lugares.</p>
+</main>
+<script>
+(function () {
+  'use strict';
+  const esc = P314.esc;
+  const MESES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  const nombreMes = m => MESES[+m.slice(5) - 1] + ' ' + m.slice(0, 4);
+  const fecha = d => d ? (+d.slice(8)) + ' de ' + MESES[+d.slice(5, 7) - 1] + ' de ' + d.slice(0, 4) : '';
+  const mesAR = (k) => { const t = new Date(Date.now() - 3 * 3600 * 1000); t.setUTCDate(1); t.setUTCMonth(t.getUTCMonth() - k); return t.toISOString().slice(0, 7); };
+  const meses = [0, 1, 2, 3, 4, 5].map(mesAR);
+  let titulos = {};
+  const nombre = ruta => {
+    const r = decodeURIComponent(ruta || '').replace(/\.html$/, '').replace(/\/$/, '') || '/';
+    if (r === '/' || r === '/index') return 'índice';
+    return titulos[r] || r.replace(/^\//, '');
+  };
+  const enlace = p => '<a href="' + esc(p) + '">' + esc(nombre(p)) + '</a>';
+  const sinRed = '<p class="aviso">Los comentarios se leen desde el sitio en línea.</p>';
+
+  fetch('corpus.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : { obras: [] }).catch(() => ({ obras: [] })).then(c => {
+    (c.obras || []).forEach(o => { titulos['/obras/' + (o._file || o.id + '.html').replace(/\.html$/, '')] = o.titulo; });
+    publicos(); bitacora();
+    if (window.P314B && P314B.listo) P314B.listo.then(si => { if (si) cola(meses[0]); });
+  });
+
+  function publicos() {
+    const caja = document.getElementById('publicos');
+    fetch('/api/comentarios', { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject())
+      .then(d => {
+        const l = d.comentarios || [];
+        caja.innerHTML = l.length ? l.map(c => `<article class="com"><blockquote>${esc(c.texto)}</blockquote>
+          <div class="pie"><span class="firma">${c.firma ? '— ' + esc(c.firma) : ''}</span><span>${fecha(c.d)}</span><span>sobre ${enlace(c.p)}</span></div></article>`).join('')
+          : '<p class="aviso">Todavía no hay comentarios publicados.</p>';
+      }).catch(() => { caja.innerHTML = sinRed; });
+  }
+
+  function bitacora() {
+    const caja = document.getElementById('bitacora');
+    Promise.all(meses.map(m => fetch('/api/bitacora?mes=' + m).then(r => r.ok ? r.json() : Promise.reject())))
+      .then(l => {
+        l = l.filter((b, i) => i === 0 || b.llegaron);
+        caja.innerHTML = '<table class="tabla"><thead><tr><th>mes</th><th>llegaron</th><th>privados</th><th>pidieron publicarse</th><th>aprobados</th><th>rechazados</th><th>sin revisar</th></tr></thead><tbody>' +
+          l.map(b => `<tr><td>${nombreMes(b.mes)}</td><td>${b.llegaron || 0}</td><td>${b.privados || 0}</td><td>${b.pidieron_publicarse || 0}</td><td>${b.aprobados || 0}</td><td>${b.rechazados || 0}</td><td>${b.pendientes || 0}</td></tr>`).join('') + '</tbody></table>';
+      }).catch(() => { caja.innerHTML = sinRed; });
+  }
+
+  // ── la cola de la autora ──
+  let token = null;
+  try { token = localStorage.getItem('p314b_gh_token'); } catch (e) {}
+  function cola(mes) {
+    const caja = document.getElementById('cola');
+    document.getElementById('meses-cola').innerHTML = meses.map(m => `<button class="btn" type="button" data-mes="${m}" aria-pressed="${m === mes}">${nombreMes(m)}</button>`).join('');
+    document.querySelectorAll('[data-mes]').forEach(b => b.addEventListener('click', () => cola(b.dataset.mes)));
+    if (!token) { caja.innerHTML = '<p class="aviso">En tu máquina la cola no responde: está en el sitio en línea, con tu token.</p>'; return; }
+    caja.innerHTML = '<p class="aviso">cargando…</p>';
+    fetch('/api/comentarios/cola?mes=' + mes, { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' })
+      .then(r => r.status === 401 ? Promise.reject('token') : r.ok ? r.json() : Promise.reject('red'))
+      .then(d => {
+        const l = (d.comentarios || []).sort((a, b) => (a.estado === 'pendiente' ? 0 : 1) - (b.estado === 'pendiente' ? 0 : 1));
+        if (!l.length) { caja.innerHTML = '<p class="aviso">Ningún comentario en ' + nombreMes(mes) + '.</p>'; return; }
+        caja.innerHTML = l.map(c => {
+          const acc = [];
+          if (c.estado === 'pendiente') acc.push(['aprobar', 'aprobar y publicar'], ['rechazar', 'no publicar']);
+          if (c.estado === 'aprobado') acc.push(['rechazar', 'retirar']);
+          if (c.estado === 'rechazado') acc.push(['aprobar', 'publicar igual']);
+          acc.push(['borrar', 'borrar (basura)']);
+          return `<article class="com" data-id="${esc(c.id)}"><blockquote>${esc(c.texto)}</blockquote>
+            <div class="pie"><span class="etq ${esc(c.estado)}">${esc(c.estado)}</span>${c.firma ? '<span class="firma">— ' + esc(c.firma) + '</span>' : ''}<span>${fecha(c.d)}</span><span>desde ${enlace(c.p)}</span>${c.matriz ? '<span>sirve para la matriz</span>' : ''}</div>
+            <div class="acciones">${acc.map(([a, t]) => `<button class="btn" type="button" data-accion="${a}">${t}</button>`).join('')}</div></article>`;
+        }).join('');
+        caja.querySelectorAll('[data-accion]').forEach(b => b.addEventListener('click', () => {
+          const accion = b.dataset.accion, id = b.closest('[data-id]').dataset.id;
+          if (accion === 'borrar' && !confirm('¿Borrar este comentario? No cuenta más en la bitácora.')) return;
+          b.disabled = true;
+          fetch('/api/comentarios/revisar', { method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ mes, id, accion }) })
+            .then(r => r.ok ? r.json() : Promise.reject(r.status))
+            .then(() => { cola(mes); publicos(); bitacora(); })
+            .catch(s => { b.disabled = false; alert('No se pudo (' + s + ').'); });
+        }));
+      })
+      .catch(e => { caja.innerHTML = '<p class="aviso">' + (e === 'token' ? 'GitHub no reconoce este token como tuyo (o venció). Volvé a pegarlo en <a href="acceso.html">acceso</a>.' : 'La cola solo responde en el sitio en línea.') + '</p>'; });
+  }
+})();
+</script>
+<script src="visita.js"></script>
+</body>
+</html>

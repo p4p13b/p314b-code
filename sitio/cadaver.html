@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cadáver exquisito — p314b</title>
+<meta name="description" content="Un texto nuevo en cada visita: una frase de cada texto del corpus, encadenadas por las palabras que comparten.">
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<style>
+/* Cadáver exquisito del corpus. Las frases y sus vecinas las arma a mano
+   cadaver.py (cadaver.json); acá solo se tiran los dados, en cada visita.
+   No se guarda nada: el que se fue no vuelve. */
+:root{
+  --bg:#080808;--page:#0d0d0d;--ink:#f5f5f5;--ink-soft:#d0d0d0;--ink-muted:#8a8a8a;--rule:#292929;
+  --line-ctl:color-mix(in oklab,var(--ink) 42%,var(--bg));--mark-lt:#60a5fa;--violet:#a78bfa;
+  --font-body:'Newsreader',Georgia,serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f6f4ef;--page:#fbfaf6;--ink:#141414;--ink-soft:#333;--ink-muted:#6b6b6b;--rule:#dcd8cf;--mark-lt:#1d4ed8;--violet:#7c3aed;}}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--bg);color:var(--ink);}
+body{font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
+a{color:inherit;}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;border-bottom:1px solid var(--rule);background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(10px);}
+.nav-btn,.btn{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-decoration:none;padding:7px 11px;min-height:34px;display:inline-flex;align-items:center;border:1px solid var(--line-ctl);border-radius:3px;background:transparent;cursor:pointer;}
+.nav-btn:hover,.btn:hover{border-color:var(--ink);}
+.btn[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in oklab,var(--ink) 8%,transparent);}
+:focus-visible{outline:2px solid var(--mark-lt);outline-offset:2px;}
+main{max-width:860px;margin:0 auto;padding:40px 24px 90px;}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-muted);margin:0 0 6px;}
+h1{font-style:italic;font-weight:300;font-size:clamp(40px,7vw,76px);line-height:1;margin:0 0 16px;letter-spacing:-.02em;}
+.lede{font-size:17px;line-height:1.55;color:var(--ink-soft);max-width:60ch;margin:0 0 20px;}
+.acciones{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 34px;}
+#cadaver{font-size:21px;line-height:1.75;margin:0;padding:0;list-style:none;}
+#cadaver li{position:relative;margin:0 0 .2em;opacity:0;transform:translateY(6px);animation:entra .9s ease forwards;}
+#cadaver.prosa li{display:inline;margin:0;}
+#cadaver.prosa li::after{content:' ';}
+#cadaver li .de{display:block;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.06em;color:var(--ink-muted);text-decoration:none;opacity:0;transition:opacity .2s;margin:2px 0 10px;}
+#cadaver li:hover .de,#cadaver li:focus-within .de{opacity:1;}
+#cadaver.prosa li .de{display:none;}
+#cadaver .hilo{text-decoration:underline dotted var(--violet) 1.5px;text-underline-offset:.25em;}
+@keyframes entra{to{opacity:1;transform:none;}}
+@media (prefers-reduced-motion:reduce){#cadaver li{animation:none;opacity:1;transform:none;}}
+.pie{font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);margin-top:34px;border-top:1px solid var(--rule);padding-top:14px;line-height:1.7;}
+@media (max-width:700px){main{padding:28px 16px 60px;}#cadaver{font-size:19px;}}
+</style>
+</head>
+<body>
+<nav class="nav"><a class="nav-btn" href="index.html">← índice</a><span class="eyebrow" style="margin:0">p314b</span></nav>
+<main>
+  <p class="eyebrow">cadáver exquisito del corpus</p>
+  <h1>nadie firma</h1>
+  <p class="lede">Una frase de cada texto, y cada una llama a la siguiente desde otro texto por las palabras que comparten (subrayadas). Se arma de nuevo en cada visita y no se guarda: el que se fue no vuelve.</p>
+  <div class="acciones">
+    <button class="btn" id="otra" type="button">otra tirada</button>
+    <button class="btn" id="mas" type="button">una frase más</button>
+    <button class="btn" id="prosa" type="button" aria-pressed="false">en prosa</button>
+  </div>
+  <ol id="cadaver" aria-live="polite"></ol>
+  <p class="pie" id="pie"></p>
+</main>
+<script src="comun.js"></script>
+<script>
+(function () {
+  'use strict';
+  const LARGO = 7;
+  const esc = P314.esc;
+  const ol = document.getElementById('cadaver'), pie = document.getElementById('pie');
+  let D = null, cadena = [];
+  const raiz = w => w.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').slice(0, 6);
+  const palabras = t => (t.match(/[\p{L}]{5,}/gu) || []);
+
+  // la siguiente: entre las vecinas de otro texto todavía no usado, al azar
+  // con más chance cuanto más cerca
+  function siguiente() {
+    const usados = new Set(cadena.map(i => D.f[i][0]));
+    const ult = D.f[cadena[cadena.length - 1]];
+    const cand = ult.slice(2).filter(([j]) => !usados.has(D.f[j][0]));
+    if (!cand.length) return null;
+    const tot = cand.reduce((a, [, p]) => a + p, 0);
+    let r = Math.random() * tot;
+    for (const [j, p] of cand) { r -= p; if (r <= 0) return j; }
+    return cand[cand.length - 1][0];
+  }
+  function pintar() {
+    ol.innerHTML = '';
+    cadena.forEach((i, k) => {
+      const [o, t] = D.f[i];
+      const antes = k ? new Set(palabras(D.f[cadena[k - 1]][1]).map(raiz)) : new Set();
+      const despues = k < cadena.length - 1 ? new Set(palabras(D.f[cadena[k + 1]][1]).map(raiz)) : new Set();
+      const html = esc(t).replace(/[\p{L}]{5,}/gu, w => (antes.has(raiz(w)) || despues.has(raiz(w))) ? `<span class="hilo">${w}</span>` : w);
+      const [slug, tit] = D.o[o];
+      const li = document.createElement('li');
+      li.style.animationDelay = (k * 0.35) + 's';
+      li.innerHTML = `${html}<a class="de" href="obras/${esc(slug)}.html">— ${esc(tit)}</a>`;
+      ol.appendChild(li);
+    });
+    pie.textContent = `${cadena.length} frases de ${cadena.length} textos, entre ${D.f.length} frases de ${D.o.length} textos en línea.`;
+  }
+  function tirar() {
+    cadena = [Math.floor(Math.random() * D.f.length)];
+    while (cadena.length < LARGO) { const j = siguiente(); if (j == null) break; cadena.push(j); }
+    pintar();
+  }
+  document.getElementById('otra').addEventListener('click', tirar);
+  document.getElementById('mas').addEventListener('click', () => {
+    const j = siguiente();
+    if (j == null) { pie.textContent = 'No hay más: la última frase no llama a ningún texto que falte.'; return; }
+    cadena.push(j); pintar();
+  });
+  document.getElementById('prosa').addEventListener('click', e => {
+    const b = e.currentTarget, v = b.getAttribute('aria-pressed') !== 'true';
+    b.setAttribute('aria-pressed', String(v)); ol.classList.toggle('prosa', v);
+  });
+  fetch('cadaver.json', { cache: 'no-cache' }).then(r => r.json()).then(d => { D = d; tirar(); })
+    .catch(() => { pie.textContent = 'No se pudo leer cadaver.json.'; });
+})();
+</script>
+<script src="visita.js"></script>
+</body>
+</html>

@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<script src="autor.js" data-herramienta></script>
+<script src="vendor/d3-7.9.0/d3.min.js"></script>
+<script src="matriz-obras.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>matriz relacional — p314b</title>
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<style>
+:root {
+  --bg:        #080808;
+  --bg-alt:    #111111;
+  --page:      #0d0d0d;
+  --ink:       #f5f5f5;
+  --ink-soft:  #d0d0d0;
+  --ink-muted: #8a8a8a;
+  --ink-ghost: #505050;
+  --rule:      #292929;
+  --mark:      #3b82f6;
+  --mark-lt:   #60a5fa;
+  --mark-dk:   #1d4ed8;
+  --mark-bg:   rgba(59,130,246,0.10);
+  --green:     #22c55e;
+  --green-bg:  rgba(34,197,94,0.10);
+  --amber:     #eab308;
+  --amber-bg:  rgba(234,179,8,0.10);
+  --grey:      #6b6b6b;
+  --font-body: 'Newsreader', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius:    3px;
+  --nav-h:     52px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{background:var(--bg);}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);-webkit-font-smoothing:antialiased;min-height:100vh;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+
+.nav{
+  position:sticky;top:0;z-index:20;height:var(--nav-h);
+  background:color-mix(in oklab, var(--bg) 88%, transparent);
+  backdrop-filter:blur(14px) saturate(1.2);
+  border-bottom:1px solid var(--rule);
+  padding:0 40px;display:flex;align-items:center;justify-content:space-between;gap:24px;
+}
+.nav-logo{font-style:italic;font-size:16px;}
+.nav-tools{display:flex;align-items:center;gap:22px;font-family:var(--font-mono);font-size:11px;letter-spacing:0.06em;color:var(--ink-soft);}
+.nav-tools a:hover{color:var(--ink);}
+
+.wrap{max-width:1180px;margin:0 auto;padding:36px 40px 64px;}
+@media(max-width:640px){.wrap{padding:28px 16px 48px;}.nav{padding:0 16px;}}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:12px;}
+h1{font-weight:400;font-style:italic;font-size:34px;letter-spacing:-0.01em;margin-bottom:6px;}
+.lede{font-size:15px;line-height:1.65;color:var(--ink-soft);max-width:680px;margin-bottom:28px;}
+.lede code,.nota code{font-family:var(--font-mono);font-size:12px;}
+
+.stats{display:flex;gap:28px;flex-wrap:wrap;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:18px 0;margin-bottom:24px;}
+.stat{text-align:left;}
+.stat .num{font-family:var(--font-mono);font-size:22px;font-weight:500;color:var(--ink);}
+.stat .lbl{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);margin-top:2px;}
+
+.toggles{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.toggles button{
+  font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+  border:1px solid var(--rule);border-radius:var(--radius);padding:6px 14px;color:var(--ink-soft);
+}
+.toggles button:hover{color:var(--ink);border-color:var(--ink-soft);}
+.toggles button.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+
+.filtros{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:18px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);}
+.filtros label{display:flex;align-items:center;gap:8px;}
+.filtros select{
+  font-family:var(--font-mono);font-size:11px;letter-spacing:0.02em;text-transform:none;
+  background:var(--page);color:var(--ink-soft);border:1px solid var(--rule);border-radius:var(--radius);padding:5px 8px;
+}
+.filtros select:focus{outline:1px solid var(--mark-lt);}
+
+#fetch-status{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);margin-bottom:18px;line-height:1.7;}
+#fetch-error{
+  display:none;background:var(--amber-bg);border:1px solid var(--amber);border-radius:var(--radius);
+  padding:14px 16px;font-family:var(--font-mono);font-size:11.5px;color:#d4b23a;line-height:1.6;margin-bottom:20px;
+}
+#fetch-error code{background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:2px;}
+
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:28px;align-items:start;}
+@media(max-width:880px){.grid{grid-template-columns:minmax(0,1fr);}}
+#view-graph{background:var(--page);border:1px solid var(--rule);border-radius:6px;padding:14px;}
+#view-graph svg{width:100%;height:auto;display:block;}
+.node{cursor:pointer;}
+.node circle{transition:opacity .15s,stroke-width .15s;}
+.node text{font-family:var(--font-mono);font-size:9.5px;fill:var(--ink-soft);pointer-events:none;}
+.node.sitio.con_diagonales text{font-size:11px;fill:var(--ink);}
+.node.sitio circle{fill:var(--page);stroke:var(--mark-lt);stroke-width:1.5;}
+.node.sitio.sin_diagonales circle{stroke-dasharray:3 2;stroke:var(--ink-ghost);}
+.node.sitio.sin_diagonales text{fill:var(--ink-muted);}
+.node.ancla circle{fill:var(--mark-lt);stroke:var(--page);stroke-width:1;}
+.node.ancla.fija circle,.node.ancla:hover circle{stroke:var(--ink);stroke-width:1.5;}
+.orbita{fill:none;stroke:var(--rule);stroke-width:1;}
+.edge{fill:none;stroke:var(--mark);stroke-width:1.4;opacity:.8;transition:opacity .15s;}
+.edge-hit{fill:none;stroke:transparent;stroke-width:12;cursor:pointer;}
+.edge.fija{stroke:var(--mark-lt);opacity:1;}
+.edge.en-recorrido{stroke:var(--ink);opacity:1;}
+.salto{fill:none;stroke:var(--ink-muted);stroke-width:1;stroke-dasharray:1 4;stroke-linecap:round;}
+.paso-num{font-family:var(--font-mono);font-size:10px;fill:var(--ink);paint-order:stroke;stroke:var(--page);stroke-width:4px;pointer-events:none;}
+.edge.propuesta{stroke:var(--grey);stroke-width:1;stroke-dasharray:3 4;opacity:.45;}
+.edge.cowork{stroke:var(--amber);opacity:.22;}
+.edge.cowork.fija{opacity:.85;}
+.filtros input[type=range]{vertical-align:middle;width:110px;}
+.node.dim,.orbita.dim{opacity:.2;}
+.edge.dim{opacity:.07;}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{text-align:left;font-family:var(--font-mono);font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);border-bottom:1px solid var(--rule);padding:8px 10px;}
+td{border-bottom:1px solid var(--rule);padding:9px 10px;vertical-align:top;}
+tbody tr{cursor:pointer;}
+tbody tr:hover td{background:var(--mark-bg);}
+.mono{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);}
+.hidden{display:none;}
+.frag{font-style:italic;color:var(--ink-soft);}
+.vacio{font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);padding:18px 10px;line-height:1.7;}
+
+.panel{background:var(--page);border:1px solid var(--rule);border-radius:6px;padding:18px;font-family:var(--font-mono);font-size:11.5px;line-height:1.7;color:var(--ink-soft);max-height:640px;overflow-y:auto;}
+.panel .ph-title{color:var(--ink);font-size:15px;font-family:var(--font-body);font-style:italic;margin-bottom:10px;}
+.panel dt{color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.1em;font-size:9px;margin-top:12px;}
+.panel dd{margin-top:3px;}
+.panel .cita{font-family:var(--font-body);font-size:14px;font-style:italic;color:var(--ink);line-height:1.5;}
+.panel .emergente{font-family:var(--font-body);font-size:14px;line-height:1.6;color:var(--ink-soft);white-space:pre-wrap;margin-top:6px;}
+.badge{display:inline-block;font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border:1px solid var(--rule);border-radius:2px;}
+.badge.autor{color:var(--green);border-color:var(--green);}
+.badge.inferencia-matriz,.badge.inferencia-lee{color:var(--grey);}
+.badge.semilla{color:var(--amber);border-color:var(--amber);}
+.panel .det-row{border-top:1px solid var(--rule);padding:8px 0;}
+.panel a,.recorrido a,td a{color:var(--mark-lt);}
+.panel a:hover,.recorrido a:hover,td a:hover{text-decoration:underline;}
+
+.legend{font-family:var(--font-mono);font-size:9.5px;color:var(--ink-muted);line-height:2;margin-top:16px;}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+
+.seccion{margin-top:40px;border-top:1px solid var(--rule);padding-top:22px;}
+.nota{font-size:14px;line-height:1.6;color:var(--ink-muted);max-width:720px;margin-bottom:16px;}
+.grupo{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-muted);margin:18px 0 6px;}
+.recorrido{border:1px solid var(--rule);border-radius:var(--radius);margin-bottom:8px;background:var(--page);}
+.recorrido > button{width:100%;text-align:left;padding:10px 14px;display:flex;justify-content:space-between;gap:16px;font-family:var(--font-body);font-size:15px;font-style:italic;color:var(--ink);}
+.recorrido > button .mono{font-style:normal;}
+.recorrido > button:hover,.recorrido.abierto > button{background:var(--mark-bg);}
+.recorrido ol{list-style:none;padding:4px 14px 12px;}
+.recorrido li{padding:8px 0;border-top:1px solid var(--rule);font-size:14px;line-height:1.5;display:grid;grid-template-columns:28px minmax(0,1fr);gap:6px;}
+.recorrido li .n{font-family:var(--font-mono);font-size:11px;color:var(--mark-lt);padding-top:2px;}
+.recorrido li.salto-item{display:block;border-top:none;padding:0 0 0 34px;font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);}
+.recorrido .sitio-t{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);}
+
+/* Sumario: índice de la página, fijo bajo la barra, con la sección a la vista marcada. */
+.sumario{position:sticky;top:var(--nav-h);z-index:15;display:flex;flex-wrap:wrap;gap:4px 22px;align-items:center;margin:0 -40px 24px;padding:10px 40px;background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--rule);font-family:var(--font-mono);font-size:12px;}
+.sumario a{color:var(--ink-muted);padding:3px 0;border-bottom:1px solid transparent;}
+.sumario a:hover{color:var(--ink);}
+.sumario a.aca{color:var(--ink);border-bottom-color:var(--mark);}
+.sumario a .n{color:var(--ink-ghost);margin-left:4px;}
+.sumario a[hidden]{display:none;}
+@media(max-width:640px){.sumario{margin:0 -16px 20px;padding:8px 16px;}}
+#vista,#recorridos-sec,#propuestas-sec,#como{scroll-margin-top:calc(var(--nav-h) + 56px);}
+/* Recorridos en dos columnas: por instrumento a la izquierda, el resto a la derecha. */
+.rec-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0 24px;align-items:start;}
+.rec-cols .grupo:first-child{margin-top:0;}
+@media(max-width:900px){.rec-cols{grid-template-columns:1fr;}}
+/* Propuestas: agrupadas por instrumento, plegadas. */
+.prop-ctrl{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);margin-bottom:14px;}
+.prop-ctrl select{background:var(--bg-alt);color:var(--ink);border:1px solid var(--rule);border-radius:2px;font:inherit;padding:4px 6px;}
+.prop-grupo{border:1px solid var(--rule);border-radius:var(--radius);background:var(--page);margin-bottom:8px;}
+.prop-grupo > summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 16px;padding:11px 14px;}
+.prop-grupo > summary::-webkit-details-marker{display:none;}
+.prop-grupo > summary::before{content:"▸";color:var(--ink-muted);margin-right:8px;font-family:var(--font-mono);}
+.prop-grupo[open] > summary::before{content:"▾";}
+.prop-grupo > summary:hover{background:var(--mark-bg);}
+.prop-grupo .nombre{font-style:italic;font-size:16px;color:var(--ink);flex:1;}
+.prop-grupo .resumen{font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);}
+.prop-lista{list-style:none;padding:0 14px 6px;}
+.prop-lista li{border-top:1px solid var(--rule);padding:9px 0;font-size:14px;line-height:1.5;}
+.prop-lista li.de-mas{display:none;}
+.prop-lista.todas li.de-mas{display:block;}
+.prop-lista .frag{font-style:italic;color:var(--ink-soft);}
+.prop-lista .pie{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:3px;font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);}
+.prop-lista details summary{cursor:pointer;color:var(--mark-lt);}
+.prop-lista details p{font-family:var(--font-mono);font-size:11px;line-height:1.6;color:var(--ink-muted);margin-top:4px;flex-basis:100%;}
+.prop-mas{font-family:var(--font-mono);font-size:11px;color:var(--mark-lt);border-bottom:1px dotted var(--mark-lt);margin:2px 14px 12px;}
+.howto{margin-top:40px;border-top:1px solid var(--rule);padding-top:20px;font-family:var(--font-mono);font-size:11px;line-height:1.9;color:var(--ink-muted);}
+.howto code{background:var(--bg-alt);color:var(--ink-soft);padding:2px 6px;border-radius:2px;}
+</style>
+
+<style id="p314b-estandar">
+/* Estándar de controles (propuesta 30/09): 4 niveles, bordes ≥3:1, texto ≥4.5:1. Va al final para ganar sin tocar lo anterior. */
+:root{--line-ctl:color-mix(in oklab,var(--ink) 42%,var(--bg));--ctl-sz:13px;}
+.nav-volver,.nav-logo[href]{text-decoration:none;}
+:root{--ink-ghost:#7a7a7a;}
+
+.nav-logo{color:var(--ink);font-family:var(--font-mono);font-style:normal;font-size:var(--ctl-sz);padding:7px 12px;border:1px solid var(--line-ctl);border-radius:3px;}
+.nav-logo:hover{border-color:var(--ink);}
+.nav-tools{font-size:var(--ctl-sz);letter-spacing:0;color:var(--ink);gap:8px;}
+.nav-tools a{color:var(--ink);text-decoration:none;padding:7px 12px;border:1px solid var(--line-ctl);border-radius:3px;}
+.nav-tools a:hover{border-color:var(--ink);}
+.toggles button{font-size:var(--ctl-sz);letter-spacing:0;text-transform:none;padding:7px 14px;min-height:34px;color:var(--ink);border-color:var(--line-ctl);}
+.filtros{font-size:12px;letter-spacing:0;text-transform:none;color:var(--ink-soft);}
+.filtros select{font-size:var(--ctl-sz);color:var(--ink);border-color:var(--line-ctl);}
+.stat .lbl{font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--ink-soft);}
+
+/* Paso 4 · zoom, foco por grado, búsqueda y estado en la URL */
+#view-graph{position:relative;}
+#svg{cursor:grab;touch-action:none;}
+#svg:active{cursor:grabbing;}
+.foco-fuera{opacity:.07!important;transition:opacity .2s;}
+.node.foco-centro circle{stroke:var(--ink)!important;stroke-width:2.5px!important;}
+.grafo-ctl{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;z-index:2;}
+.grafo-ctl .fila{display:flex;gap:4px;}
+.grafo-ctl button,.grafo-ctl input{font-family:var(--font-mono);font-size:13px;background:color-mix(in oklab,var(--bg) 88%,transparent);color:var(--ink);border:1px solid var(--line-ctl);border-radius:3px;min-height:32px;}
+.grafo-ctl button{min-width:32px;padding:4px 8px;cursor:pointer;}
+.grafo-ctl button:hover{border-color:var(--ink);}
+.grafo-ctl input{padding:4px 8px;width:200px;}
+.grafo-foco{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);background:color-mix(in oklab,var(--bg) 88%,transparent);padding:4px 8px;border:1px solid var(--line-ctl);border-radius:3px;}
+.stat[data-ir]{cursor:pointer;border-radius:3px;}
+.stat[data-ir]:hover .num{color:var(--mark-lt);}
+@media (max-width:760px){.filtros label{flex-wrap:wrap;max-width:100%;}.filtros select{max-width:100%;min-width:0;}.grafo-ctl input{width:140px;}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html">← corpus</a>
+  <div class="nav-tools">
+    
+    <a href="matriz-anexo.html">anexo</a>
+    <a href="matriz-autonoma.html">autónoma</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="eyebrow">infraestructura</div>
+  <h1>matriz relacional</h1>
+  <p class="lede">Las diagonales que escribiste, como aristas entre anclas: un fragmento de un post o una página de un PDF. Se lee en vivo de <code>acciones.json</code>, <code>corpus.json</code> y <code>matriz/</code>. Desde acá no se edita nada: los pesos los calcula <code>matriz/recalibrar.py</code> y los recorridos <code>matriz/calcular_recorridos.py</code>.</p>
+
+  <div id="fetch-error"></div>
+
+  <div class="stats">
+    <div class="stat"><div class="num" id="stat-sitios">—</div><div class="lbl">sitios con diagonales</div></div>
+    <div class="stat"><div class="num" id="stat-anclas">—</div><div class="lbl">anclas</div></div>
+    <div class="stat"><div class="num" id="stat-diags">—</div><div class="lbl">diagonales</div></div>
+    <div class="stat"><div class="num" id="stat-instr">—</div><div class="lbl">instrumentos en uso</div></div>
+    <div class="stat"><div class="num" id="stat-rec">—</div><div class="lbl">recorridos</div></div>
+  </div>
+
+  <nav class="sumario" id="sumario" aria-label="Secciones de esta página">
+    <a href="#vista">grafo y tablas</a>
+    <a href="#recorridos-sec">recorridos<span class="n" id="sum-rec"></span></a>
+    <a href="#propuestas-sec" id="sum-prop" hidden>propuestas de la matriz<span class="n" id="sum-prop-n"></span></a>
+    <a href="#como">cómo actualizar</a>
+  </nav>
+
+  <div id="fetch-status">cargando…</div>
+
+  <div class="toggles" id="vista">
+    <button id="btn-view-obras" class="active" data-vista="obras">textos</button>
+    <button id="btn-view-graph" data-vista="graph">anclas</button>
+    <button id="btn-view-tabla" data-vista="tabla">diagonales</button>
+    <button id="btn-view-instr" data-vista="instr">instrumentos</button>
+    <button id="btn-reload">↻ releer</button>
+  </div>
+
+  <div class="filtros">
+    <label>instrumento <select id="f-instr"><option value="">todos</option></select></label>
+    <label>tipo de relación <select id="f-tipo"><option value="">todos</option></select></label>
+    <label id="lbl-cowork" class="hidden"><input type="checkbox" id="f-cowork" checked> relaciones del Cowork</label>
+    <label id="lbl-cowork-min" class="hidden">las más fuertes <input type="range" id="f-cowork-min" min="0" max="95" step="5" value="80"> <span id="f-cowork-n"></span></label>
+    <label id="lbl-prop" class="hidden"><input type="checkbox" id="f-prop" checked> propuestas de la matriz</label>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div id="view-obras"></div>
+      <div id="view-graph" class="hidden"><svg id="svg" viewBox="0 0 760 560" role="img" aria-label="Grafo de sitios, anclas y diagonales"></svg></div>
+      <div id="view-tabla" class="hidden">
+        <table>
+          <thead><tr><th>origen</th><th>destino</th><th>instrumento</th><th>tipo de relación</th></tr></thead>
+          <tbody id="tabla-body"></tbody>
+        </table>
+      </div>
+      <div id="view-instr" class="hidden">
+        <table>
+          <thead><tr><th>instrumento</th><th>estatuto</th><th>diagonales</th><th>decisiones</th><th>peso</th><th>umbral</th></tr></thead>
+          <tbody id="instr-body"></tbody>
+        </table>
+      </div>
+      <div class="legend" id="legend">
+        <span><span class="dot" style="border:1.5px solid var(--mark-lt)"></span>sitio con diagonales &mdash;</span>
+        <span><span class="dot" style="border:1.3px dashed var(--ink-ghost)"></span>sitio sin diagonales todavía</span><br>
+        <span><span class="dot" style="background:var(--mark-lt);width:5px;height:5px"></span>ancla (fragmento de un post o página de un PDF)</span><br>
+        <span style="color:var(--mark)">━▸</span> diagonal (la escribiste vos); el grosor es el peso de su instrumento &nbsp;
+        <span style="color:var(--ink-muted)">┈</span> salto dentro de un recorrido
+        <span id="legend-propuestas" class="hidden"><br><span style="color:var(--grey)">┄</span> propuesta de la matriz (inferencia-matriz: no es una relación confirmada)</span>
+        <span id="legend-cowork" class="hidden"><br><span style="color:var(--amber)">━</span> relación entre textos de la lectura del Cowork (criterios de los informes, reescritura, glosario); el grosor es su peso. No es una diagonal.</span>
+      </div>
+    </div>
+    <div class="panel" id="detail-panel"></div>
+  </div>
+
+  <section class="seccion" id="recorridos-sec">
+    <div class="eyebrow">recorridos</div>
+    <p class="nota">Caminos que pasan solo por tus diagonales, armados con criterios declarados en <code>matriz/calcular_recorridos.py</code>: por instrumento, por tipo de relación, por peso y a la deriva. Cada paso lleva a la obra, al ancla. No son el botón «recorrido» de cada obra (que fija todas las diagonales de la página): ese sigue igual.</p>
+    <div id="recorridos-lista"><div class="vacio">cargando…</div></div>
+  </section>
+
+  <section class="seccion hidden" id="propuestas-sec">
+    <div class="eyebrow">propuestas de la matriz</div>
+    <p class="nota">Las propone el motor (<code>matriz/proponer_cruces.py</code>), con estatuto <code>inferencia-matriz</code>: no son relaciones confirmadas ni tienen emergente. Se muestran porque <code>mostrar_propuestas</code> está activado en <code>matriz/config.json</code>.</p>
+    <div class="prop-ctrl">
+      <label>obra <select id="prop-obra"><option value="">todas</option></select></label>
+      <span id="prop-cuenta"></span>
+      <button type="button" class="prop-mas" id="prop-abrir" style="margin:0">desplegar todos</button>
+    </div>
+    <div id="propuestas-lista"></div>
+  </section>
+
+  <div class="howto" id="como">
+    Para actualizar lo que ves: publicá o regenerá las obras con <code>python3 generar_obra.py &lt;obra&gt;.json</code>; después <code>python3 matriz/recalibrar.py</code> (pesos y umbrales) y <code>python3 matriz/calcular_recorridos.py</code> (recorridos). Recargá esta página o tocá <strong>↻ releer</strong>. Cómo se calcula cada cosa: <code>matriz/LEEME.md</code>.
+  </div>
+</div>
+
+<script>
+let ACCIONES = {}, OBRAS = [], REGISTRO = null, RECORRIDOS = null, CONFIG = {}, PROPUESTAS = null, RELACIONES = null;
+let DIAGONALES = [];          // [{id, origen, destino, instrumento, tipo_relacion, emergente}]
+let ANCLAS = {};              // id -> {id, sitio, capitulo, fragmento, pdf_pagina}
+let SITIOS = [];              // [{id, titulo, tipo_nodo, serie, _file, conDiagonales}]
+let fijado = null;            // {kind, id}: selección que no cambia con el hover
+let recorridoActivo = null;
+let _pos = null;
+
+const $ = id => document.getElementById(id);
+
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function leerJSON(ruta) {
+  const r = await fetch(ruta, {cache:'no-store'});
+  if (!r.ok) throw new Error(ruta + ': HTTP ' + r.status);
+  return r.json();
+}
+
+async function cargar() {
+  $('fetch-status').textContent = 'cargando acciones.json, corpus.json y matriz/…';
+  $('fetch-error').style.display = 'none';
+  const avisos = [];
+
+  // acciones.json es indispensable: sin diagonales no hay grafo.
+  try {
+    ACCIONES = (await leerJSON('acciones.json')).acciones || {};
+  } catch (e) {
+    $('fetch-error').style.display = 'block';
+    $('fetch-error').innerHTML = '<strong>No se pudo leer acciones.json.</strong><br>' + escHtml(e.message) +
+      '<br>Si abriste este archivo con doble clic (<code>file://…</code>), el navegador bloquea la lectura de archivos locales. Serví la carpeta <code>sitio/</code> con <code>python3 -m http.server</code> y abrí <code>http://localhost:8000/matriz.html</code>.';
+    $('fetch-status').textContent = 'Error al leer acciones.json: ver aviso arriba.';
+    return;
+  }
+  // El resto es best-effort: si falta, la página sigue con menos datos.
+  try { OBRAS = (await leerJSON('corpus.json')).obras || []; }
+  catch (e) { OBRAS = []; avisos.push('corpus.json no se pudo leer (' + e.message + '): los sitios se muestran por su id'); }
+  try { REGISTRO = await leerJSON('matriz/instrumentos.json'); }
+  catch (e) { REGISTRO = null; avisos.push('no hay registro de instrumentos: corré python3 matriz/recalibrar.py'); }
+  try { RECORRIDOS = await leerJSON('matriz/recorridos.json'); }
+  catch (e) { RECORRIDOS = null; avisos.push('no hay recorridos calculados: corré python3 matriz/calcular_recorridos.py'); }
+  try { CONFIG = await leerJSON('matriz/config.json'); }
+  catch (e) { CONFIG = {}; }
+  // Relaciones entre obras de la lectura del Cowork (matriz/cowork.py):
+  // una capa aparte, a nivel obra, que puebla el grafo antes de que haya
+  // diagonales.
+  try { RELACIONES = await leerJSON('matriz/relaciones.json'); }
+  catch (e) { RELACIONES = null; }
+  PROPUESTAS = null;
+  if (CONFIG.mostrar_propuestas === true) {
+    try { PROPUESTAS = await leerJSON('matriz/propuestas.json'); }
+    catch (e) { avisos.push('mostrar_propuestas está activado pero no se pudo leer matriz/propuestas.json'); }
+  }
+
+  armarModelo();
+  const faltanEnRecorridos = RECORRIDOS ? DIAGONALES.filter(d =>
+    !(RECORRIDOS.recorridos || []).some(r => r.pasos.some(p => p.diagonal === d.id))).length : 0;
+  if (faltanEnRecorridos) avisos.push(faltanEnRecorridos + ' diagonal(es) todavía no están en los recorridos: corré python3 matriz/calcular_recorridos.py');
+
+  $('fetch-status').innerHTML = escHtml(DIAGONALES.length + ' diagonal(es) · ' + Object.keys(ANCLAS).length + ' ancla(s) · leído ' + new Date().toLocaleTimeString('es-AR'))
+    + avisos.map(a => '<br>⚠ ' + escHtml(a)).join('');
+  render();
+  aplicarParametros();
+}
+
+/* ── Modelo: diagonales, anclas y sitios, desde acciones.json ── */
+
+function instrumento(id) {
+  if (!id || !REGISTRO) return null;
+  return (REGISTRO.instrumentos || []).find(i => i.id === id || (i.alias || []).includes(id)) || null;
+}
+function instrId(id) { const i = instrumento(id); return i ? i.id : id; }
+function instrEtiqueta(id) { const i = instrumento(id); return i ? (i.etiqueta || i.id) : (id || 'sin instrumento'); }
+function titulo(sitio) { const o = OBRAS.find(x => x.id === sitio); return o ? o.titulo : sitio; }
+
+function slugTitulo(s) {
+  return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+function armarModelo() {
+  DIAGONALES = []; ANCLAS = {};
+  Object.entries(ACCIONES).forEach(([aid, a]) => {
+    (a.tipos || []).forEach(t => {
+      // la vuelta (reciproca_de) es la misma diagonal: cuenta una vez
+      if (t.tipo !== 'diagonal' || t.reciproca_de) return;
+      const dest = ACCIONES[t.destino];
+      if (!dest) return;   // destino sin resolver: no hay arista que dibujar
+      [[aid, a], [t.destino, dest]].forEach(([id, acc]) => {
+        const o = acc.origen || {};
+        ANCLAS[id] = { id, sitio: o.obra, capitulo: o.capitulo, fragmento: o.fragmento, pdf_pagina: o.pdf_pagina };
+      });
+      // sin instrumento, el significante es el título (igual que en matriz/comun.py)
+      const instr = t.instrumento || (t.titulo ? slugTitulo(t.titulo) : null);
+      DIAGONALES.push({ id: aid, origen: aid, destino: t.destino, instrumento: instrId(instr), titulo: t.titulo || '',
+                        tipo_relacion: (t.tipo_relacion || '').trim() || null, emergente: t.emergente || '' });
+    });
+  });
+  const conDiag = new Set(Object.values(ANCLAS).map(x => x.sitio));
+  SITIOS = OBRAS.map(o => ({ id: o.id, titulo: o.titulo, tipo_nodo: o.tipo_nodo || 'post', serie: o.serie, _file: o._file, conDiagonales: conDiag.has(o.id) }));
+  conDiag.forEach(s => { if (!SITIOS.some(x => x.id === s)) SITIOS.push({ id: s, titulo: s, tipo_nodo: 'post', conDiagonales: true }); });
+  _pos = null;
+}
+
+function lugarAncla(an) {
+  if (!an) return '';
+  return an.pdf_pagina != null ? 'p. ' + an.pdf_pagina : (an.fragmento ? '«' + an.fragmento + '»' : an.id);
+}
+function urlAncla(an) {
+  const s = SITIOS.find(x => x.id === an.sitio);
+  return 'obras/' + encodeURIComponent(s && s._file ? s._file.replace(/\.html$/, '') : an.sitio) + '.html#accion=' + encodeURIComponent(an.id);
+}
+
+/* ── Filtros ── */
+
+function pasaFiltro(d) {
+  const fi = $('f-instr').value, ft = $('f-tipo').value;
+  if (fi && d.instrumento !== fi) return false;
+  if (ft === '__sin' && d.tipo_relacion) return false;
+  if (ft && ft !== '__sin' && d.tipo_relacion !== ft) return false;
+  return true;
+}
+
+function llenarFiltros() {
+  const fi = $('f-instr'), ft = $('f-tipo');
+  const vi = fi.value, vt = ft.value;
+  const instrs = [...new Set(DIAGONALES.map(d => d.instrumento).filter(Boolean))];
+  fi.innerHTML = '<option value="">todos</option>' + instrs.map(i => `<option value="${escHtml(i)}">${escHtml(instrEtiqueta(i))}</option>`).join('');
+  const tipos = [...new Set(DIAGONALES.map(d => d.tipo_relacion).filter(Boolean))].sort();
+  ft.innerHTML = '<option value="">todos</option>' + tipos.map(t => `<option value="${escHtml(t)}">${escHtml(t)}</option>`).join('')
+    + (DIAGONALES.some(d => !d.tipo_relacion) ? '<option value="__sin">sin tipo todavía</option>' : '');
+  if ([...fi.options].some(o => o.value === vi)) fi.value = vi;
+  if ([...ft.options].some(o => o.value === vt)) ft.value = vt;
+}
+
+/* ── Render ── */
+
+function render() {
+  const sitiosCon = SITIOS.filter(s => s.conDiagonales).length;
+  $('stat-sitios').textContent = sitiosCon + ' / ' + SITIOS.length;
+  $('stat-anclas').textContent = Object.keys(ANCLAS).length;
+  $('stat-diags').textContent = DIAGONALES.length;
+  const enUso = new Set(DIAGONALES.map(d => d.instrumento).filter(Boolean)).size;
+  $('stat-instr').textContent = REGISTRO ? enUso + ' / ' + (REGISTRO.instrumentos || []).length : enUso;
+  $('stat-rec').textContent = RECORRIDOS ? (RECORRIDOS.recorridos || []).length : '—';
+  $('legend-propuestas').classList.toggle('hidden', !PROPUESTAS);
+  ['lbl-cowork', 'lbl-cowork-min', 'legend-cowork'].forEach(i => $(i).classList.toggle('hidden', !RELACIONES));
+  $('lbl-prop').classList.toggle('hidden', !PROPUESTAS);
+  llenarFiltros();
+  renderGraph();
+  if (window.MO) MO.render();
+  renderTabla();
+  renderInstrumentos();
+  renderRecorridos();
+  renderPropuestas();
+  if (!fijado) { if (window.MO && !$('view-obras').classList.contains('hidden')) MO.panel(null); else panelInicio(); }
+}
+
+/* Layout determinístico (sin azar: recargar no reordena el mapa).
+   Los sitios con diagonales van al centro, en un círculo interior, en
+   el orden de corpus.json; los que todavía no tienen van en un anillo
+   exterior, con la etiqueta hacia afuera para que no se pisen. Las
+   anclas se ubican después, en órbita alrededor de su sitio, del lado
+   de los sitios con los que conectan. */
+let W = 760, H = 560;
+function posiciones() {
+  if (_pos) return _pos;
+  // Con muchas obras el lienzo crece, para que el anillo exterior respire.
+  const muchos = SITIOS.length > 40;
+  W = muchos ? 1000 : 760; H = muchos ? 820 : 560;
+  const rx = muchos ? 330 : 225, ry = muchos ? 320 : 215;
+  const cx = W / 2, cy = H / 2;
+  const sitio = {}, etiqueta = {};
+  const dentro = SITIOS.filter(s => s.conDiagonales), fuera = SITIOS.filter(s => !s.conDiagonales);
+  const r1 = dentro.length <= 1 ? 0 : Math.min(150, 70 + 16 * dentro.length);
+  dentro.forEach((s, i) => {
+    const a = dentro.length === 2 ? (i === 0 ? Math.PI : 0) : (i / dentro.length) * Math.PI * 2 - Math.PI / 2;
+    sitio[s.id] = { x: cx + r1 * Math.cos(a), y: cy + r1 * 0.85 * Math.sin(a) };
+    etiqueta[s.id] = { x: 0, y: -34, anchor: 'middle' };
+  });
+  fuera.forEach((s, i) => {
+    const a = (i / fuera.length) * Math.PI * 2 - Math.PI / 2 + (fuera.length % 2 ? 0 : Math.PI / fuera.length);
+    const c = Math.cos(a), sn = Math.sin(a);
+    sitio[s.id] = { x: cx + rx * c, y: cy + ry * sn };
+    // Etiqueta radial, hacia afuera: con decenas de obras es la única
+    // forma de que dos vecinas no se pisen. Del lado izquierdo se da
+    // vuelta para no leerse cabeza abajo.
+    const grados = Math.atan2(ry * sn, rx * c) * 180 / Math.PI;
+    etiqueta[s.id] = c >= 0
+      ? { x: 9, y: 3, anchor: 'start', rot: grados }
+      : { x: -9, y: 3, anchor: 'end', rot: grados + 180 };
+  });
+
+  // Anclas: en órbita (radio 24) alrededor de su sitio, abiertas en
+  // abanico hacia el promedio de los sitios con los que conectan.
+  const ancla = {}, orbita = {};
+  const porSitio = {};
+  Object.values(ANCLAS).forEach(an => (porSitio[an.sitio] = porSitio[an.sitio] || []).push(an.id));
+  Object.entries(porSitio).forEach(([sid, ids]) => {
+    const c = sitio[sid]; if (!c) return;
+    ids.sort();
+    let px = 0, py = 0, m = 0;
+    DIAGONALES.forEach(d => {
+      const otro = ids.includes(d.origen) ? ANCLAS[d.destino].sitio : ids.includes(d.destino) ? ANCLAS[d.origen].sitio : null;
+      if (otro && otro !== sid && sitio[otro]) { px += sitio[otro].x; py += sitio[otro].y; m++; }
+    });
+    const base = m ? Math.atan2(py / m - c.y, px / m - c.x) : -Math.PI / 2;
+    const nA = ids.length, abanico = Math.min(Math.PI * 1.6, 0.6 * (nA - 1));
+    ids.forEach((id, i) => {
+      const a = base - abanico / 2 + (nA > 1 ? i * abanico / (nA - 1) : 0);
+      ancla[id] = { x: c.x + 24 * Math.cos(a), y: c.y + 24 * Math.sin(a) };
+    });
+    orbita[sid] = true;
+  });
+  _pos = { sitio, ancla, orbita, etiqueta };
+  return _pos;
+}
+
+// Curva de una diagonal: cuadrática, abombada hacia el lado donde están
+// sus anclas respecto de la línea entre los dos sitios (ref es el punto
+// medio de esa línea), así dos diagonales entre los mismos sitios no se
+// cruzan; las del mismo lado se separan por "lado" (1, 2, 3…).
+function curva(p, q, lado, ref) {
+  const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
+  const dx = q.x - p.x, dy = q.y - p.y, len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  const lejos = ref ? (mx - ref.x) * nx + (my - ref.y) * ny : 0;
+  const signo = Math.abs(lejos) > 0.5 ? Math.sign(lejos) : (lado % 2 ? -1 : 1);
+  const off = (0.14 + 0.06 * ((lado - 1) % 3)) * len * signo;
+  const c = { x: mx + nx * off, y: my + ny * off };
+  return { d: `M${p.x.toFixed(1)},${p.y.toFixed(1)} Q${c.x.toFixed(1)},${c.y.toFixed(1)} ${q.x.toFixed(1)},${q.y.toFixed(1)}`,
+           medio: { x: 0.25 * p.x + 0.5 * c.x + 0.25 * q.x, y: 0.25 * p.y + 0.5 * c.y + 0.25 * q.y } };
+}
+
+// Punto medio entre los sitios de una diagonal (referencia del abombado).
+function refPar(d) {
+  const { sitio } = posiciones();
+  const a = sitio[ANCLAS[d.origen].sitio], b = sitio[ANCLAS[d.destino].sitio];
+  return a && b ? { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } : null;
+}
+
+function coworkVisibles() {
+  if (!RELACIONES || !$('f-cowork').checked) { $('f-cowork-n').textContent = ''; return []; }
+  const { sitio } = posiciones();
+  const rs = (RELACIONES.relaciones || []).filter(r => sitio[r.a] && sitio[r.b] && r.a !== r.b);
+  if (!rs.length) return [];
+  const pesos = rs.map(r => r.peso).sort((x, y) => x - y);
+  const corte = pesos[Math.min(pesos.length - 1, Math.floor(pesos.length * (+$('f-cowork-min').value / 100)))];
+  const max = pesos[pesos.length - 1] || 1;
+  const vis = rs.filter(r => r.peso >= corte).map(r => Object.assign({ _rel: r.peso / max }, r));
+  $('f-cowork-n').textContent = vis.length + ' de ' + rs.length;
+  return vis;
+}
+function coworkDe(id) {
+  return ((RELACIONES && RELACIONES.relaciones) || []).filter(r => r.a === id || r.b === id).sort((x, y) => y.peso - x.peso);
+}
+
+function pesoInstr(id) {
+  const i = instrumento(id);
+  return i && i.calculado && typeof i.calculado.peso === 'number' ? i.calculado.peso : 0;
+}
+
+function renderGraph() {
+  const svg = $('svg');
+  const { sitio, ancla, orbita, etiqueta } = posiciones();
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let html = `<defs>
+    <marker id="flecha" viewBox="0 0 6 6" refX="5.5" refY="3" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L6,3 L0,6 z" fill="#3b82f6"/></marker>
+    <marker id="flecha-rec" viewBox="0 0 6 6" refX="5.5" refY="3" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L6,3 L0,6 z" fill="#f5f5f5"/></marker>
+  </defs>`;
+
+  // Relaciones del Cowork, de obra a obra: solo las más fuertes (el
+  // control «las más fuertes» es el percentil de peso desde el que se ven).
+  coworkVisibles().forEach(r => {
+    const a = sitio[r.a], b = sitio[r.b];
+    const w = (0.6 + 2.4 * r._rel).toFixed(2);
+    html += `<path class="edge cowork" data-a="${escHtml(r.a)}" data-b="${escHtml(r.b)}" d="M${a.x.toFixed(1)},${a.y.toFixed(1)} L${b.x.toFixed(1)},${b.y.toFixed(1)}" stroke-width="${w}"><title>${escHtml(titulo(r.a) + ' — ' + titulo(r.b) + ' · peso ' + r.peso.toFixed(2))}</title></path>`;
+  });
+
+  // Propuestas (solo con mostrar_propuestas): de sitio a sitio, porque
+  // sus extremos son páginas que todavía no son anclas.
+  if (PROPUESTAS && $('f-prop').checked) {
+    (PROPUESTAS.propuestas || []).forEach(p => {
+      const a = sitio[p.origen.sitio], b = sitio[p.destino.sitio];
+      if (!a || !b) return;
+      html += `<path class="edge propuesta" data-propuesta="${escHtml(p.id)}" data-instr="${escHtml(p.instrumento)}" d="M${a.x},${a.y} L${b.x},${b.y}"></path>`;
+    });
+  }
+
+  Object.keys(orbita).forEach(sid => {
+    const c = sitio[sid];
+    html += `<circle class="orbita" data-sitio="${escHtml(sid)}" cx="${c.x}" cy="${c.y}" r="24"></circle>`;
+  });
+
+  const vistos = {};
+  DIAGONALES.forEach(d => {
+    const p = ancla[d.origen], q = ancla[d.destino];
+    if (!p || !q) return;
+    const k = [ANCLAS[d.origen].sitio, ANCLAS[d.destino].sitio].sort().join('|');
+    vistos[k] = (vistos[k] || 0) + 1;
+    const { d: path } = curva(p, q, vistos[k], refPar(d));
+    const w = (1.2 + pesoInstr(d.instrumento) * 2.4).toFixed(2);
+    html += `<path class="edge diagonal" data-diag="${escHtml(d.id)}" d="${path}" stroke-width="${w}" marker-end="url(#flecha)"></path>`;
+    html += `<path class="edge-hit" data-diag="${escHtml(d.id)}" d="${path}"></path>`;
+  });
+
+  html += '<g id="capa-recorrido"></g>';
+
+  SITIOS.forEach(s => {
+    const p = sitio[s.id];
+    if (!p) return;
+    const t = s.titulo.length > 24 ? s.titulo.slice(0, 23) + '…' : s.titulo;
+    const e = etiqueta[s.id];
+    html += `<g class="node sitio ${s.conDiagonales ? 'con_diagonales' : 'sin_diagonales'}" data-id="${escHtml(s.id)}" transform="translate(${p.x.toFixed(1)},${p.y.toFixed(1)})">
+      <circle r="${s.conDiagonales ? 8 : 5}"></circle>
+      <text x="${e.x}" y="${e.y}" text-anchor="${e.anchor}"${e.rot != null ? ` transform="rotate(${e.rot.toFixed(1)})"` : ''}>${escHtml(t)}</text>
+    </g>`;
+  });
+  Object.keys(ANCLAS).forEach(id => {
+    const p = ancla[id];
+    if (!p) return;
+    html += `<g class="node ancla" data-id="${escHtml(id)}" transform="translate(${p.x.toFixed(1)},${p.y.toFixed(1)})"><circle r="3.6"></circle></g>`;
+  });
+
+  svg.innerHTML = html;
+
+  svg.querySelectorAll('.node.sitio').forEach(n => {
+    n.addEventListener('mouseenter', () => { if (!fijado) { resaltarSitio(n.dataset.id); panelSitio(n.dataset.id); } });
+    n.addEventListener('click', () => {
+      const s = SITIOS.find(x => x.id === n.dataset.id);
+      if (s && s._file) window.open('obras/' + s._file, '_blank');
+    });
+  });
+  svg.querySelectorAll('.node.ancla').forEach(n => {
+    n.addEventListener('mouseenter', () => { if (!fijado) { resaltarAncla(n.dataset.id); panelAncla(n.dataset.id); } });
+    n.addEventListener('click', e => { e.stopPropagation(); fijar('ancla', n.dataset.id); });
+  });
+  svg.querySelectorAll('.edge-hit').forEach(n => {
+    n.addEventListener('mouseenter', () => { if (!fijado) { resaltarDiagonal(n.dataset.diag); panelDiagonal(n.dataset.diag); } });
+    n.addEventListener('click', e => { e.stopPropagation(); fijar('diagonal', n.dataset.diag); });
+  });
+  svg.onclick = () => { if (fijado) { fijado = null; restaurar(); panelInicio(); } };
+  svg.onmouseleave = () => { if (!fijado) restaurar(); };
+  restaurar();
+}
+
+/* Resaltado. Los filtros atenúan lo que no pasa; el resaltado atenúa
+   además lo que no toca el elemento señalado. restaurar() vuelve al
+   reposo: el recorrido abierto, si hay uno, o solo los filtros. */
+function restaurar() {
+  if (recorridoActivo) dibujarRecorrido(recorridoActivo); else limpiar();
+}
+function quitarRecorrido() {
+  recorridoActivo = null;
+  const capa = $('capa-recorrido');
+  if (capa) capa.innerHTML = '';
+  document.querySelectorAll('.edge.diagonal').forEach(e => { e.classList.remove('en-recorrido'); e.setAttribute('marker-end', 'url(#flecha)'); });
+  document.querySelectorAll('.recorrido').forEach(x => { x.classList.remove('abierto'); const ol = x.querySelector('ol'); if (ol) ol.classList.add('hidden'); });
+  limpiar();
+}
+function limpiar() {
+  document.querySelectorAll('.node, .edge, .orbita').forEach(n => n.classList.remove('dim', 'fija'));
+  aplicarFiltroGrafo();
+}
+function aplicarFiltroGrafo() {
+  const visibles = new Set(DIAGONALES.filter(pasaFiltro).map(d => d.id));
+  const anclasVis = new Set(), sitiosVis = new Set();
+  DIAGONALES.forEach(d => {
+    if (!visibles.has(d.id)) return;
+    [d.origen, d.destino].forEach(a => { anclasVis.add(a); sitiosVis.add(ANCLAS[a].sitio); });
+  });
+  const hayFiltro = $('f-instr').value || $('f-tipo').value;
+  document.querySelectorAll('.edge.diagonal').forEach(e => { if (!visibles.has(e.dataset.diag)) e.classList.add('dim'); });
+  document.querySelectorAll('.edge-hit').forEach(e => { e.style.pointerEvents = visibles.has(e.dataset.diag) ? '' : 'none'; });
+  document.querySelectorAll('.edge.propuesta').forEach(e => { if ($('f-instr').value && e.dataset.instr !== $('f-instr').value) e.classList.add('dim'); });
+  if (!hayFiltro) return;
+  document.querySelectorAll('.node.ancla').forEach(n => { if (!anclasVis.has(n.dataset.id)) n.classList.add('dim'); });
+  document.querySelectorAll('.node.sitio').forEach(n => { if (!sitiosVis.has(n.dataset.id)) n.classList.add('dim'); });
+  document.querySelectorAll('.orbita').forEach(n => { if (!sitiosVis.has(n.dataset.sitio)) n.classList.add('dim'); });
+}
+function atenuarSalvo(diagIds) {
+  limpiar();
+  const anclas = new Set(), sitios = new Set();
+  DIAGONALES.forEach(d => { if (diagIds.has(d.id)) [d.origen, d.destino].forEach(a => { anclas.add(a); sitios.add(ANCLAS[a].sitio); }); });
+  document.querySelectorAll('.edge.diagonal').forEach(e => { if (!diagIds.has(e.dataset.diag)) e.classList.add('dim'); });
+  document.querySelectorAll('.edge.propuesta').forEach(e => e.classList.add('dim'));
+  document.querySelectorAll('.node.ancla').forEach(n => { if (!anclas.has(n.dataset.id)) n.classList.add('dim'); });
+  document.querySelectorAll('.node.sitio').forEach(n => { if (!sitios.has(n.dataset.id)) n.classList.add('dim'); });
+  document.querySelectorAll('.orbita').forEach(n => { if (!sitios.has(n.dataset.sitio)) n.classList.add('dim'); });
+}
+function resaltarSitio(id) {
+  const ids = new Set(DIAGONALES.filter(d => pasaFiltro(d) && (ANCLAS[d.origen].sitio === id || ANCLAS[d.destino].sitio === id)).map(d => d.id));
+  atenuarSalvo(ids);
+  document.querySelectorAll('.node.sitio').forEach(n => { if (n.dataset.id === id) n.classList.remove('dim'); });
+  // sus relaciones del Cowork, y las obras del otro lado
+  document.querySelectorAll('.edge.cowork').forEach(e => {
+    if (e.dataset.a !== id && e.dataset.b !== id) return;
+    e.classList.remove('dim'); e.classList.add('fija');
+    const otra = e.dataset.a === id ? e.dataset.b : e.dataset.a;
+    document.querySelectorAll('.node.sitio').forEach(n => { if (n.dataset.id === otra) n.classList.remove('dim'); });
+  });
+}
+function resaltarAncla(id) {
+  atenuarSalvo(new Set(DIAGONALES.filter(d => pasaFiltro(d) && (d.origen === id || d.destino === id)).map(d => d.id)));
+  document.querySelectorAll('.node.ancla').forEach(n => { if (n.dataset.id === id) { n.classList.remove('dim'); n.classList.add('fija'); } });
+}
+function resaltarDiagonal(id) {
+  atenuarSalvo(new Set([id]));
+  document.querySelectorAll('.edge.diagonal').forEach(e => { if (e.dataset.diag === id) e.classList.add('fija'); });
+}
+function fijar(kind, id) {
+  fijado = { kind, id };
+  if (kind === 'ancla') { resaltarAncla(id); panelAncla(id); }
+  if (kind === 'diagonal') { resaltarDiagonal(id); panelDiagonal(id); }
+  if (kind === 'instrumento') { panelInstrumento(id); }
+}
+
+/* ── Panel de detalle ── */
+
+function panelInicio() {
+  $('detail-panel').innerHTML = `<div class="ph-title">Elegí un nodo</div>
+    <dd style="color:var(--ink-muted)">Pasá el mouse por un sitio (círculo grande), un ancla (punto) o una diagonal (flecha). Un clic en un ancla o una diagonal la deja fija; un clic en el fondo la suelta. Un clic en un sitio lo enfoca y muestra lo que está a un paso (+ / − amplía, Esc suelta); doble clic en un ancla hace lo mismo. Rueda o botones para acercar; arrastrar para mover.</dd>`;
+}
+function badgeEstatuto(e) { return e ? `<span class="badge ${escHtml(e)}">${escHtml(e)}</span>` : ''; }
+
+function filaDiagonal(d, desde) {
+  const otra = ANCLAS[desde === d.origen ? d.destino : d.origen];
+  const flecha = desde === d.origen ? '→' : '←';
+  return `<div class="det-row"><a href="#" data-ver-diag="${escHtml(d.id)}">${flecha} ${escHtml(titulo(otra.sitio))} · <span class="frag">${escHtml(lugarAncla(otra))}</span></a><br><span class="mono">${escHtml(instrEtiqueta(d.instrumento))}${d.tipo_relacion ? ' · ' + escHtml(d.tipo_relacion) : ''}</span></div>`;
+}
+function conectarPanel() {
+  $('detail-panel').querySelectorAll('[data-ver-diag]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); fijar('diagonal', a.dataset.verDiag); }));
+  $('detail-panel').querySelectorAll('[data-ver-ancla]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); fijar('ancla', a.dataset.verAncla); }));
+}
+
+function panelSitio(id) {
+  const s = SITIOS.find(x => x.id === id);
+  if (!s) return;
+  const anclas = Object.values(ANCLAS).filter(a => a.sitio === id);
+  const otras = Object.entries(ACCIONES).filter(([aid, a]) => (a.origen || {}).obra === id && !ANCLAS[aid]).length;
+  $('detail-panel').innerHTML = `
+    <div class="ph-title">${escHtml(s.titulo)}</div>
+    <dd>${escHtml(s.tipo_nodo === 'pdf' ? 'posteo PDF' : 'post')}${s.serie ? ' · serie ' + escHtml(s.serie) : ''}${s._file ? ` — <a href="obras/${escHtml(s._file)}" target="_blank">abrir texto →</a>` : ''}</dd>
+    <dt>anclas con diagonales (${anclas.length})</dt>
+    ${anclas.length ? anclas.map(a => `<div class="det-row"><a href="#" data-ver-ancla="${escHtml(a.id)}" class="frag">${escHtml(lugarAncla(a))}</a></div>`).join('') : '<dd style="color:var(--ink-muted)">ninguna todavía</dd>'}
+    ${otras ? `<dt>otras acciones</dt><dd style="color:var(--ink-muted)">${otras} sin diagonal (anclas, notas, marginalia, hojeos): no entran al grafo</dd>` : ''}
+    ${(() => { const rs = coworkDe(id); if (!rs.length) return '';
+      return `<dt>relaciones del Cowork (${rs.length})</dt>` + rs.slice(0, 10).map(r => {
+        const otra = r.a === id ? r.b : r.a;
+        const dims = Object.entries(r.dimensiones || {}).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([k]) => k).join(', ');
+        return `<div class="det-row">${escHtml(titulo(otra))} <span style="color:var(--ink-muted)">· ${r.peso.toFixed(2)} · ${escHtml(dims)}</span></div>`;
+      }).join('') + (rs.length > 10 ? `<dd style="color:var(--ink-muted)">y ${rs.length - 10} más</dd>` : ''); })()}`;
+  conectarPanel();
+}
+
+function panelAncla(id) {
+  const an = ANCLAS[id];
+  if (!an) return;
+  const salen = DIAGONALES.filter(d => d.origen === id), llegan = DIAGONALES.filter(d => d.destino === id);
+  $('detail-panel').innerHTML = `
+    <div class="ph-title">ancla</div>
+    <dd class="cita">${escHtml(an.pdf_pagina != null ? 'página ' + an.pdf_pagina : (an.fragmento || an.id))}</dd>
+    <dt>sitio</dt><dd>${escHtml(titulo(an.sitio))}${an.pdf_pagina != null && an.fragmento ? ' · «' + escHtml(an.fragmento) + '»' : ''} — <a href="${urlAncla(an)}" target="_blank">ir al ancla →</a></dd>
+    ${salen.length ? `<dt>salen (${salen.length})</dt>${salen.map(d => filaDiagonal(d, id)).join('')}` : ''}
+    ${llegan.length ? `<dt>llegan (${llegan.length})</dt>${llegan.map(d => filaDiagonal(d, id)).join('')}` : ''}
+    <dt>id</dt><dd class="mono">${escHtml(id)}</dd>`;
+  conectarPanel();
+}
+
+function panelDiagonal(id) {
+  const d = DIAGONALES.find(x => x.id === id);
+  if (!d) return;
+  const o = ANCLAS[d.origen], de = ANCLAS[d.destino], ins = instrumento(d.instrumento);
+  const recs = RECORRIDOS ? (RECORRIDOS.recorridos || []).filter(r => r.pasos.some(p => p.diagonal === id)) : [];
+  $('detail-panel').innerHTML = `
+    <div class="ph-title">diagonal</div>
+    <dt>desde</dt><dd>${escHtml(titulo(o.sitio))} · <a href="${urlAncla(o)}" target="_blank" class="frag">${escHtml(lugarAncla(o))}</a></dd>
+    <dt>hacia</dt><dd>${escHtml(titulo(de.sitio))} · <a href="${urlAncla(de)}" target="_blank" class="frag">${escHtml(lugarAncla(de))}</a></dd>
+    <dt>instrumento</dt><dd>${d.instrumento ? `<a href="#" data-ver-instr="${escHtml(d.instrumento)}">${escHtml(instrEtiqueta(d.instrumento))}</a> ${badgeEstatuto(ins && ins.estatuto)}` : '<span style="color:var(--ink-muted)">sin instrumento</span>'}</dd>
+    <dt>tipo de relación</dt><dd>${d.tipo_relacion ? escHtml(d.tipo_relacion) : '<span style="color:var(--ink-muted)">sin tipo todavía (lo completás en el taller)</span>'}</dd>
+    ${recs.length ? `<dt>en recorridos</dt><dd>${recs.map(r => `<a href="#" data-ver-rec="${escHtml(r.id)}">${escHtml(nombreRecorrido(r))}</a>`).join(' · ')}</dd>` : ''}
+    <dt>emergente</dt><div class="emergente">${escHtml(d.emergente) || '<span style="color:var(--ink-muted)">—</span>'}</div>`;
+  conectarPanel();
+  $('detail-panel').querySelectorAll('[data-ver-instr]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); panelInstrumento(a.dataset.verInstr); }));
+  $('detail-panel').querySelectorAll('[data-ver-rec]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); abrirRecorrido(a.dataset.verRec, true); }));
+}
+
+function panelInstrumento(id) {
+  const ins = instrumento(id);
+  const diags = DIAGONALES.filter(d => d.instrumento === id);
+  if (!ins) {
+    $('detail-panel').innerHTML = `<div class="ph-title">${escHtml(id)}</div><dd style="color:var(--ink-muted)">No está en el registro (matriz/instrumentos.json). Corré python3 matriz/recalibrar.py.</dd>`;
+    return;
+  }
+  const c = ins.calculado || {};
+  $('detail-panel').innerHTML = `
+    <div class="ph-title">${escHtml(ins.etiqueta || ins.id)}</div>
+    <dd>${badgeEstatuto(ins.estatuto)} ${ins.semilla ? '<span class="badge semilla">semilla</span>' : ''}</dd>
+    <dt>lema</dt><dd>${ins.lema ? escHtml(ins.lema) : '<span style="color:var(--ink-muted)">sin lema (lo propone recalibrar.py)</span>'}${(() => { const her = (REGISTRO.instrumentos || []).filter(o => o.id !== ins.id && o.lema && o.lema === ins.lema); return her.length ? ' · misma familia: ' + her.map(o => escHtml(o.etiqueta || o.id)).join(', ') : ''; })()}</dd>
+    <dt>id</dt><dd class="mono">${escHtml(ins.id)}${(ins.alias || []).length ? ' · alias ' + ins.alias.map(escHtml).join(', ') : ''}</dd>
+    <dt>descripción</dt><dd>${ins.descripcion ? escHtml(ins.descripcion) : '<span style="color:var(--ink-muted)">sin descripción (la escribís vos en matriz/instrumentos.json)</span>'}</dd>
+    <dt>origen</dt><dd>${escHtml(ins.origen || '—')}${ins.marca_original ? ' · marca original ' + escHtml(ins.marca_original) : ''}</dd>
+    ${(ins.sitios_declarados || []).length ? `<dt>sitios declarados en el mapeo anterior</dt><dd>${ins.sitios_declarados.map(escHtml).join(', ')}</dd>` : ''}
+    <dt>calculado (recalibrar.py)</dt>
+    <dd>diagonales ${c.diagonales ?? 0} · aceptadas ${c.aceptadas ?? 0} · rechazadas ${c.rechazadas ?? 0} · retipadas ${c.retipadas ?? 0}<br>
+        sitios ${c.sitios ?? 0} · peso ${typeof c.peso === 'number' ? c.peso.toFixed(3) : '—'} · umbral ${typeof c.umbral === 'number' ? c.umbral.toFixed(3) : '—'}</dd>
+    ${diags.length ? `<dt>diagonales (${diags.length})</dt>${diags.map(d => filaDiagonal(d, d.origen)).join('')}` : ''}`;
+  conectarPanel();
+}
+
+/* ── Tablas ── */
+
+function renderTabla() {
+  const filas = DIAGONALES.filter(pasaFiltro);
+  $('tabla-body').innerHTML = filas.length ? filas.map(d => {
+    const o = ANCLAS[d.origen], de = ANCLAS[d.destino];
+    return `<tr data-diag="${escHtml(d.id)}">
+      <td>${escHtml(titulo(o.sitio))}<div class="frag">${escHtml(lugarAncla(o))}</div></td>
+      <td>${escHtml(titulo(de.sitio))}<div class="frag">${escHtml(lugarAncla(de))}</div></td>
+      <td>${escHtml(instrEtiqueta(d.instrumento))}<div class="mono">${escHtml(d.instrumento || '')}</div></td>
+      <td class="mono">${d.tipo_relacion ? escHtml(d.tipo_relacion) : '—'}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="4" class="vacio">${DIAGONALES.length ? 'Ninguna diagonal pasa el filtro.' : 'Todavía no hay diagonales en acciones.json.'}</td></tr>`;
+  $('tabla-body').querySelectorAll('tr[data-diag]').forEach(r => r.addEventListener('click', () => fijar('diagonal', r.dataset.diag)));
+}
+
+function renderInstrumentos() {
+  if (!REGISTRO) {
+    $('instr-body').innerHTML = '<tr><td colspan="6" class="vacio">No hay registro de instrumentos todavía: corré <code>python3 matriz/recalibrar.py</code>.</td></tr>';
+    return;
+  }
+  const lista = [...(REGISTRO.instrumentos || [])].sort((a, b) =>
+    ((b.calculado || {}).diagonales || 0) - ((a.calculado || {}).diagonales || 0) || (a.estatuto === 'autor' ? -1 : 0) - (b.estatuto === 'autor' ? -1 : 0));
+  $('instr-body').innerHTML = lista.map(ins => {
+    const c = ins.calculado || {};
+    return `<tr data-instr="${escHtml(ins.id)}">
+      <td>${escHtml(ins.etiqueta || ins.id)}<div class="mono">${ins.lema ? 'lema ' + escHtml(ins.lema) + ' · ' : ''}${escHtml(ins.id)}</div></td>
+      <td>${badgeEstatuto(ins.estatuto)} ${ins.semilla ? '<span class="badge semilla">semilla</span>' : (ins.estatuto === 'inferencia-matriz' ? '<div class="mono">candidato a semilla</div>' : '')}</td>
+      <td class="mono">${c.diagonales ?? 0}</td>
+      <td class="mono">${(c.aceptadas ?? 0)} ✓ · ${(c.rechazadas ?? 0)} ✗ · ${(c.retipadas ?? 0)} ↺</td>
+      <td class="mono">${typeof c.peso === 'number' ? c.peso.toFixed(3) : '—'}</td>
+      <td class="mono">${typeof c.umbral === 'number' ? c.umbral.toFixed(3) : '—'}</td>
+    </tr>`;
+  }).join('');
+  $('instr-body').querySelectorAll('tr[data-instr]').forEach(r => r.addEventListener('click', () => {
+    fijado = { kind: 'instrumento', id: r.dataset.instr };
+    panelInstrumento(r.dataset.instr);
+  }));
+}
+
+/* ── Recorridos ── */
+
+const NOMBRE_CRITERIO = { instrumento: 'por instrumento', tipo_relacion: 'por tipo de relación', peso: 'por peso', deriva: 'a la deriva' };
+function nombreRecorrido(r) {
+  if (r.criterio === 'instrumento') return instrEtiqueta(r.valor);
+  return r.etiqueta || r.id;
+}
+
+function renderRecorridos() {
+  const cont = $('recorridos-lista');
+  if (!RECORRIDOS) {
+    cont.innerHTML = '<div class="vacio">Todavía no hay recorridos calculados: corré <code>python3 matriz/calcular_recorridos.py</code>.</div>';
+    return;
+  }
+  const recs = RECORRIDOS.recorridos || [];
+  let html = '';
+  Object.entries(NOMBRE_CRITERIO).forEach(([crit, nombre]) => {
+    const grupo = recs.filter(r => r.criterio === crit);
+    // Dos columnas: por instrumento (la lista larga) a la izquierda; el resto a la derecha.
+    if (crit === 'tipo_relacion') html += '</div><div>';
+    html += `<div class="grupo">${escHtml(nombre)}</div>`;
+    if (!grupo.length) {
+      html += `<div class="vacio">${crit === 'tipo_relacion' ? 'Ninguna diagonal tiene tipo de relación todavía.' : 'Ninguno todavía.'}</div>`;
+      return;
+    }
+    grupo.forEach(r => {
+      html += `<div class="recorrido" data-rec="${escHtml(r.id)}">
+        <button type="button">${escHtml(nombreRecorrido(r))}<span class="mono">${r.pasos.length} paso${r.pasos.length === 1 ? '' : 's'} · ${r.saltos} salto${r.saltos === 1 ? '' : 's'}</span></button>
+        <ol class="hidden">${r.pasos.map((p, i) => pasoHTML(p, i)).join('')}</ol>
+      </div>`;
+    });
+  });
+  cont.innerHTML = '<div class="rec-cols"><div>' + html + '</div></div>';
+  $('sum-rec').textContent = recs.length;
+  cont.querySelectorAll('.recorrido > button').forEach(b => b.addEventListener('click', () => abrirRecorrido(b.parentElement.dataset.rec)));
+}
+
+function pasoHTML(p, i) {
+  const existe = DIAGONALES.some(d => d.id === p.diagonal);
+  const lado = a => `<span class="sitio-t">${escHtml(a.titulo || a.sitio)}</span> <a href="${escHtml(a.url)}" target="_blank" class="frag">${escHtml(a.pdf_pagina != null ? 'p. ' + a.pdf_pagina : '«' + (a.fragmento || a.accion) + '»')}</a>`;
+  return (p.salto ? '<li class="salto-item">⤳ salto: no sale ninguna diagonal de acá; el recorrido sigue en otro lugar</li>' : '') +
+    `<li><span class="n">${i + 1}</span><span>${lado(p.desde)} → ${lado(p.hacia)}${existe ? '' : ' <span class="mono">(esta diagonal ya no está en acciones.json)</span>'}</span></li>`;
+}
+
+function abrirRecorrido(id, desdePanel) {
+  const box = document.querySelector(`.recorrido[data-rec="${CSS.escape(id)}"]`);
+  const yaAbierto = box && box.classList.contains('abierto');
+  quitarRecorrido();
+  if (yaAbierto && !desdePanel) return;
+  if (box) { box.classList.add('abierto'); box.querySelector('ol').classList.remove('hidden'); }
+  recorridoActivo = id;
+  fijado = null;
+  mostrarVista('graph');
+  dibujarRecorrido(id);
+  if (desdePanel && box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function dibujarRecorrido(id) {
+  const r = (RECORRIDOS && RECORRIDOS.recorridos || []).find(x => x.id === id);
+  const capa = $('capa-recorrido');
+  if (!r || !capa) return;
+  const { ancla } = posiciones();
+  const ids = new Set(r.pasos.map(p => p.diagonal));
+  atenuarSalvo(ids);
+  document.querySelectorAll('.edge.diagonal').forEach(e => {
+    const en = ids.has(e.dataset.diag);
+    e.classList.toggle('en-recorrido', en);
+    e.setAttribute('marker-end', en ? 'url(#flecha-rec)' : 'url(#flecha)');
+  });
+  let html = '', previa = null;
+  const vistos = {};
+  r.pasos.forEach((p, i) => {
+    const a = ancla[p.desde.accion], b = ancla[p.hacia.accion];
+    if (!a || !b) return;
+    if (p.salto && previa) html += `<path class="salto" d="M${previa.x},${previa.y} L${a.x},${a.y}"></path>`;
+    const k = [p.desde.sitio, p.hacia.sitio].sort().join('|');
+    const d = DIAGONALES.find(x => x.id === p.diagonal);
+    let lado = 1;
+    if (d) {   // mismo abombado que en renderGraph: contar en el mismo orden
+      const orden = DIAGONALES.filter(x => [ANCLAS[x.origen].sitio, ANCLAS[x.destino].sitio].sort().join('|') === k);
+      lado = orden.indexOf(d) + 1;
+    } else { vistos[k] = (vistos[k] || 0) + 1; lado = vistos[k]; }
+    const { medio } = curva(a, b, lado, d ? refPar(d) : null);
+    html += `<text class="paso-num" x="${medio.x.toFixed(1)}" y="${(medio.y + 3).toFixed(1)}" text-anchor="middle">${i + 1}</text>`;
+    previa = b;
+  });
+  capa.innerHTML = html;
+}
+
+/* ── Propuestas (solo con mostrar_propuestas: true) ── */
+
+const PROP_VISIBLES = 8;
+function renderPropuestas() {
+  const sec = $('propuestas-sec');
+  if (!PROPUESTAS) { sec.classList.add('hidden'); $('sum-prop').hidden = true; return; }
+  sec.classList.remove('hidden');
+  const todas = PROPUESTAS.propuestas || [];
+  const sitiosMeta = (PROPUESTAS.meta && PROPUESTAS.meta.sitios) || {};
+  const nombre = s => (sitiosMeta[s] && sitiosMeta[s].titulo) || titulo(s);
+  $('sum-prop').hidden = false;
+  $('sum-prop-n').textContent = todas.length;
+  // Filtro por obra: las que aparecen como origen o destino, de más a menos propuestas.
+  const sel = $('prop-obra');
+  if (!sel.dataset.listo) {
+    const cuenta = {};
+    todas.forEach(p => [p.origen.sitio, p.destino.sitio].forEach(x => { cuenta[x] = (cuenta[x] || 0) + 1; }));
+    sel.innerHTML = '<option value="">todas</option>' + Object.entries(cuenta).sort((x, y) => y[1] - x[1] || nombre(x[0]).localeCompare(nombre(y[0]), 'es'))
+      .map(([x, n]) => `<option value="${escHtml(x)}">${escHtml(nombre(x))} (${n})</option>`).join('');
+    sel.dataset.listo = '1';
+    sel.addEventListener('change', renderPropuestas);
+    $('prop-abrir').addEventListener('click', () => {
+      const gs = document.querySelectorAll('.prop-grupo'), abrir = Array.from(gs).some(g => !g.open);
+      gs.forEach(g => { g.open = abrir; });
+      $('prop-abrir').textContent = abrir ? 'plegar todos' : 'desplegar todos';
+    });
+  }
+  const obra = sel.value;
+  const lista = obra ? todas.filter(p => p.origen.sitio === obra || p.destino.sitio === obra) : todas;
+  $('prop-cuenta').textContent = lista.length === todas.length ? `${todas.length} propuestas` : `${lista.length} de ${todas.length} propuestas`;
+  if (!lista.length) { $('propuestas-lista').innerHTML = '<div class="vacio">No hay propuestas.</div>'; return; }
+  const lado = e => `${escHtml(nombre(e.sitio))}${e.pdf_pagina != null ? ', p. ' + e.pdf_pagina : ''} <span class="frag">«${escHtml(e.cita)}»</span>`;
+  const total = p => Number(p.puntaje && p.puntaje.total || 0);
+  const grupos = new Map();
+  lista.forEach(p => { if (!grupos.has(p.instrumento)) grupos.set(p.instrumento, []); grupos.get(p.instrumento).push(p); });
+  const orden = Array.from(grupos.entries()).sort((x, y) => y[1].length - x[1].length || instrEtiqueta(x[0]).localeCompare(instrEtiqueta(y[0]), 'es'));
+  $('propuestas-lista').innerHTML = orden.map(([ins, ps], gi) => {
+    ps.sort((x, y) => total(y) - total(x) || nombre(x.origen.sitio).localeCompare(nombre(y.origen.sitio), 'es'));
+    // Las obras que más aparecen en el grupo, para saber de qué trata sin abrirlo.
+    const cuenta = {};
+    ps.forEach(p => [p.origen.sitio, p.destino.sitio].forEach(x => { if (x !== obra) cuenta[x] = (cuenta[x] || 0) + 1; }));
+    const mas = Object.entries(cuenta).sort((x, y) => y[1] - x[1]).slice(0, 3).map(([x, n]) => `${nombre(x)} (${n})`).join(', ');
+    const filas = ps.map((p, i) => `<li${i >= PROP_VISIBLES ? ' class="de-mas"' : ''}>${lado(p.origen)} → ${lado(p.destino)}
+      <div class="pie"><span>total ${total(p).toFixed(3)}</span>${p.explicacion && p.explicacion.por_que ? `<details><summary>por qué</summary><p>${escHtml(p.explicacion.por_que)}</p></details>` : ''}</div></li>`).join('');
+    return `<details class="prop-grupo"${gi === 0 ? ' open' : ''}><summary><span class="nombre">${escHtml(instrEtiqueta(ins))}</span><span class="resumen">${ps.length} propuesta${ps.length === 1 ? '' : 's'}${mas ? ' · más en ' + escHtml(mas) : ''}</span></summary>
+      <ol class="prop-lista">${filas}</ol>${ps.length > PROP_VISIBLES ? `<button type="button" class="prop-mas" data-mas="${ps.length - PROP_VISIBLES}">ver las ${ps.length - PROP_VISIBLES} restantes</button>` : ''}</details>`;
+  }).join('');
+  $('propuestas-lista').querySelectorAll('.prop-mas').forEach(b => b.addEventListener('click', () => {
+    const ol = b.previousElementSibling, abierta = ol.classList.toggle('todas');
+    b.textContent = abierta ? 'mostrar menos' : `ver las ${b.dataset.mas} restantes`;
+  }));
+}
+
+// Sumario: marca la última sección cuyo comienzo ya pasó bajo la barra.
+(function () {
+  const enlaces = Array.from(document.querySelectorAll('#sumario a'));
+  let pend = false;
+  function marcar() {
+    pend = false;
+    let aca = null;
+    enlaces.forEach(a => { const x = document.querySelector(a.getAttribute('href')); if (x && !a.hidden && x.getBoundingClientRect().top < 160) aca = a; });
+    enlaces.forEach(a => a.classList.toggle('aca', a === aca));
+  }
+  addEventListener('scroll', () => { if (!pend) { pend = true; requestAnimationFrame(marcar); } }, { passive: true });
+  marcar();
+})();
+
+/* ── Vistas, filtros y parámetros de URL ── */
+
+function mostrarVista(v) {
+  // los controles de capas de arriba son del grafo de anclas
+  ['lbl-cowork', 'lbl-cowork-min', 'lbl-prop'].forEach(i => $(i).style.display = v === 'graph' ? '' : 'none');
+  $('legend').style.display = v === 'graph' ? '' : 'none';
+  ['obras', 'graph', 'tabla', 'instr'].forEach(x => {
+    $('view-' + x).classList.toggle('hidden', x !== v);
+    $('btn-view-' + x).classList.toggle('active', x === v);
+  });
+  fijado = null;
+  if (v === 'obras' && window.MO) MO.render(); else if (v === 'graph') panelInicio();
+}
+document.querySelectorAll('.toggles button[data-vista]').forEach(b => b.addEventListener('click', () => mostrarVista(b.dataset.vista)));
+$('btn-reload').addEventListener('click', cargar);
+['f-instr', 'f-tipo', 'f-cowork', 'f-cowork-min', 'f-prop'].forEach(id => $(id).addEventListener(id === 'f-cowork-min' ? 'input' : 'change', () => {
+  fijado = null;
+  quitarRecorrido();
+  renderGraph(); renderTabla(); panelInicio();
+  if (window.MO && !$('view-obras').classList.contains('hidden')) MO.render();
+}));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && fijado) { fijado = null; restaurar(); panelInicio(); } });
+
+// ?instr=ID (compatible con los enlaces viejos), ?tipo=, ?recorrido=, ?accion=
+function aplicarParametros() {
+  const q = new URLSearchParams(location.search);
+  const instr = q.get('instr');
+  if (instr) {
+    const id = instrId(instr);
+    if ([...$('f-instr').options].some(o => o.value === id)) { $('f-instr').value = id; renderGraph(); renderTabla(); }
+    fijado = { kind: 'instrumento', id };
+    panelInstrumento(id);
+  }
+  const tipo = q.get('tipo');
+  if (tipo && [...$('f-tipo').options].some(o => o.value === tipo)) { $('f-tipo').value = tipo; renderGraph(); renderTabla(); }
+  const rec = q.get('recorrido');
+  if (rec) abrirRecorrido(rec, true);
+  const acc = q.get('accion');
+  if (acc && ANCLAS[acc]) fijar('ancla', acc);
+}
+
+mostrarVista('obras');
+cargar();
+</script>
+
+<script id="p314b-grafo">
+(function(){
+  if(!window.d3||typeof renderGraph!=='function') return;
+  var zoom=null, tr=d3.zoomIdentity, foco=null, grado=1, primera=true;
+  function capa(){ var svg=document.getElementById('svg'); var g=svg.querySelector('#zoom-capa');
+    if(!g){ g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.id='zoom-capa';
+      Array.prototype.slice.call(svg.childNodes).forEach(function(n){ if(n.nodeName!=='defs') g.appendChild(n); }); svg.appendChild(g); }
+    return g; }
+  function pos(n){ var m=/translate\(([-\d.]+),([-\d.]+)\)/.exec(n.getAttribute('transform')||''); return m?[+m[1],+m[2]]:null; }
+  function centrar(n,k){ var p=pos(n); if(!p||!zoom) return; var s=d3.select('#svg');
+    s.transition().duration(450).call(zoom.transform, d3.zoomIdentity.translate(W/2,H/2).scale(k||Math.max(tr.k,1.6)).translate(-p[0],-p[1])); }
+  function vecinos(kind,id,n){
+    var D=DIAGONALES.filter(pasaFiltro), A=new Set(), S=new Set();
+    if(kind==='sitio'){ var fr=new Set([id]); S.add(id);
+      var CW=Array.prototype.filter.call(document.querySelectorAll('#svg .edge.cowork'),function(e){return !e.classList.contains('dim');}).map(function(e){return [e.dataset.a,e.dataset.b];});
+      for(var i=0;i<n;i++){ var nx=new Set(); D.forEach(function(d){ var a=ANCLAS[d.origen].sitio,b=ANCLAS[d.destino].sitio; if(fr.has(a)&&!S.has(b))nx.add(b); if(fr.has(b)&&!S.has(a))nx.add(a); }); CW.forEach(function(c){ if(fr.has(c[0])&&!S.has(c[1]))nx.add(c[1]); if(fr.has(c[1])&&!S.has(c[0]))nx.add(c[0]); }); nx.forEach(function(x){S.add(x);}); fr=nx; }
+      Object.keys(ANCLAS).forEach(function(a){ if(S.has(ANCLAS[a].sitio)) A.add(a); });
+    } else { var fa=new Set([id]); A.add(id);
+      for(var j=0;j<n;j++){ var na=new Set(); D.forEach(function(d){ if(fa.has(d.origen)&&!A.has(d.destino))na.add(d.destino); if(fa.has(d.destino)&&!A.has(d.origen))na.add(d.origen); }); na.forEach(function(x){A.add(x);}); fa=na; }
+      A.forEach(function(a){ S.add(ANCLAS[a].sitio); }); }
+    return {A:A,S:S}; }
+  function pintarFoco(){ var svg=document.getElementById('svg');
+    svg.querySelectorAll('.foco-fuera,.foco-centro').forEach(function(e){e.classList.remove('foco-fuera','foco-centro');});
+    var et=document.getElementById('grafo-foco');
+    if(!foco){ if(et) et.style.display='none'; return; }
+    var v=vecinos(foco.kind,foco.id,grado);
+    svg.querySelectorAll('.node.sitio').forEach(function(n){ if(!v.S.has(n.dataset.id)) n.classList.add('foco-fuera'); if(foco.kind==='sitio'&&n.dataset.id===foco.id) n.classList.add('foco-centro'); });
+    svg.querySelectorAll('.node.ancla').forEach(function(n){ if(!v.A.has(n.dataset.id)) n.classList.add('foco-fuera'); if(foco.kind==='ancla'&&n.dataset.id===foco.id) n.classList.add('foco-centro'); });
+    svg.querySelectorAll('.orbita').forEach(function(n){ if(!v.S.has(n.dataset.sitio)) n.classList.add('foco-fuera'); });
+    svg.querySelectorAll('[data-diag]').forEach(function(e){ var d=DIAGONALES.find(function(x){return x.id===e.dataset.diag;}); if(!d||!(v.A.has(d.origen)&&v.A.has(d.destino))) e.classList.add('foco-fuera'); });
+    svg.querySelectorAll('.edge.cowork').forEach(function(e){ if(!(v.S.has(e.dataset.a)&&v.S.has(e.dataset.b))) e.classList.add('foco-fuera'); });
+    if(et){ et.style.display=''; et.textContent='foco a '+grado+' paso'+(grado>1?'s':'')+' · + / − amplía · Esc suelta'; }
+  }
+  function url(){ var q=new URLSearchParams(location.search);
+    if(foco){ q.set('foco',foco.kind+':'+foco.id); q.set('g',grado); } else { q.delete('foco'); q.delete('g'); }
+    var s=q.toString(); history.replaceState(null,'',location.pathname+(s?'?'+s:'')+location.hash); }
+  function enfocar(kind,id){ foco={kind:kind,id:id}; pintarFoco(); url();
+    var n=document.querySelector('#svg .node.'+kind+'[data-id="'+CSS.escape(id)+'"]'); if(n) centrar(n);
+    if(kind==='sitio'&&typeof panelSitio==='function') panelSitio(id); }
+  function soltar(){ foco=null; grado=1; pintarFoco(); url(); }
+  function controles(){ var vg=document.getElementById('view-graph'); if(document.getElementById('grafo-ctl')) return;
+    var c=document.createElement('div'); c.className='grafo-ctl'; c.id='grafo-ctl';
+    c.innerHTML='<input id="grafo-buscar" list="grafo-lista" placeholder="buscar obra…" aria-label="Buscar una obra en el grafo"><datalist id="grafo-lista"></datalist>'+
+      '<div class="fila"><button data-z="in" title="Acercar">+</button><button data-z="out" title="Alejar">−</button><button data-z="reset" title="Ver todo">⟲</button></div>'+
+      '<div class="grafo-foco" id="grafo-foco" style="display:none"></div>';
+    vg.appendChild(c);
+    c.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b) return; e.stopPropagation(); var s=d3.select('#svg');
+      if(b.dataset.z==='in') s.transition().duration(250).call(zoom.scaleBy,1.4);
+      if(b.dataset.z==='out') s.transition().duration(250).call(zoom.scaleBy,1/1.4);
+      if(b.dataset.z==='reset'){ soltar(); s.transition().duration(350).call(zoom.transform,d3.zoomIdentity); } });
+    document.getElementById('grafo-buscar').addEventListener('change',function(e){ var q=e.target.value.trim().toLowerCase();
+      var n=Array.prototype.find.call(document.querySelectorAll('#svg .node.sitio'),function(x){ return (x.textContent||'').trim().toLowerCase()===q; })||
+            Array.prototype.find.call(document.querySelectorAll('#svg .node.sitio'),function(x){ return (x.textContent||'').toLowerCase().indexOf(q)>=0; });
+      if(n) enfocar('sitio',n.dataset.id); });
+  }
+  var orig=renderGraph;
+  renderGraph=function(){ orig.apply(this,arguments); var svg=document.getElementById('svg'); capa(); controles();
+    if(!zoom){ zoom=d3.zoom().scaleExtent([0.5,8]).on('zoom',function(ev){ tr=ev.transform; var g=document.getElementById('zoom-capa'); if(g) g.setAttribute('transform',tr.toString()); });
+      d3.select(svg).call(zoom).on('dblclick.zoom',null);
+      svg.addEventListener('click',function(e){ var n=e.target.closest('.node.sitio'); if(n){ e.stopPropagation(); enfocar('sitio',n.dataset.id); } },true);
+      svg.addEventListener('dblclick',function(e){ var n=e.target.closest('.node.ancla'); if(n){ e.stopPropagation(); enfocar('ancla',n.dataset.id); } });
+      document.addEventListener('keydown',function(e){ if(!foco||/^(INPUT|TEXTAREA|SELECT)$/.test((e.target||{}).tagName||'')) return;
+        if(e.key==='+'||e.key==='='){ grado=Math.min(6,grado+1); pintarFoco(); url(); }
+        else if(e.key==='-'||e.key==='_'){ grado=Math.max(1,grado-1); pintarFoco(); url(); }
+        else if(e.key==='Escape'){ soltar(); } });
+    } else { document.getElementById('zoom-capa').setAttribute('transform',tr.toString()); }
+    var dl=document.getElementById('grafo-lista'); if(dl) dl.innerHTML=Array.prototype.map.call(svg.querySelectorAll('.node.sitio text'),function(x){ return '<option value="'+escHtml((x.textContent||'').trim())+'">'; }).join('');
+    if(primera){ primera=false; var q=new URLSearchParams(location.search), f=q.get('foco');
+      if(f){ var k=f.split(':')[0], id=f.slice(k.length+1); grado=Math.max(1,Math.min(6,+q.get('g')||1)); if(k==='sitio'||k==='ancla'){ if(typeof mostrarVista==='function') mostrarVista('graph'); setTimeout(function(){ enfocar(k,id); },50); } } }
+    else if(foco) pintarFoco();
+  };
+  var _rest=typeof restaurar==='function'?restaurar:null;
+  if(_rest){ restaurar=function(){ _rest.apply(this,arguments); if(foco) pintarFoco(); }; }
+  // los números de arriba llevan a su vista
+  var ir={'stat-sitios':'obras','stat-anclas':'graph','stat-diags':'tabla','stat-instr':'instr'};
+  Object.keys(ir).forEach(function(id){ var el=document.getElementById(id); if(!el) return; var st=el.closest('.stat'); st.dataset.ir=ir[id]; st.title='ver '+ir[id];
+    st.addEventListener('click',function(){ mostrarVista(ir[id]); }); });
+  var r=document.getElementById('stat-rec'); if(r){ var sr=r.closest('.stat'); sr.dataset.ir='rec'; sr.title='ir a los recorridos';
+    sr.addEventListener('click',function(){ var s=document.getElementById('recorridos-sec'); if(s) window.scrollTo({top:s.getBoundingClientRect().top+scrollY-70,behavior:'smooth'}); }); }
+})();
+</script>
+</body>
+</html>

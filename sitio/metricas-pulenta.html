@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<script src="autor.js" data-herramienta></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>métricas de pulenta — corpus</title>
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<style>
+:root {
+  --bg:        #080808;
+  --bg-alt:    #111111;
+  --page:      #0d0d0d;
+  --ink:       #f5f5f5;
+  --ink-soft:  #d0d0d0;
+  --ink-muted: #8a8a8a;
+  --ink-ghost: #505050;
+  --rule:      #292929;
+  --mark:      #3b82f6;
+  --mark-lt:   #60a5fa;
+  --mark-dk:   #1d4ed8;
+  --mark-bg:   rgba(59,130,246,0.10);
+  --green:     #22c55e;
+  --red:       #ef4444;
+  --font-body: 'Newsreader', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius:    3px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased; min-height: 100vh; line-height: 1.6;
+}
+.wrap { max-width: 760px; margin: 0 auto; padding: 48px 32px 120px; }
+.back {
+  display: inline-block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+  color: var(--ink-muted); border-bottom: 1px solid var(--rule); margin-bottom: 40px; transition: color 0.15s;
+}
+.back:hover { color: var(--mark-lt); border-color: var(--mark-lt); }
+.eyebrow {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--ink-muted); margin-bottom: 10px;
+}
+h1 { font-family: var(--font-body); font-style: italic; font-weight: 400; font-size: 40px; letter-spacing: -0.01em; margin-bottom: 28px; }
+.lede { font-size: 16.5px; color: var(--ink-soft); margin-bottom: 44px; max-width: 62ch; }
+h2 {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--mark-lt); margin: 56px 0 18px; padding-bottom: 10px; border-bottom: 1px solid var(--rule);
+}
+p { font-size: 15.5px; color: var(--ink-soft); margin-bottom: 16px; max-width: 66ch; }
+p code, li code { font-family: var(--font-mono); font-size: 0.85em; background: var(--page); padding: 1px 5px; border-radius: 2px; color: var(--ink); }
+ul, ol { margin: 0 0 16px 22px; color: var(--ink-soft); font-size: 15.5px; }
+li { margin-bottom: 6px; }
+.modos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 20px 0 28px; }
+.modo-card { border: 1px solid var(--rule); border-radius: var(--radius); padding: 16px; background: var(--page); }
+.modo-card h3 { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; color: var(--ink); margin-bottom: 8px; }
+.modo-card p { font-size: 13px; margin-bottom: 0; }
+.glosario dt {
+  font-family: var(--font-mono); font-size: 13px; color: var(--ink); font-weight: 500;
+  margin-top: 22px; display: flex; align-items: baseline; gap: 8px;
+}
+.glosario dt .rango { font-size: 10px; color: var(--ink-ghost); font-weight: 400; }
+.glosario dd { font-size: 14.5px; color: var(--ink-muted); margin-top: 4px; max-width: 60ch; }
+.veredicto { font-family: var(--font-mono); font-size: 10px; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.04em; }
+.veredicto.texto { color: var(--green); border: 1px solid color-mix(in oklab, var(--green) 45%, transparent); }
+.veredicto.instrumento { color: var(--ink-ghost); border: 1px solid var(--rule); }
+.veredicto.anti { color: var(--red); border: 1px solid color-mix(in oklab, var(--red) 45%, transparent); }
+.nota-manual {
+  margin-top: 56px; padding: 18px 20px; border: 1px dashed var(--rule); border-radius: var(--radius);
+  font-family: var(--font-mono); font-size: 12px; color: var(--ink-ghost); line-height: 1.65;
+}
+@media (max-width: 640px) {
+  .modos { grid-template-columns: 1fr; }
+  h1 { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← volver al índice</a>
+
+  <p class="eyebrow">anexo · fuente de los datos</p>
+  <h1>métricas de pulenta</h1>
+  <p class="lede">
+    Cada obra del corpus puede mostrar, además del texto, un pequeño conjunto de medidas cuantitativas
+    sobre su propia organización léxica. Esta página explica de dónde salen esos números, cómo se
+    calculan, y qué significa cada uno — sin asumir que ya sabés nada de análisis de texto.
+  </p>
+
+  <h2>Qué es pulenta</h2>
+  <p>
+    <b>pulenta</b> (nombre de trabajo del <i>PDF Clusterer</i>) es una herramienta aparte de este sitio:
+    lee un PDF, cuenta cuántas veces aparece cada palabra, y agrupa los términos que tienden a
+    aparecer juntos en distintos "clústeres" — comunidades de vocabulario que se activan en conjunto.
+    No interpreta el texto ni le asigna significado: mide patrones de coocurrencia, nada más.
+  </p>
+  <p>
+    Los números que ves acá <b>no se calculan en este sitio</b>. Se corren aparte en pulenta y se
+    pasan a mano al taller de carga (uploader) para cada obra — por eso una obra puede mostrar
+    "métricas pendientes" simplemente porque todavía no se corrió pulenta sobre ese texto, no porque
+    algo esté roto.
+  </p>
+
+  <h2>Cómo procesa el texto</h2>
+  <p>
+    Antes de agrupar nada, pulenta tokeniza el texto (lo separa en palabras, descarta las demasiado
+    cortas y las de función pura — artículos, preposiciones — según la calibración elegida) y cuenta
+    frecuencias. A partir de ahí, mide <b>coocurrencia</b> — qué tan seguido dos términos aparecen
+    cerca uno del otro — de tres maneras distintas, porque "cerca" puede significar cosas distintas:
+  </p>
+  <div class="modos">
+    <div class="modo-card">
+      <h3>Secuencial</h3>
+      <p>Cerca en el <b>orden de lectura</b>: cuántas palabras separan a un término de otro en la
+      secuencia del texto, sin importar dónde caigan en la página.</p>
+    </div>
+    <div class="modo-card">
+      <h3>Espacial</h3>
+      <p>Cerca en la <b>posición física</b> sobre la página del PDF — relevante cuando el texto tiene
+      diseño (columnas, poesía con quiebres, disposición no lineal) y el orden de lectura no captura
+      todo lo que importa.</p>
+    </div>
+    <div class="modo-card">
+      <h3>Vectorial / Arquitectónica</h3>
+      <p>Cerca en <b>estructura</b> más que en distancia — patrones de repetición y ritmo que no
+      dependen de la cercanía lineal ni espacial, sino de cómo se organiza el material a mayor escala.</p>
+    </div>
+  </div>
+  <p>
+    Cada uno de estos tres modos produce su propia agrupación de términos ("clústeres") — por eso
+    las métricas de clústeres se muestran en tres columnas paralelas, no como un número único.
+  </p>
+
+  <h2>El modelo nulo — cómo se sabe si un patrón es real</h2>
+  <p>
+    Cualquier método de agrupamiento va a encontrar <i>algo</i>, incluso en un texto sin estructura
+    real — es una propiedad del instrumento, no necesariamente del texto. Para distinguir un patrón
+    genuino de un artefacto de la medición, pulenta corre un <b>modelo nulo</b>: barajar al azar qué
+    palabra ocupa cada posición (conservando el vocabulario y las frecuencias intactas), volver a
+    agrupar el texto barajado, y repetir esto muchas veces (típicamente 20).
+  </p>
+  <p>
+    Si la estructura real es mucho más fuerte que la de las versiones barajadas, el patrón es del
+    texto. Si da más o menos lo mismo barajado o no, lo que estaba "viendo" el clúster era un efecto
+    de cómo está calibrado el instrumento (radio de búsqueda, umbral, etc.), no algo que el texto
+    realmente tenga.
+  </p>
+
+  <h2>Glosario</h2>
+  <dl class="glosario">
+    <dt>Ocurrencias <span class="rango">— entero, sin techo</span></dt>
+    <dd>Cuántas palabras en total tiene el texto procesado (tokens), contando repeticiones. Da una
+    idea del volumen bruto.</dd>
+
+    <dt>Tipo único <span class="rango">— entero, ≤ ocurrencias</span></dt>
+    <dd>Cuántas palabras <i>distintas</i> aparecen (vocabulario), sin contar repeticiones. Un texto
+    corto y muy variado puede tener un tipo único casi igual a sus ocurrencias; uno largo y repetitivo,
+    mucho menor.</dd>
+
+    <dt>TTR <span class="rango">— 0 a 1</span></dt>
+    <dd><i>Type-Token Ratio:</i> tipo único dividido ocurrencias. Mide riqueza léxica — más alto es
+    vocabulario más variado en relación al volumen de texto. Baja naturalmente en textos largos (hay
+    más oportunidad de repetir palabras), así que solo es comparable entre textos de tamaño similar.</dd>
+
+    <dt>Entropía normalizada <span class="rango">— 0 a 1</span></dt>
+    <dd>Qué tan pareja es la distribución de frecuencias del vocabulario. 0 = el texto se concentra en
+    muy pocas palabras dominantes; 1 = todas las palabras aparecen con frecuencia parecida, sin
+    términos que dominen claramente.</dd>
+
+    <dt>Clústeres <span class="rango">— entero, por modo</span></dt>
+    <dd>Cuántos grupos de vocabulario coocurrente detectó ese modo de análisis.</dd>
+
+    <dt>Nodos/clúster <span class="rango">— decimal, por modo</span></dt>
+    <dd>Tamaño promedio de cada clúster (cuántos términos agrupa, en promedio).</dd>
+
+    <dt>Entropía (por modo) <span class="rango">— decimal</span></dt>
+    <dd>Qué tan parejo es el reparto de términos entre los clústeres de ese modo — no confundir con
+    la entropía normalizada del vocabulario general, es la misma idea pero aplicada a los tamaños de
+    los grupos, no a las palabras.</dd>
+
+    <dt>Enlaces <span class="rango">— entero, por modo</span></dt>
+    <dd>Cantidad de conexiones (pares de términos que coocurren por encima del umbral) que ese modo
+    encontró en total.</dd>
+
+    <dt>Criterio <span class="rango">— texto libre, por modo</span></dt>
+    <dd>El parámetro operativo específico de ese modo (por ejemplo, la ventana de palabras para
+    secuencial, o el radio en píxeles para espacial) — el detalle técnico de qué contó como "cerca"
+    en esa corrida particular.</dd>
+
+    <dt>Modularidad <span class="rango">— decimal, típicamente −0.5 a 1</span></dt>
+    <dd>Qué tan bien definida está la partición en comunidades: más alta significa que los clústeres
+    son grupos densos y separados entre sí, no un continuo difuso. Es la métrica central del modelo
+    nulo — se compara la modularidad real contra la de las versiones barajadas al azar.</dd>
+
+    <dt>Azar (media ± sd) <span class="rango">— decimal ± decimal</span></dt>
+    <dd>Modularidad promedio (y su desvío estándar) obtenida sobre las versiones del texto barajadas
+    al azar — la línea de base "sin estructura real". La media sola ya sirve de referencia para
+    comparar contra la modularidad real; el ± sd dice qué tan dispersa fue esa línea de base entre
+    corridas (una banda angosta hace más confiable el Z de al lado).</dd>
+
+    <dt>Z <span class="rango">— decimal, puede ser negativo</span></dt>
+    <dd>Cuántos desvíos estándar separan la modularidad real del promedio azaroso. Es el número que
+    resume la comparación: valores altos (≥ 2 aprox.) indican que el patrón difícilmente sea casual.</dd>
+
+    <dt>Conclusión</dt>
+    <dd>
+      Lectura directa del valor de Z, en tres posibles veredictos:<br><br>
+      <span class="veredicto texto">del texto</span> — la organización detectada excede claramente lo
+      esperable al azar: es una propiedad real del material.<br>
+      <span class="veredicto instrumento">del instrumento</span> — la modularidad real cae dentro del
+      rango de lo que también aparece barajando el texto al azar: lo que se ve depende de cómo está
+      calibrado el instrumento (radio, ventana, umbral), no del texto en sí.<br>
+      <span class="veredicto anti">antiestructura</span> — la modularidad real es notablemente
+      <i>menor</i> que la azarosa: el texto activamente evita la organización que el instrumento busca.
+    </dd>
+
+    <dt>Calibración</dt>
+    <dd>Los parámetros con los que se corrió pulenta para llegar a estos números — longitud mínima de
+    palabra considerada, modo de normalización, nivel de stopwords filtradas, si se usaron n-gramas,
+    límite de nodos mostrados, y el umbral de coocurrencia. Se guarda para que la corrida sea
+    reproducible y comparable con otras.</dd>
+
+    <dt>Resonancia <span class="rango">— fracción, ej. 8/24</span></dt>
+    <dd>(Archivada junto con la matriz conceptual; ya no se calcula.) No era una métrica de pulenta — salía de la matriz conceptual del sitio. Contaba cuántos de los conceptos
+    <i>transversales</i> (presentes en dos o más obras del corpus) tocaban esta obra en particular,
+    sobre el total de conceptos transversales que existían.</dd>
+  </dl>
+
+  <div class="nota-manual">
+    Nota técnica: estos valores se tipean a mano en el taller de carga después de correr pulenta —
+    no hay un pipeline automático que lea el export de pulenta y lo vuelque acá. Si una obra no
+    muestra métricas, es simplemente porque todavía no se cargaron, no porque el corpus tenga algún
+    error.
+  </div>
+</div>
+</body>
+</html>

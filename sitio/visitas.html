@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>visitas — p314b</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<style>
+/* Visitas: solo para la autora. Los números los suma worker/huella.js
+   (/api/visita); para leerlos (/api/visitas) hace falta el token de GitHub
+   guardado en este navegador desde acceso.html. Sin personas: solo cuántas
+   veces se abrió cada página, de qué sitio venían y de qué país. */
+:root{
+  --bg:#080808;--page:#0d0d0d;--ink:#f5f5f5;--ink-soft:#d0d0d0;--ink-muted:#8a8a8a;--rule:#292929;
+  --line-ctl:color-mix(in oklab,var(--ink) 42%,var(--bg));--mark:#3b82f6;--mark-lt:#60a5fa;--violet:#a78bfa;
+  --font-body:'Newsreader',Georgia,serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f6f4ef;--page:#fbfaf6;--ink:#141414;--ink-soft:#333;--ink-muted:#6b6b6b;--rule:#dcd8cf;--mark:#2563eb;--mark-lt:#1d4ed8;--violet:#7c3aed;}}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--bg);color:var(--ink);}
+body{font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
+a{color:inherit;}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;border-bottom:1px solid var(--rule);background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(10px);}
+.nav-btn,.btn{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-decoration:none;padding:7px 11px;min-height:34px;display:inline-flex;align-items:center;border:1px solid var(--line-ctl);border-radius:3px;background:transparent;cursor:pointer;}
+.btn[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in oklab,var(--ink) 8%,transparent);}
+:focus-visible{outline:2px solid var(--mark-lt);outline-offset:2px;}
+main{max-width:1000px;margin:0 auto;padding:40px 24px 80px;}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-muted);margin:0 0 6px;}
+h1{font-style:italic;font-weight:300;font-size:clamp(40px,7vw,72px);line-height:1;margin:0 0 18px;}
+h2{font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-muted);font-weight:500;margin:40px 0 12px;padding-bottom:10px;border-bottom:1px solid var(--rule);}
+.cifras{display:flex;flex-wrap:wrap;gap:8px 28px;font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);margin-bottom:16px;}
+.cifras b{color:var(--ink);font-weight:500;font-size:18px;margin-right:4px;}
+.rango{display:flex;gap:8px;margin-bottom:8px;}
+svg#barras{display:block;width:100%;height:auto;}
+svg#barras rect{fill:var(--mark);}
+svg#barras rect.hoy{fill:var(--violet);}
+svg#barras text{fill:var(--ink-muted);font-family:var(--font-mono);font-size:10px;}
+.tabla{width:100%;border-collapse:collapse;font-size:15px;}
+.tabla td{padding:6px 0;border-bottom:1px solid var(--rule);vertical-align:baseline;}
+.tabla td.n{text-align:right;font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);width:5em;}
+.tabla td small{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);margin-left:6px;}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:0 40px;}
+.aviso{font-family:var(--font-mono);font-size:13px;color:var(--ink-soft);line-height:1.7;}
+.nota{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted);line-height:1.7;margin-top:36px;}
+@media (max-width:700px){main{padding:28px 16px 60px;}.dos{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<nav class="nav"><a class="nav-btn" href="index.html">← índice</a><span class="eyebrow" style="margin:0">p314b · solo para vos</span></nav>
+<main>
+  <p class="eyebrow">contador</p>
+  <h1>visitas</h1>
+  <div id="cuerpo"><p class="aviso">cargando…</p></div>
+  <p class="nota">Cada página abierta suma uno: su ruta, el dominio de donde venía quien la abrió (si vino de otro sitio) y el país, según Cloudflare. No se guarda IP, hora exacta, cookies ni nada que identifique a nadie. No cuenta tus propias visitas (las de este navegador, con tu token). Los días van con la hora de Argentina; cada día se guarda unos 13 meses.</p>
+</main>
+<script src="comun.js"></script>
+<script>
+(function () {
+  'use strict';
+  const cuerpo = document.getElementById('cuerpo');
+  const esc = P314.esc;
+  let token = null;
+  try { token = localStorage.getItem('p314b_gh_token'); } catch (e) {}
+  if (!token) { cuerpo.innerHTML = '<p class="aviso">Esta página es de la autora. Entrá con tu token desde <a href="acceso.html">acceso</a> y volvé.</p>'; return; }
+  let dias = 30, titulos = {};
+  fetch('corpus.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : { obras: [] }).catch(() => ({ obras: [] })).then(c => {
+    (c.obras || []).forEach(o => { titulos['/obras/' + (o._file || o.id + '.html').replace(/\.html$/, '')] = o.titulo; });
+    cargar();
+  });
+  const nombre = ruta => {
+    const r = decodeURIComponent(ruta).replace(/\.html$/, '').replace(/\/$/, '') || '/';
+    if (r === '/' || r === '/index') return 'índice';
+    return titulos[r] || r.replace(/^\//, '');
+  };
+  function sumar(lista, campo) {
+    const t = {};
+    lista.forEach(d => Object.entries(d[campo] || {}).forEach(([k, n]) => { t[k] = (t[k] || 0) + n; }));
+    return Object.entries(t).sort((a, b) => b[1] - a[1]);
+  }
+  function tabla(filas, fmt, vacio) {
+    if (!filas.length) return '<p class="aviso">' + vacio + '</p>';
+    return '<table class="tabla">' + filas.slice(0, 25).map(([k, n]) => '<tr><td>' + fmt(k) + '</td><td class="n">' + n + '</td></tr>').join('') + '</table>';
+  }
+  function pintar(d) {
+    const lista = d.dias || [];
+    const total = lista.reduce((a, x) => a + (x.total || 0), 0);
+    const hoy = (lista[0] || {}).total || 0, semana = lista.slice(0, 7).reduce((a, x) => a + (x.total || 0), 0);
+    const W = 900, H = 160, n = lista.length, max = Math.max(1, ...lista.map(x => x.total || 0)), bw = W / n;
+    let svg = '';
+    lista.slice().reverse().forEach((x, i) => {
+      const h = Math.round((x.total || 0) / max * (H - 30));
+      svg += `<rect class="${i === n - 1 ? 'hoy' : ''}" x="${(i * bw + 1).toFixed(1)}" y="${H - 18 - h}" width="${Math.max(1, bw - 2).toFixed(1)}" height="${h}"><title>${x.dia}: ${x.total || 0}</title></rect>`;
+      const paso = n <= 31 ? 7 : 15;
+      if (i % paso === 0 && n - 1 - i >= 3 || i === n - 1) svg += `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H - 4}" text-anchor="middle">${x.dia.slice(5)}</text>`;
+    });
+    cuerpo.innerHTML = `<div class="rango">${[7, 30, 90].map(k => `<button class="btn" type="button" data-dias="${k}" aria-pressed="${k === dias}">${k} días</button>`).join('')}</div>
+      <div class="cifras"><span><b>${hoy}</b>hoy</span><span><b>${semana}</b>últimos 7 días</span><span><b>${total}</b>en ${n} días</span></div>
+      <svg id="barras" viewBox="0 0 ${W} ${H}" role="img" aria-label="visitas por día">${svg}</svg>
+      <h2>qué se abrió</h2>${tabla(sumar(lista, 'rutas'), k => esc(nombre(k)) + '<small>' + esc(decodeURIComponent(k)) + '</small>', 'Todavía nada.')}
+      <div class="dos"><div><h2>de dónde vinieron</h2>${tabla(sumar(lista, 'desde'), k => esc(k), 'Nadie llegó desde otro sitio (o vinieron directo).')}</div>
+      <div><h2>países</h2>${tabla(sumar(lista, 'paises'), k => esc(k === '??' ? 'sin dato' : k), '—')}</div></div>`;
+    cuerpo.querySelectorAll('[data-dias]').forEach(b => b.addEventListener('click', () => { dias = +b.dataset.dias; cargar(); }));
+  }
+  function cargar() {
+    fetch('/api/visitas?dias=' + dias, { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' })
+      .then(r => r.status === 401 ? Promise.reject('token') : r.ok ? r.json() : Promise.reject('red'))
+      .then(pintar)
+      .catch(e => { cuerpo.innerHTML = '<p class="aviso">' + (e === 'token' ? 'GitHub no reconoce este token como tuyo (o venció). Volvé a pegarlo en <a href="acceso.html">acceso</a>.' : 'El contador solo responde en el sitio en línea.') + '</p>'; });
+  }
+})();
+</script>
+</body>
+</html>

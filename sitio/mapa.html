@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mapa — p314b</title>
+<meta name="description" content="Mapa del corpus: los textos publicados y las diagonales que los unen.">
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<script defer src="vendor/d3-7.9.0/d3.min.js"></script>
+<style>
+/* Mapa público del corpus. Mismos tokens que el índice. Solo lectura:
+   los datos (mapa.json) los arma publicar.py con lo que está en línea. */
+:root{
+  --bg:#080808;--page:#0d0d0d;--ink:#f5f5f5;--ink-soft:#d0d0d0;--ink-muted:#8a8a8a;--ink-ghost:#7a7a7a;
+  --rule:#292929;--line-ctl:color-mix(in oklab,var(--ink) 42%,var(--bg));
+  --mark:#3b82f6;--mark-lt:#60a5fa;--mark-bg:rgba(59,130,246,0.10);
+  --font-body:'Newsreader',Georgia,serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--bg);color:var(--ink);}
+body{font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
+a{color:inherit;}
+.saltar{position:absolute;left:12px;top:-60px;z-index:100;background:var(--ink);color:var(--bg);padding:10px 14px;font-family:var(--font-mono);font-size:13px;text-decoration:none;border-radius:3px;}
+.saltar:focus{top:10px;}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;border-bottom:1px solid var(--rule);background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(10px);}
+.nav-btn{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-decoration:none;padding:7px 11px;min-height:34px;display:inline-flex;align-items:center;border:1px solid var(--line-ctl);border-radius:3px;}
+.nav-btn:hover{border-color:var(--ink);background:color-mix(in oklab,var(--ink) 8%,transparent);}
+.nav-btn:focus-visible,.nodo:focus-visible circle.punto,.lista a:focus-visible{outline:2px solid var(--mark-lt);outline-offset:2px;}
+.cab{max-width:1220px;margin:0 auto;padding:48px 44px 12px;}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-muted);margin:0 0 6px;}
+h1{font-style:italic;font-weight:300;font-size:clamp(48px,9vw,96px);line-height:1;margin:0 0 18px;letter-spacing:-.02em;}
+.lede{font-size:18px;line-height:1.55;color:var(--ink-soft);max-width:62ch;margin:0 0 18px;}
+.cifras{display:flex;flex-wrap:wrap;gap:8px 28px;font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);margin:0;}
+.cifras b{color:var(--ink);font-weight:500;font-size:14px;margin-right:4px;}
+.lienzo{max-width:1220px;margin:0 auto;padding:12px 44px 0;position:relative;}
+svg#mapa{display:block;width:100%;height:auto;border:1px solid var(--rule);border-radius:4px;background:var(--page);}
+.cat{font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;fill:var(--ink-ghost);pointer-events:none;}
+.punto{fill:var(--ink-muted);stroke:var(--bg);stroke-width:1.5;transition:fill .15s;}
+.nodo.con-diag .punto{fill:var(--mark-lt);}
+.nodo:hover .punto,.nodo.activo .punto{fill:var(--ink);}
+.anillo{fill:none;stroke:var(--mark);stroke-width:1.2;stroke-dasharray:2 2;}
+.etq{font-family:var(--font-body);font-style:italic;font-size:14px;fill:var(--ink-soft);pointer-events:none;paint-order:stroke;stroke:var(--page);stroke-width:4px;stroke-linejoin:round;}
+.nodo:not(.con-diag) .etq{opacity:0;transition:opacity .15s;}
+.nodo:hover .etq,.nodo:focus .etq,.nodo.activo .etq{opacity:1;}
+.arista{fill:none;stroke:var(--mark);stroke-opacity:.75;cursor:pointer;}
+.fijada{pointer-events:none;fill:none;stroke:var(--ink-ghost);stroke-width:1;stroke-dasharray:1 4;stroke-linecap:round;}
+.fijada-toque{fill:none;stroke:transparent;stroke-width:8;}
+.fijada-toque:hover+.fijada,.fijada.activa{stroke:var(--ink-muted);}
+.arista:hover,.arista.activa{stroke:var(--mark-lt);stroke-opacity:1;}
+.atenuado{opacity:.18;}
+/* Filtro por trayectoria: las diagonales vacías que no tocan el camino de
+   esta visita quedan dormidas (casi invisibles); al pasar por un texto
+   se despiertan las suyas. */
+.arista.dormida{stroke-opacity:.07;pointer-events:none;marker-end:none;}
+.arista.dormida.revelada{stroke-opacity:.6;pointer-events:auto;marker-end:url(#flecha);}
+.nodo.camino .punto{stroke:var(--mark-lt);stroke-width:3;}
+.nodo.camino .etq{opacity:1;}
+.cifras button{font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);background:none;border:0;border-bottom:1px dotted var(--ink-muted);padding:0;cursor:pointer;}
+.cifras button:hover{color:var(--ink);border-color:var(--ink);}
+.tip{position:absolute;pointer-events:none;z-index:10;max-width:280px;background:var(--bg);border:1px solid var(--rule);border-left:2px solid var(--mark);padding:10px 12px;font-family:var(--font-mono);font-size:12px;line-height:1.5;color:var(--ink-soft);box-shadow:0 12px 32px rgba(0,0,0,.5);}
+.tip[hidden]{display:none;}
+.tip em{font-family:var(--font-body);font-size:15px;color:var(--ink);}
+.leyenda{display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);margin:12px 0 0;}
+.leyenda span{display:inline-flex;align-items:center;gap:8px;}
+.ley-punto{width:10px;height:10px;border-radius:50%;background:var(--ink-muted);display:inline-block;}
+.ley-punto.azul{background:var(--mark-lt);}
+.ley-linea{width:22px;height:2px;background:var(--mark);display:inline-block;}
+.ley-fijada{width:22px;height:0;border-top:1.5px dotted var(--ink-ghost);display:inline-block;}
+.ley-anillo{width:12px;height:12px;border-radius:50%;border:1.2px dashed var(--mark);display:inline-block;}
+.lista{max-width:1220px;margin:0 auto;padding:36px 44px 80px;}
+.lista h2{font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-muted);font-weight:500;margin:0 0 14px;padding-bottom:10px;border-bottom:1px solid var(--rule);}
+.lista ol{list-style:none;margin:0;padding:0;display:grid;gap:10px;}
+.lista li{border-left:2px solid var(--mark);padding:2px 0 2px 14px;}
+.lista a{text-decoration:none;}
+.lista a:hover em{color:var(--mark-lt);}
+.lista em{font-size:17px;}
+.lista .meta{display:block;font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);margin-top:2px;}
+.nodo.leida .punto{stroke:var(--ink);stroke-width:2.5;}
+.nodo.leida .etq{opacity:1;}
+.anillo.seguida{stroke:var(--ink);stroke-dasharray:none;}
+.arista.seguida{stroke:var(--ink);stroke-opacity:.95;}
+.ley-punto.leida{box-shadow:0 0 0 2px var(--ink);}
+.ley-linea.seguida{background:var(--ink);}
+.ley-punto.camino{box-shadow:0 0 0 2px var(--mark-lt);}
+.rastro{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);margin:10px 0 0;}
+.rastro[hidden]{display:none;}
+.rastro button{font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);background:none;border:0;border-bottom:1px dotted var(--ink-muted);padding:0;cursor:pointer;}
+.rastro button:hover{color:var(--ink);border-color:var(--ink);}
+.recorridos ol{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;}
+.recorridos li{border:1px solid var(--rule);border-radius:4px;padding:14px 16px;background:var(--page);display:flex;flex-direction:column;gap:6px;}
+.recorridos li:hover{border-color:var(--mark);}
+.recorridos .nombre{font-style:italic;font-size:19px;}
+.recorridos .meta{font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);}
+.recorridos .camino{font-size:14px;color:var(--ink-soft);line-height:1.5;}
+.recorridos .empezar{align-self:flex-start;margin-top:4px;font-family:var(--font-mono);font-size:12px;color:var(--mark-lt);text-decoration:none;border-bottom:1px dotted var(--mark-lt);}
+.recorridos .empezar:hover{color:var(--ink);border-color:var(--ink);}
+.recorridos .empezar:focus-visible{outline:2px solid var(--mark-lt);outline-offset:2px;}
+.nodo.en-rec .punto{fill:var(--mark-lt);}
+.vacio,.aviso{font-family:var(--font-mono);font-size:13px;color:var(--ink-muted);}
+@media (max-width:700px){
+  .nav{padding:10px 12px;}
+  .cab{padding:32px 20px 8px;}
+  .lienzo{padding:8px 12px 0;}
+  .lista{padding:28px 20px 64px;}
+  .etq{font-size:18px;}
+}
+
+/* Transición entre páginas del sitio (al seguir una diagonal a otro texto,
+   al volver al corpus): un fundido corto. Solo donde el navegador la
+   soporta y si no se pidió menos movimiento; si no, todo sigue igual. */
+@media (prefers-reduced-motion: no-preference){
+  @view-transition{navigation:auto;}
+  ::view-transition-old(root){animation:p314b-sale .18s ease-in both;}
+  ::view-transition-new(root){animation:p314b-entra .32s ease-out both;}
+}
+@keyframes p314b-sale{to{opacity:0;}}
+@keyframes p314b-entra{from{opacity:0;transform:translateY(10px);}}
+</style>
+</head>
+<body>
+<a class="saltar" href="#lista">saltar a la lista de diagonales</a>
+<nav class="nav" aria-label="Navegación">
+  <a class="nav-btn" href="index.html">← corpus</a>
+</nav>
+
+<header class="cab">
+  <p class="eyebrow">sistema de lectura diagonal · mapa</p>
+  <h1>mapa</h1>
+  <p class="lede">Cada punto es un texto publicado, agrupado por su categoría. Las líneas son diagonales que van de un texto a otro: tocá una para ir a su origen, o un punto para abrir el texto. Lo que ya leíste queda marcado: es tu rastro, y vive solo en este navegador. Cuando son muchas, se encienden las que tocan los textos de tu camino en esta visita; pasá por un punto para ver todas las suyas.</p>
+  <p class="cifras" id="cifras"><span>cargando…</span></p>
+</header>
+
+<main id="principal">
+  <div class="lienzo" id="lienzo">
+    <svg id="mapa" viewBox="0 0 1000 680" role="img" aria-labelledby="mapa-titulo">
+      <title id="mapa-titulo">Mapa de los textos publicados y las diagonales entre ellos</title>
+    </svg>
+    <div class="tip" id="tip" hidden></div>
+    <div class="leyenda" aria-hidden="true">
+      <span><i class="ley-punto"></i>texto</span>
+      <span><i class="ley-punto azul"></i>texto con diagonales</span>
+      <span><i class="ley-linea"></i>diagonal entre textos (más gruesa: más diagonales)</span>
+      <span id="ley-fijada" hidden><i class="ley-fijada"></i>ancla de diagonal vacía: relación fijada, sin emergente</span>
+      <span><i class="ley-anillo"></i>diagonales dentro del mismo texto</span>
+      <span><i class="ley-punto leida"></i>texto que ya leíste</span>
+      <span><i class="ley-linea seguida"></i>diagonal que seguiste</span>
+      <span><i class="ley-punto camino"></i>texto de tu camino en esta visita</span>
+    </div>
+    <p class="rastro" id="rastro" hidden></p>
+  </div>
+  <section class="lista recorridos" id="recorridos" aria-labelledby="rec-tit" hidden>
+    <h2 id="rec-tit">Recorridos</h2>
+    <p class="lede" style="font-size:16px">Caminos que pasan de diagonal en diagonal. Al empezar uno, una barra abajo lleva de parada en parada, aunque cambies de texto.</p>
+    <div id="rec-cuerpo"></div>
+  </section>
+  <section class="lista" id="lista" tabindex="-1" aria-labelledby="lista-tit">
+    <h2 id="lista-tit">Diagonales entre textos</h2>
+    <div id="lista-cuerpo"><p class="vacio">cargando…</p></div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+  var W = 1000, H = 680;
+  var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+
+  // En la web: mapa.json (lo escribe publicar.py, solo lo que está en
+  // línea). En tu máquina (sitio/ servido en local) no existe: se arma
+  // igual a partir de corpus.json y acciones.json.
+  function cargar() {
+    return fetch('mapa.json', { cache: 'no-cache' }).then(function (r) {
+      if (r.ok) return r.json();
+      throw new Error('sin mapa.json');
+    }).catch(function () {
+      return Promise.all([
+        fetch('corpus.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }),
+        fetch('acciones.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : { acciones: {} }; })
+      ]).then(function (res) {
+        var obras = (res[0].obras || []).filter(function (o) { return !o.diagonal; }).map(function (o) {
+          return { id: o.id, titulo: o.titulo || o.id, categoria: o.categoria, tipo_nodo: o.tipo_nodo, archivo: o._file || (o.id + '.html'), palabras: o._totalWords || 0 };
+        });
+        var ids = new Set(obras.map(function (o) { return o.id; }));
+        var acc = res[1].acciones || {}, diagonales = [];
+        Object.keys(acc).sort().forEach(function (aid) {
+          var a = acc[aid], de = (a.origen || {}).obra;
+          (a.tipos || []).forEach(function (t) {
+            if (t.tipo !== 'diagonal') return;
+            var hacia = ((acc[t.destino] || {}).origen || {}).obra;
+            if (ids.has(de) && ids.has(hacia)) diagonales.push({ de: de, a: hacia, accion: aid, relacion: t.tipo_relacion || null, signo: t.signo || null, instrumento: t.instrumento_nuevo_label || t.instrumento || null, vacia: !!t.vacia });
+          });
+        });
+        return { obras: obras, diagonales: diagonales };
+      });
+    });
+  }
+
+  // Tu rastro (lo anotan las obras al leerlas): solo en este navegador.
+  function leerRastro() {
+    try { var r = JSON.parse(localStorage.getItem('p314b_rastro') || '{}'); return { obras: r.obras || {}, diagonales: r.diagonales || {} }; }
+    catch (e) { return { obras: {}, diagonales: {} }; }
+  }
+
+  // El trayecto de esta visita (lo anotan las obras en sessionStorage):
+  // los textos por los que pasó, en orden.
+  function leerTrayecto() {
+    try { return (JSON.parse(sessionStorage.getItem('p314b_trayecto') || '[]') || []).map(function (p) { return p.obra; }); }
+    catch (e) { return []; }
+  }
+  // Con más de UMBRAL_MAPA diagonales entre textos, las vacías que no
+  // tocan el trayecto se duermen.
+  var UMBRAL_MAPA = 120, KEY_FILTRO = 'p314b_diag_filtro';
+
+  function dibujar(datos) {
+    var obras = datos.obras || [], diags = datos.diagonales || [];
+    var porIdF = new Set(obras.map(function (o) { return o.id; }));
+    var fijadas = (datos.fijadas || []).filter(function (f) { return porIdF.has(f.de) && porIdF.has(f.a) && f.de !== f.a; });
+    var rastro = leerRastro();
+    var porId = new Map(obras.map(function (o) { return [o.id, o]; }));
+    obras.forEach(function (o) { o.internas = 0; o.externas = 0; });
+    var pares = new Map();
+    diags.forEach(function (d) {
+      if (d.de === d.a) { porId.get(d.de).internas++; return; }
+      porId.get(d.de).externas++; porId.get(d.a).externas++;
+      var k = d.de + '→' + d.a;
+      if (!pares.has(k)) pares.set(k, { source: d.de, target: d.a, items: [] });
+      pares.get(k).items.push(d);
+    });
+    var aristas = Array.from(pares.values());
+    var conDiag = function (o) { return o.internas + o.externas > 0; };
+
+    document.getElementById('cifras').innerHTML =
+      '<span><b>' + obras.length + '</b>textos</span>' +
+      '<span><b>' + diags.filter(function (d) { return d.de !== d.a; }).length + '</b>diagonales entre textos</span>' +
+      '<span><b>' + diags.filter(function (d) { return d.de === d.a; }).length + '</b>dentro de un mismo texto</span>' +
+      (fijadas.length ? '<span><b>' + fijadas.reduce(function (s, f) { return s + (f.n || 1); }, 0) + '</b>anclas vacías</span>' : '');
+    document.getElementById('ley-fijada').hidden = !fijadas.length;
+
+    // Categorías en una elipse; cada texto tira hacia la suya.
+    // La misma categoría escrita con otra mayúscula, con espacios de más o
+    // con una letra de más, de menos o cambiada («poeamario», en palabras de
+    // 6 letras o más) va al mismo grupo, con su forma más usada, como en el
+    // índice. No toca los datos.
+    var distanciaUno = function (a, b) {
+      if (a === b || Math.abs(a.length - b.length) > 1) return false;
+      var i = 0; while (i < a.length && a[i] === b[i]) i++;
+      if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1);
+      return a.length > b.length ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1);
+    };
+    var formas = {}, total = {};
+    var claveCat = function (o) { return (o.categoria || 'sin categoría').trim().toLocaleLowerCase('es'); };
+    obras.forEach(function (o) {
+      var f = (o.categoria || 'sin categoría').trim(), k = claveCat(o);
+      formas[k] = formas[k] || {}; formas[k][f] = (formas[k][f] || 0) + 1; total[k] = (total[k] || 0) + 1;
+    });
+    var nombreCat = new Map();
+    Object.keys(formas).forEach(function (k) {
+      var mayor = k.length >= 6 && Object.keys(formas).filter(function (j) { return j.length >= 6 && total[j] > total[k] && distanciaUno(j, k); })
+        .sort(function (x, y) { return total[y] - total[x]; })[0];
+      var d = mayor || k;
+      nombreCat.set(k, Object.entries(formas[d]).sort(function (a, b) { return b[1] - a[1]; })[0][0]);
+    });
+    obras.forEach(function (o) { o.categoria = nombreCat.get(claveCat(o)); });
+    var cats = Array.from(new Set(nombreCat.values())).sort(function (a, b) { return a.localeCompare(b, 'es'); });
+    var centro = new Map();
+    cats.forEach(function (c, i) {
+      var ang = -Math.PI / 2 + i * 2 * Math.PI / Math.max(cats.length, 1);
+      centro.set(c, { x: W / 2 + Math.cos(ang) * W * 0.36, y: H / 2 + Math.sin(ang) * H * 0.36 });
+    });
+    var radio = function (o) { return Math.max(4, Math.min(14, 3 + Math.sqrt(o.palabras || 0) / 14)); };
+    // Posición inicial fija (sin azar): el mapa se ve igual en cada visita.
+    obras.forEach(function (o, i) { var c = centro.get(o.categoria || 'sin categoría'), r = 8 + (i % 5) * 7; o.x = c.x + Math.cos(i * 2.4) * r; o.y = c.y + Math.sin(i * 2.4) * r; });
+
+    // Se calcula entero antes de dibujar: sin animación, el mapa aparece quieto.
+    var sim = d3.forceSimulation(obras)
+      .force('link', d3.forceLink(aristas).id(function (o) { return o.id; }).distance(120).strength(0.25))
+      .force('charge', d3.forceManyBody().strength(-38))
+      .force('x', d3.forceX(function (o) { return centro.get(o.categoria || 'sin categoría').x; }).strength(0.14))
+      .force('y', d3.forceY(function (o) { return centro.get(o.categoria || 'sin categoría').y; }).strength(0.14))
+      .force('choque', d3.forceCollide(function (o) { return radio(o) + 3; }))
+      .stop();
+    for (var i = 0; i < 400; i++) sim.tick();
+    obras.forEach(function (o) { o.x = Math.max(24, Math.min(W - 24, o.x)); o.y = Math.max(24, Math.min(H - 24, o.y)); });
+
+    var svg = d3.select('#mapa');
+    svg.append('defs').append('marker').attr('id', 'flecha').attr('viewBox', '0 0 10 10').attr('refX', 9).attr('refY', 5)
+      .attr('markerWidth', 7).attr('markerHeight', 7).attr('orient', 'auto-start-reverse')
+      .append('path').attr('d', 'M0 0L10 5L0 10z').attr('fill', 'var(--mark)');
+
+    // Nombre de cada categoría, junto a su grupo.
+    svg.append('g').selectAll('text').data(cats).join('text').attr('class', 'cat')
+      .attr('x', function (c) { return centro.get(c).x; }).attr('y', function (c) {
+        var ys = obras.filter(function (o) { return (o.categoria || 'sin categoría') === c; }).map(function (o) { return o.y - radio(o); });
+        return Math.max(14, (ys.length ? Math.min.apply(null, ys) : centro.get(c).y) - 12);
+      }).attr('text-anchor', 'middle').text(function (c) { return c; });
+
+    var tip = document.getElementById('tip'), lienzo = document.getElementById('lienzo');
+    function mostrarTip(ev, html) {
+      tip.innerHTML = html; tip.hidden = false;
+      var r = lienzo.getBoundingClientRect();
+      var x = ev.clientX - r.left + 14, y = ev.clientY - r.top + 14;
+      if (x + 290 > r.width) x = Math.max(8, x - 300);
+      tip.style.left = x + 'px'; tip.style.top = y + 'px';
+    }
+    function ocultarTip() { tip.hidden = true; }
+
+    // Anclas de diagonal vacías: relaciones que la autora fijó entre dos
+    // textos sin emergente todavía. Van debajo de todo, rectas y punteadas,
+    // y no llevan a ningún lado: la diagonal aún no está tendida.
+    if (fijadas.length) {
+      var porIdObra = new Map(obras.map(function (o) { return [o.id, o]; }));
+      var gF = svg.append('g').attr('class', 'fijadas');
+      var trazo = function (f) { var s = porIdObra.get(f.de), t = porIdObra.get(f.a); return 'M' + s.x + ',' + s.y + 'L' + t.x + ',' + t.y; };
+      var fg = gF.selectAll('g').data(fijadas).join('g');
+      fg.append('path').attr('class', 'fijada-toque').attr('d', trazo)
+        .on('mousemove', function (ev, f) {
+          mostrarTip(ev, '<em>' + esc(porIdObra.get(f.de).titulo) + '</em> · <em>' + esc(porIdObra.get(f.a).titulo) + '</em><br>' +
+            (f.n || 1) + ' ' + ((f.n || 1) === 1 ? 'ancla de diagonal vacía' : 'anclas de diagonal vacías') +
+            ((f.relaciones || []).length ? '<br>' + esc(f.relaciones.join(' · ')) : ''));
+        })
+        .on('mouseleave', ocultarTip);
+      fg.append('path').attr('class', 'fijada').attr('d', trazo);
+    }
+
+    // Aristas: un arco por par de textos; si hay ida y vuelta, se separan.
+    var gA = svg.append('g');
+    var arista = gA.selectAll('path').data(aristas).join('path').attr('class', 'arista')
+      .attr('stroke-width', function (a) { return Math.min(6, 1.4 + a.items.length * 0.9); })
+      .attr('marker-end', 'url(#flecha)')
+      // el signo de la diagonal (si todas las del par lo comparten) en el trazo
+      .attr('stroke-dasharray', function (a) {
+        var sg = a.items.map(function (d) { return d.signo || ''; });
+        var uno = sg.every(function (x) { return x === sg[0]; }) ? sg[0] : '';
+        return ({ niega: '5 4', desplaza: '1 5', repite: '10 3', invierte: '8 3 1 3' })[uno] || null;
+      })
+      .attr('d', function (a) {
+        var s = a.source, t = a.target, dx = t.x - s.x, dy = t.y - s.y, dist = Math.hypot(dx, dy) || 1;
+        var rt = radio(t) + 4, ex = t.x - dx / dist * rt, ey = t.y - dy / dist * rt;
+        return 'M' + s.x + ',' + s.y + 'A' + dist * 1.1 + ',' + dist * 1.1 + ' 0 0,1 ' + ex + ',' + ey;
+      })
+      .on('mousemove', function (ev, a) {
+        mostrarTip(ev, '<em>' + esc(a.source.titulo) + '</em> → <em>' + esc(a.target.titulo) + '</em><br>' +
+          a.items.map(function (d) { return esc([d.signo, d.relacion, d.instrumento].filter(Boolean).join(' · ') || (d.vacia ? 'ancla de diagonal vacía' : 'diagonal')); }).join('<br>'));
+      })
+      .on('mouseleave', ocultarTip)
+      .on('click', function (ev, a) { location.href = 'obras/' + encodeURIComponent(a.source.archivo) + '#accion=' + encodeURIComponent(a.items[0].accion); });
+
+    // Nodos: cada uno es un enlace al texto (se llega también con Tab).
+    var nodo = svg.append('g').selectAll('a').data(obras).join('a')
+      .attr('class', function (o) { return 'nodo' + (conDiag(o) ? ' con-diag' : ''); })
+      .attr('href', function (o) { return 'obras/' + encodeURIComponent(o.archivo); })
+      .attr('aria-label', function (o) { return o.titulo + (conDiag(o) ? ', ' + (o.internas + o.externas) + ' diagonales' : ''); })
+      .attr('transform', function (o) { return 'translate(' + o.x + ',' + o.y + ')'; });
+    nodo.filter(function (o) { return o.internas > 0; }).append('circle').attr('class', 'anillo').attr('r', function (o) { return radio(o) + 4; });
+    nodo.classed('leida', function (o) { return !!rastro.obras[o.id]; });
+    nodo.selectAll('.anillo').classed('seguida', function (o) { return diags.some(function (d) { return d.de === o.id && d.a === o.id && rastro.diagonales[d.accion]; }); });
+    arista.classed('seguida', function (a) { return a.items.some(function (d) { return rastro.diagonales[d.accion]; }); });
+    var tray = leerTrayecto().filter(function (id) { return porId.has(id); });
+    var camino = new Set(tray);
+    nodo.classed('camino', function (o) { return camino.has(o.id); });
+    var nEntre = diags.filter(function (d) { return d.de !== d.a; }).length;
+    var modoFiltro = 'trayecto';
+    try { if (localStorage.getItem(KEY_FILTRO) === 'todas') modoFiltro = 'todas'; } catch (e) {}
+    // Se encienden las que tocan el texto inicial de la visita y los dos
+    // últimos (el anterior y el de ahora): con una visita larga, todo el
+    // camino encendería casi todo.
+    var claves = new Set([tray[0], tray[tray.length - 1], tray[tray.length - 2]].filter(Boolean));
+    var dormible = function (a) {
+      return a.items.every(function (d) { return d.vacia && !rastro.diagonales[d.accion]; }) && !claves.has(a.source.id) && !claves.has(a.target.id);
+    };
+    function filtrar() {
+      var activo = modoFiltro !== 'todas' && nEntre > UMBRAL_MAPA;
+      arista.classed('dormida', function (a) { return activo && dormible(a); });
+      var dormidas = activo ? aristas.filter(dormible).reduce(function (s, a) { return s + a.items.length; }, 0) : 0;
+      var el = document.getElementById('cifras-filtro');
+      if (!el) { el = document.createElement('span'); el.id = 'cifras-filtro'; document.getElementById('cifras').appendChild(el); }
+      if (nEntre <= UMBRAL_MAPA) { el.hidden = true; return; }
+      el.hidden = false;
+      el.innerHTML = (activo
+        ? '<b>' + (nEntre - dormidas) + '</b>encendidas por ' + (tray.length ? 'tu camino' : 'la autora') + ' · '
+        : '') + '<button type="button">' + (activo ? 'ver todas' : 'solo las de mi camino') + '</button>';
+      el.querySelector('button').addEventListener('click', function () {
+        modoFiltro = modoFiltro === 'todas' ? 'trayecto' : 'todas';
+        try { localStorage.setItem(KEY_FILTRO, modoFiltro); } catch (e) {}
+        filtrar();
+      });
+    }
+    filtrar();
+    var leidas = obras.filter(function (o) { return rastro.obras[o.id]; }).length;
+    var seguidas = diags.filter(function (d) { return rastro.diagonales[d.accion]; }).length;
+    var pRastro = document.getElementById('rastro');
+    if (leidas || seguidas) {
+      pRastro.hidden = false;
+      pRastro.innerHTML = '<span>tu rastro: <b style="color:var(--ink)">' + leidas + '</b> de ' + obras.length + ' textos leídos · <b style="color:var(--ink)">' + seguidas + '</b> ' + (seguidas === 1 ? 'diagonal seguida' : 'diagonales seguidas') + '</span>'
+        + '<button type="button" id="rastro-borrar">borrar mi rastro</button>';
+      document.getElementById('rastro-borrar').addEventListener('click', function () {
+        if (!confirm('¿Borrar lo que leíste y las diagonales que seguiste? Solo afecta a este navegador.')) return;
+        try { localStorage.removeItem('p314b_rastro'); } catch (e) {}
+        nodo.classed('leida', false); arista.classed('seguida', false); nodo.selectAll('.anillo').classed('seguida', false);
+        pRastro.hidden = true;
+      });
+    }
+    window.__mapaNodos = nodo;
+    nodo.append('circle').attr('class', 'punto').attr('r', radio);
+    nodo.append('text').attr('class', 'etq').attr('x', function (o) { return radio(o) + 6; }).attr('y', 4)
+      .attr('text-anchor', function (o) { return o.x > W - 200 ? 'end' : 'start'; })
+      .attr('dx', function (o) { return o.x > W - 200 ? -2 * (radio(o) + 6) : 0; })
+      .text(function (o) { return o.titulo; });
+
+    function resaltar(o) {
+      var vecinos = new Set([o.id]);
+      aristas.forEach(function (a) { if (a.source.id === o.id) vecinos.add(a.target.id); if (a.target.id === o.id) vecinos.add(a.source.id); });
+      nodo.classed('atenuado', function (n) { return !vecinos.has(n.id); }).classed('activo', function (n) { return n.id === o.id; });
+      arista.classed('atenuado', function (a) { return a.source.id !== o.id && a.target.id !== o.id; })
+        .classed('revelada', function (a) { return a.source.id === o.id || a.target.id === o.id; });
+    }
+    function soltar() { nodo.classed('atenuado', false).classed('activo', false); arista.classed('atenuado', false).classed('revelada', false); }
+    nodo.on('mouseenter focus', function (ev, o) {
+      resaltar(o);
+      var partes = [];
+      if (o.externas) partes.push(o.externas + ' con otros textos');
+      if (o.internas) partes.push(o.internas + ' dentro del texto');
+      mostrarTip(ev.type === 'focus' ? { clientX: this.getBoundingClientRect().right, clientY: this.getBoundingClientRect().bottom } : ev,
+        '<em>' + esc(o.titulo) + '</em><br>' + esc(o.categoria || 'sin categoría') + (o.tipo_nodo === 'pdf' ? ' · PDF' : '') + (rastro.obras[o.id] ? ' · leído' : '') +
+        (partes.length ? '<br>diagonales: ' + esc(partes.join(' · ')) : ''));
+    }).on('mouseleave blur', function () { soltar(); ocultarTip(); });
+
+    // La misma información como lista: para leer sin el dibujo.
+    var cuerpo = document.getElementById('lista-cuerpo');
+    var entre = diags.filter(function (d) { return d.de !== d.a; });
+    if (!entre.length) { cuerpo.innerHTML = '<p class="vacio">Todavía no hay diagonales publicadas entre textos distintos.</p>'; return; }
+    cuerpo.innerHTML = '<ol>' + entre.map(function (d) {
+      var de = porId.get(d.de), a = porId.get(d.a);
+      return '<li><a href="obras/' + encodeURIComponent(de.archivo) + '#accion=' + encodeURIComponent(d.accion) + '"><em>' + esc(de.titulo) + '</em> → <em>' + esc(a.titulo) + '</em></a>' +
+        '<span class="meta">' + esc([d.signo, d.relacion, d.instrumento].filter(Boolean).join(' · ') || (d.vacia ? 'ancla de diagonal vacía' : 'diagonal')) + (rastro.diagonales[d.accion] ? ' · la seguiste' : '') + '</span></li>';
+    }).join('') + '</ol>';
+  }
+
+  // Recorridos: recorridos.json en la web (lo recorta publicar.py a lo que
+  // está en línea); en local, matriz/recorridos.json entero.
+  function cargarRecorridos() {
+    return fetch('recorridos.json', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw 0; return r.json(); })
+      .then(function (d) { return d.recorridos || []; })
+      .catch(function () {
+        return fetch('matriz/recorridos.json', { cache: 'no-cache' }).then(function (r) { return r.json(); }).then(function (d) {
+          return (d.recorridos || []).map(function (r) {
+            var out = [];
+            (r.pasos || []).forEach(function (p) {
+              [[p.desde || {}, null], [p.hacia || {}, p.diagonal]].forEach(function (x) {
+                var e = x[0];
+                if (!e.accion || (out.length && out[out.length - 1].accion === e.accion)) return;
+                out.push({ accion: e.accion, obra: e.sitio, titulo: e.titulo || e.sitio, archivo: e.sitio + '.html', diagonal: x[1] });
+              });
+            });
+            return { id: r.id, etiqueta: r.etiqueta || r.id, criterio: r.criterio, paradas: out };
+          }).filter(function (r) { return r.paradas.length > 1; });
+        });
+      }).catch(function () { return []; });
+  }
+  var CRITERIO = { instrumento: 'por instrumento', tipo: 'por tipo de relación', tipo_relacion: 'por tipo de relación', peso: 'por peso', deriva: 'a la deriva' };
+  function listarRecorridos(lista) {
+    if (!lista.length) return;
+    var sec = document.getElementById('recorridos');
+    sec.hidden = false;
+    document.getElementById('rec-cuerpo').innerHTML = '<ol>' + lista.map(function (r) {
+      var textos = [];
+      r.paradas.forEach(function (p) { if (textos[textos.length - 1] !== p.titulo) textos.push(p.titulo); });
+      var saltos = r.paradas.filter(function (p, i) { return i > 0 && !p.diagonal; }).length;
+      var p0 = r.paradas[0];
+      return '<li data-rec="' + esc(r.id) + '"><span class="nombre">' + esc(r.etiqueta) + '</span>'
+        + '<span class="meta">' + esc([CRITERIO[r.criterio] || r.criterio, r.paradas.length + ' paradas', saltos ? saltos + (saltos > 1 ? ' saltos' : ' salto') : ''].filter(Boolean).join(' · ')) + '</span>'
+        + '<span class="camino">' + textos.map(function (t) { return '<em>' + esc(t) + '</em>'; }).join(' → ') + '</span>'
+        + '<a class="empezar" href="obras/' + encodeURIComponent(p0.archivo) + '#accion=' + encodeURIComponent(p0.accion) + '&recorrido=' + encodeURIComponent(r.id) + '&paso=0">empezar el recorrido →</a></li>';
+    }).join('') + '</ol>';
+    // Al pasar por un recorrido, el mapa marca sus textos.
+    var porId = new Map(lista.map(function (r) { return [r.id, r]; }));
+    document.querySelectorAll('#rec-cuerpo li').forEach(function (li) {
+      var obrasRec = new Set(porId.get(li.dataset.rec).paradas.map(function (p) { return p.obra; }));
+      li.addEventListener('mouseenter', function () { if (window.__mapaNodos) window.__mapaNodos.classed('en-rec', function (o) { return obrasRec.has(o.id); }); });
+      li.addEventListener('mouseleave', function () { if (window.__mapaNodos) window.__mapaNodos.classed('en-rec', false); });
+    });
+  }
+
+  function iniciar() {
+    cargarRecorridos().then(listarRecorridos);
+    if (!window.d3) { document.getElementById('cifras').innerHTML = '<span class="aviso">No se pudo cargar la librería del mapa.</span>'; return; }
+    cargar().then(dibujar).catch(function () {
+      document.getElementById('cifras').innerHTML = '<span class="aviso">No se pudo leer el mapa. Probá recargar la página.</span>';
+      document.getElementById('lista-cuerpo').innerHTML = '';
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', iniciar); else iniciar();
+})();
+</script>
+<script src="visita.js"></script>
+</body>
+</html>

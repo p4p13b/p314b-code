@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tercero — p314b</title>
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<script src="comun.js"></script>
+<script src="vendor/pdfjs-3.11.174/pdf.min.js"></script>
+<script src="pdf-viewer-core.js"></script>
+<style>
+/* Experimento «tercero». Embriaguez a la izquierda, Aire a la derecha (el
+   mismo cuerpo de cut-up en dos tiradas; cada página llama a su gemela).
+   En el centro, vacío, hasta que se pide el tercero: el fragmento de otro
+   texto con el que se relaciona el par, por lo común o ampliando con lo
+   propio de cada tirada. Los datos los arma a mano
+   matriz/anexo/scripts/tercero.py (tercero.json); la página solo los lee. */
+:root{
+  --bg:#0b0a08;--bg-alt:#14120e;--page:#121110;--ink:#ece7dc;--ink-soft:#b8b0a0;--ink-muted:#756e5f;--ink-ghost:#4a463c;
+  --rule:#262420;--mark:#c9a576;--mark-lt:#e0bf8a;--green:#7fa06a;--violet:#a992c9;--violet-lt:#c1aed9;--red:#c26a5a;
+  --font-body:'Newsreader',Georgia,serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace;--radius:3px;--bar-h:52px;
+  --col-emb:var(--violet-lt);--col-aire:var(--green);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+[hidden]{display:none !important;}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--font-body);-webkit-font-smoothing:antialiased;height:100%;}
+body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+button,select{font-family:inherit;color:inherit;}
+a{color:inherit;}
+.barra{height:var(--bar-h);flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid var(--rule);font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);overflow-x:auto;white-space:nowrap;}
+.barra .tit{color:var(--ink);font-size:13px;letter-spacing:.06em;text-transform:uppercase;}
+.barra a,.barra button,.barra select{border:1px solid var(--rule);background:none;border-radius:var(--radius);padding:6px 10px;min-height:32px;cursor:pointer;font-size:12px;text-decoration:none;}
+.barra a:hover,.barra button:hover,.barra select:hover{border-color:var(--ink-soft);color:var(--ink);}
+.barra .sep{flex:1;}
+.modos{display:inline-flex;gap:0;}
+.modos button{border-radius:0;margin-left:-1px;}
+.modos button:first-child{border-radius:var(--radius) 0 0 var(--radius);margin-left:0;}
+.modos button:last-child{border-radius:0 var(--radius) var(--radius) 0;}
+.modos button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+#btn-buscar{border-color:var(--mark);color:var(--mark-lt);}
+#btn-buscar[aria-pressed="true"]{background:var(--mark);color:var(--bg);}
+.tres{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,1.05fr) minmax(0,1fr);min-height:0;}
+.col{display:flex;flex-direction:column;min-height:0;min-width:0;}
+.col + .col{border-left:1px solid var(--rule);}
+.cab{flex-shrink:0;padding:9px 12px 10px;border-bottom:1px solid var(--rule);font-family:var(--font-mono);font-size:11px;line-height:1.6;color:var(--ink-soft);min-height:74px;}
+.cab b{color:var(--ink);font-weight:500;font-size:12px;}
+.cab .lado-emb{color:var(--col-emb);} .cab .lado-aire{color:var(--col-aire);}
+.chips{display:block;margin-top:3px;}
+.chips span{display:inline-block;margin:1px 3px 1px 0;padding:0 5px;border-radius:2px;background:var(--bg-alt);color:var(--ink-soft);}
+.chips.emb span{box-shadow:inset 0 -1px 0 var(--col-emb);} .chips.aire span{box-shadow:inset 0 -1px 0 var(--col-aire);}
+.chips.com span{box-shadow:inset 0 -1px 0 var(--mark);}
+.cl{display:inline-block;padding:0 6px;border:1px solid var(--rule);border-radius:2px;margin-right:6px;}
+.cl.comun{color:var(--green);} .cl.variante{color:var(--mark-lt);} .cl.propio{color:var(--violet-lt);}
+.visor{flex:1;min-height:0;}
+.pvcore-wrap{overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:16px 10px 60px;}
+.pvcore-page{position:relative;margin-bottom:12px;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.35);flex-shrink:0;}
+.pvcore-page canvas{display:block;}
+.pvcore-page-label{position:absolute;top:6px;right:8px;font-family:var(--font-mono);font-size:9px;color:#8a8a8a;background:rgba(255,255,255,.85);padding:2px 6px;border-radius:2px;}
+.pvcore-textlayer{position:absolute;inset:0;overflow:hidden;line-height:1;transform-origin:0 0;z-index:2;}
+.pvcore-textlayer span{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%;}
+.pvcore-page.actual{outline:2px solid var(--mark);outline-offset:3px;}
+/* centro */
+.centro .vacio{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--ink-ghost);font-family:var(--font-mono);font-size:12px;line-height:1.8;}
+.centro .vacio b{display:block;font-family:var(--font-body);font-style:italic;font-weight:300;font-size:26px;color:var(--ink-muted);margin-bottom:8px;}
+.terceros{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.terceros button{border:1px solid var(--rule);background:none;border-radius:var(--radius);padding:3px 8px;cursor:pointer;font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);text-align:left;}
+.terceros button[aria-pressed="true"]{border-color:var(--mark);color:var(--ink);}
+.inclina{display:inline-block;padding:0 6px;border-radius:2px;border:1px solid var(--rule);}
+.inclina.Aire{color:var(--col-aire);} .inclina.Embriaguez{color:var(--col-emb);}
+.texto-tercero{flex:1;overflow-y:auto;padding:22px 24px 60px;font-size:17px;line-height:1.6;color:var(--ink-soft);}
+.ayuda{font-family:var(--font-mono);font-size:10.5px;color:var(--ink-muted);}
+@media (max-width:900px){
+  body{height:auto;overflow:auto;}
+  .tres{grid-template-columns:1fr;}
+  .col + .col{border-left:0;border-top:1px solid var(--rule);}
+  .visor{height:62vh;flex:none;}
+  .centro .vacio{min-height:30vh;}
+  .texto-tercero{max-height:62vh;}
+}
+</style>
+</head>
+<body>
+<div class="barra" role="toolbar" aria-label="Tercero">
+  <a href="index.html" title="Volver al corpus">← corpus</a>
+  <span class="tit">tercero</span>
+  <span class="ayuda" id="estado">cargando…</span>
+  <span class="sep"></span>
+  <span class="modos" role="group" aria-label="Con qué se busca el tercero">
+    <button data-modo="común" aria-pressed="true" title="Solo lo que comparten las dos páginas: coincidencia estructural">común</button>
+    <button data-modo="común + Embriaguez" aria-pressed="false" title="Lo común más lo propio de Embriaguez">+ Embriaguez</button>
+    <button data-modo="común + Aire" aria-pressed="false" title="Lo común más lo propio de Aire">+ Aire</button>
+    <button data-modo="todo" aria-pressed="false" title="Las dos páginas enteras: el rango más amplio">todo</button>
+  </span>
+  <select id="sel-nucleo" title="Núcleos de lo común, por peso: ir al par central de cada uno" aria-label="Núcleo de lo común"></select>
+  <a rel="license" href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.es" title="Se puede compartir citando la autoría, sin fines comerciales y sin modificar" style="border:0;padding:0 4px;opacity:.6">© Pepi · CC BY-NC-ND 4.0</a>
+  <button id="btn-buscar" aria-pressed="false" title="Buscar el tercero del par que se está leyendo (después sigue la lectura)">◎ tercero</button>
+</div>
+<main class="tres">
+  <section class="col" aria-label="De embriaguez y pathos">
+    <div class="cab" id="cab-emb"><b class="lado-emb">De embriaguez y pathos</b></div>
+    <div class="visor" id="visor-emb"></div>
+  </section>
+  <section class="col centro" aria-label="Tercero">
+    <div class="cab" id="cab-centro"></div>
+    <div class="vacio" id="vacio"><div><b>vacío</b>Leé de un lado o del otro: la otra tirada sigue con la gemela.<br>«◎ tercero» busca el texto que se relaciona con el par.</div></div>
+    <div class="texto-tercero" id="texto-centro" hidden></div>
+    <div class="visor" id="visor-centro" hidden></div>
+  </section>
+  <section class="col" aria-label="Aire en la cuerda">
+    <div class="cab" id="cab-aire"><b class="lado-aire">Aire en la cuerda</b></div>
+    <div class="visor" id="visor-aire"></div>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const esc = P314.esc;
+const chips = (l, cls) => l && l.length ? `<span class="chips ${cls}">${l.map(w => '<span>' + esc(w) + '</span>').join('')}</span>` : '';
+const num = x => String(x).replace('.', ',');
+let D = null, modo = 'común', buscado = false, lider = 'aire', parActual = null, elegido = 0;
+const visores = {};
+let visorCentro = null, pdfCentro = null, montandoCentro = null, pedidoCentro = 0;
+
+async function montar(lado, archivo) {
+  const cont = $('visor-' + lado);
+  const v = await PDFViewerCore.montar({
+    contenedor: cont,
+    datos: { url: new URL('Archivo/' + archivo, document.baseURI).href },
+    escalaInicial: 1,
+    onPaginaVisible: n => pagina(lado, n),
+  });
+  ajustar(v, cont);
+  return v;
+}
+function ajustar(v, cont) {
+  const pg = cont.querySelector('.pvcore-page');
+  if (pg && pg.offsetWidth) { const f = (cont.clientWidth - 28) / pg.offsetWidth; if (f > 0 && Math.abs(f - 1) > 0.04) v.setZoom(v.getZoom() * f); }
+}
+// La columna con la que se interactúa manda; la otra sigue con la gemela.
+['emb', 'aire'].forEach(l => ['pointerdown', 'wheel', 'touchstart', 'keydown'].forEach(ev =>
+  $('visor-' + l).addEventListener(ev, () => { lider = l; }, { passive: true })));
+
+function pagina(lado, n) {
+  if (!D || lado !== lider) return;
+  const key = (lado === 'aire' ? D.por_aire : D.por_embriaguez)[String(n)];
+  const otro = lado === 'aire' ? 'emb' : 'aire';
+  const par = key && D.pares[key];
+  if (par) {
+    const destino = lado === 'aire' ? par.embriaguez : par.aire;
+    if (visores[otro] && visores[otro].paginaActual !== destino) visores[otro].irAPagina(destino);
+  }
+  mostrarPar(key, lado, n);
+}
+
+function mostrarPar(key, lado, n) {
+  parActual = key;
+  const par = key && D.pares[key];
+  if (!par) {
+    $('cab-' + (lado === 'aire' ? 'aire' : 'emb')).innerHTML = `<b class="${lado === 'aire' ? 'lado-aire">Aire en la cuerda' : 'lado-emb">De embriaguez y pathos'}</b> · pág. ${n}<br><span class="ayuda">sin texto para comparar (portada, figura o separador)</span>`;
+    return;
+  }
+  const cl = par.clase === 'común' ? 'comun' : par.clase;
+  $('cab-emb').innerHTML = `<b class="lado-emb">De embriaguez y pathos</b> · pág. ${par.embriaguez}<br>propio de esta tirada:${chips(par.solo_embriaguez, 'emb')}`;
+  $('cab-aire').innerHTML = `<b class="lado-aire">Aire en la cuerda</b> · pág. ${par.aire}<br>propio de esta tirada:${chips(par.solo_aire, 'aire')}`;
+  const nu = par.nucleo != null ? D.nucleos[par.nucleo] : null;
+  $('cab-centro').innerHTML = `<span class="cl ${cl}">${esc(par.clase)} · ${num(par.coseno)}</span>Embriaguez ${par.embriaguez} ↔ Aire ${par.aire}` +
+    (nu ? ` · núcleo <b>${esc(nu.nucleo)}</b> (peso ${num(nu.peso)})` : '') + `<br>lo común:${chips(par.comun, 'com') || ' <span class="ayuda">casi nada: el par es propio; ampliá con lo de cada tirada</span>'}` +
+    (buscado ? '<div class="terceros" id="terceros"></div>' : '');
+  if (buscado) mostrarTerceros();
+}
+
+function mostrarTerceros() {
+  const par = D.pares[parActual];
+  const lista = (par && par.terceros[modo]) || [];
+  const cont = $('terceros');
+  if (!lista.length) { if (cont) cont.innerHTML = '<span class="ayuda">ningún tercero supera al azar con este modo (o no comparte al menos dos términos): probá ampliar</span>'; mostrarFragmento(null); return; }
+  elegido = Math.min(elegido, lista.length - 1);
+  cont.innerHTML = lista.map((t, i) => { const f = D.fragmentos[t.id];
+    return `<button aria-pressed="${i === elegido}" data-i="${i}">${esc(f.obra)}${f.pagina ? ' · p. ' + f.pagina : ''}<br><span class="ayuda" title="cuántas desviaciones por encima de un par al azar (corregido por «hubs»)">z ${num(t.fuerza)} · se inclina: <span class="inclina ${esc(t.inclina)}">${esc(t.inclina)}</span></span></button>`; }).join('');
+  cont.querySelectorAll('button').forEach(b => b.addEventListener('click', () => { elegido = +b.dataset.i; mostrarTerceros(); }));
+  mostrarFragmento(lista[elegido]);
+}
+
+async function mostrarFragmento(t) {
+  $('vacio').hidden = !!t;
+  if (!t) { $('visor-centro').hidden = true; $('texto-centro').hidden = true; return; }
+  const f = D.fragmentos[t.id];
+  const pie = `<p class="ayuda" style="margin-bottom:12px">${esc(f.obra)}${f.fecha ? ' · ' + esc(f.fecha.slice(0, 4)) : ''}${f.pagina ? ' · pág. ' + f.pagina : ''} · z ${num(t.fuerza)} sobre el azar (umbral ${num(D.umbral.z)}) · estructural ${num(t.estructural)} · léxico ${num(t.lexico)}<br>por: ${esc((t.por || []).join(', ') || '—')}${f.tipo === 'pdf' && f.pdf ? ` · <a href="Archivo/${encodeURIComponent(f.pdf)}${f.pagina ? '#page=' + f.pagina : ''}" target="_blank" rel="noopener">abrir el PDF ↗</a>` : f.publicado ? ` · <a href="obras/${esc(f.slug)}.html" target="_blank" rel="noopener">abrir ↗</a>` : ''}</p>`;
+  if (f.tipo === 'pdf' && f.pdf) {
+    $('texto-centro').hidden = false; $('texto-centro').style.flex = 'none'; $('texto-centro').style.padding = '8px 14px 0';
+    $('texto-centro').innerHTML = pie;
+    $('visor-centro').hidden = false;
+    // Un solo visor en el centro: si cambia el PDF se monta otro; los pedidos
+    // que llegan mientras tanto (se sigue leyendo) esperan y solo vale el último.
+    const mio = ++pedidoCentro;
+    if (pdfCentro !== f.pdf) {
+      if (visorCentro) { try { visorCentro.destruir(); } catch (e) {} visorCentro = null; }
+      pdfCentro = f.pdf;
+      const este = f.pdf;
+      montandoCentro = PDFViewerCore.montar({ contenedor: $('visor-centro'), datos: { url: new URL('Archivo/' + f.pdf, document.baseURI).href }, escalaInicial: 1 })
+        .then(v => { if (pdfCentro !== este) { try { v.destruir(); } catch (e) {} return null; } ajustar(v, $('visor-centro')); visorCentro = v; return v; });
+    }
+    const v = await montandoCentro;
+    if (mio !== pedidoCentro || !v) return;
+    if (f.pagina) setTimeout(() => { if (mio === pedidoCentro) v.irAPagina(f.pagina); }, 80);
+  } else {
+    $('visor-centro').hidden = true;
+    $('texto-centro').hidden = false; $('texto-centro').style.flex = ''; $('texto-centro').style.padding = '';
+    $('texto-centro').innerHTML = pie + '<p>' + esc(f.texto) + '</p>';
+  }
+}
+
+document.querySelectorAll('.modos button').forEach(b => b.addEventListener('click', () => {
+  modo = b.dataset.modo; elegido = 0;
+  document.querySelectorAll('.modos button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  if (buscado && parActual) mostrarTerceros();
+}));
+$('btn-buscar').addEventListener('click', () => {
+  buscado = !buscado; elegido = 0;
+  $('btn-buscar').setAttribute('aria-pressed', String(buscado));
+  if (!buscado) { mostrarFragmento(null); }
+  if (parActual) { const p = D.pares[parActual]; mostrarPar(parActual, lider, lider === 'aire' ? p.aire : p.embriaguez); }
+});
+$('sel-nucleo').addEventListener('change', e => {
+  const nu = D.nucleos[+e.target.value];
+  if (!nu) return;
+  const par = D.pares[nu.par_central];
+  lider = 'aire';
+  visores.aire && visores.aire.irAPagina(par.aire);
+  visores.emb && visores.emb.irAPagina(par.embriaguez);
+  setTimeout(() => mostrarPar(nu.par_central, 'aire', par.aire), 300);
+});
+
+(async function () {
+  try {
+    D = await (await fetch('tercero.json', { cache: 'no-cache' })).json();
+  } catch (e) { $('estado').textContent = 'no se pudo leer tercero.json'; return; }
+  $('estado').textContent = `${Object.keys(D.pares).length} pares · ${D.nucleos.length} núcleos de lo común`;
+  $('sel-nucleo').innerHTML = '<option value="">núcleos de lo común…</option>' +
+    D.nucleos.map((n, i) => `<option value="${i}">${esc(n.nucleo)} · ${n.pares} pares · peso ${num(n.peso)}</option>`).join('');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'vendor/pdfjs-3.11.174/pdf.worker.min.js';
+  [visores.emb, visores.aire] = await Promise.all([montar('emb', D.embriaguez.pdf), montar('aire', D.aire.pdf)]);
+  const m = /p=(\d+)/.exec(location.hash);
+  const n = m ? +m[1] : 3;
+  lider = 'aire'; visores.aire.irAPagina(n);
+  setTimeout(() => pagina('aire', visores.aire.paginaActual), 400);
+})();
+</script>
+<script src="visita.js"></script>
+</body>
+</html>

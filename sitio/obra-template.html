@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script>if(/[?&]panel=1\b/.test(location.search))document.documentElement.classList.add("en-panel");</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>___TITULO___</title>
+<script src="../comun.js"></script>
+<script src="../autor.js"></script>
+<link rel="preload" href="../vendor/fuentes-5.3.0/files/eb-garamond-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../vendor/fuentes-5.3.0/fuentes.css">
+<!-- EB Garamond y Spectral: las fuentes del menú del taller. Sin cargarlas acá,
+     los capítulos escritos en EB Garamond se veían publicados en otra letra. -->
+<link rel="stylesheet" href="../vendor/katex-0.16.11/katex.min.css">
+<script defer src="../vendor/katex-0.16.11/katex.min.js"></script>
+<script defer src="../vendor/katex-0.16.11/contrib/auto-render.min.js"></script>
+<script defer src="../vendor/baffle-0.3.6/baffle.min.js"></script>
+<link rel="stylesheet" href="../obra.css">
+
+</head>
+<body>
+<a class="saltar" href="#book-page">saltar al texto</a>
+
+<nav class="top-nav">
+  <div class="left">
+    <a class="nav-btn nav-volver" id="btn-home" href="../index.html" title="Volver al corpus">←<span class="lbl"> corpus</span></a>
+    <button class="nav-btn" id="btn-index" title="Índice">☰<span class="lbl"> Índice</span></button>
+    <button class="nav-btn" id="btn-recorrido" title="Navegar siguiendo solo las diagonales salientes de cada unidad, no la secuencia lineal">⤳<span class="lbl"> recorrido</span></button>
+    <button class="nav-btn" id="btn-mapa" title="Las diagonales de este texto">◇<span class="lbl"> mapa</span></button>
+    <span class="book-title">___TITULO___</span>
+    <span class="chapter-label" id="nav-chapter-label"></span>
+  </div>
+  <div class="right">
+    <button class="nav-btn" id="btn-pdf" title="Exportar todo el texto a PDF limpio, sin marcas">↓ PDF</button>
+    <button class="nav-btn" id="btn-marcas" title="Mostrar todas las marcas, solo las diagonales o ninguna (j / k recorre las marcas)" aria-pressed="false">◈<span class="lbl"> marcas: todas</span></button>
+    <button class="nav-btn" id="btn-lectura" title="Opciones de lectura" aria-expanded="false" aria-controls="lect-panel">⚙<span class="lbl"> lectura</span></button>
+    <button class="nav-btn" id="btn-theme">◑<span class="lbl"> oscuro</span></button>
+  </div>
+</nav>
+<div class="lect-panel" id="lect-panel" role="dialog" aria-label="Opciones de lectura">
+  <div class="lect-tit"><span>Opciones de lectura</span><button class="lect-op" id="lect-cerrar" style="padding:2px 8px;">×</button></div>
+  <div id="lect-intencion"></div>
+  <div class="lect-ops" id="lect-ops"></div>
+  <div id="lect-resaltar"></div>
+  <div id="lect-extra"></div>
+  <div class="lect-sel"><label for="lect-marg">marginalias</label><select id="lect-marg">
+    <option value="auto">a la izquierda (abajo si no entra)</option>
+    <option value="abajo">todas debajo del párrafo</option>
+    <option value="boton">debajo, con un botón</option>
+    <option value="ala">en el ala, al tocar (como antes)</option>
+  </select></div>
+  <div class="lect-sel"><label for="lect-letra">letra</label><select id="lect-letra">
+    <option value="s">más chica</option>
+    <option value="m">normal</option>
+    <option value="l">grande</option>
+    <option value="xl">muy grande</option>
+  </select></div>
+  <div class="lect-sel"><label for="lect-renglon">interlineado</label><select id="lect-renglon">
+    <option value="justo">justo</option>
+    <option value="normal">normal</option>
+    <option value="amplio">amplio</option>
+  </select></div>
+  <div class="lect-sel"><label for="lect-abrir">abrir</label><select id="lect-abrir">
+    <option value="click">el mouse resalta, tocar abre</option>
+    <option value="hover">pasar el mouse abre</option>
+  </select></div>
+  <div class="lect-sel"><button type="button" class="guia-abrir" data-guia>¿cómo leer las marcas?</button></div>
+  <div class="lect-ayuda">Se guarda en este navegador.</div>
+</div>
+<div class="back-bar" id="back-bar"></div>
+<nav class="chapter-subnav" id="chapter-subnav"></nav>
+
+<div class="overlay-bg" id="overlay-bg"></div>
+<aside class="index-panel" id="index-panel">
+  <div class="index-title">___TITULO___</div>
+  ___CHAPLIST___
+</aside>
+
+<main class="layout" id="layout">
+  <aside class="wing wing-left"><div class="marg-fijas" id="marg-fijas"></div><div class="wing-content" id="wing-left"></div></aside>
+  <article class="book-page" id="book-page" tabindex="-1">
+    <header class="page-header" id="page-header"></header>
+    <div class="text-body" id="text-body"></div>
+    <nav class="chapter-nav" id="chapter-nav"></nav>
+  </article>
+  <aside class="wing wing-right"><div class="wing-content" id="wing-right"></div></aside>
+</main>
+
+<div class="legend" id="legend">
+  <button class="legend-cerrar" id="legend-cerrar" title="Ocultar">×</button>
+  <strong>Lectura</strong>
+  <span class="leyenda-tipos"><span class="leyenda-linea" style="text-decoration:underline solid var(--mark) 2px;text-underline-offset:.3em">diagonal</span> <span class="leyenda-linea" style="text-decoration:underline dotted var(--violet) 2px;text-underline-offset:.3em">hojear ↗</span> <span class="leyenda-linea" style="text-decoration:underline dashed var(--green) 2px;text-underline-offset:.3em">nota</span> <span class="leyenda-linea" style="text-decoration:underline wavy var(--red) 2px;text-underline-offset:.3em">marginalia</span> <span class="leyenda-linea" style="text-decoration:underline double var(--mark-lt) 2px;text-underline-offset:.3em">lámina ◫</span></span><br>
+    <span style="opacity:0.85;" id="legend-uso">Hover: ala · Click: fija · j / k: marca siguiente / anterior</span><br>
+    <button type="button" class="guia-abrir" data-guia>¿cómo leer las marcas?</button>
+</div>
+
+<!-- Columna de lectura (traída del PR #3): textos largos y, en pantallas
+     sin alas, todas las acciones de un fragmento. -->
+<div class="lectura-overlay" id="lectura-overlay"></div>
+<div class="lectura-modal" id="lectura-modal">
+  <div class="lectura-modal-head">
+    <span id="lectura-modal-label"></span>
+    <span class="mapa-close" onclick="cerrarLectura()">cerrar ×</span>
+  </div>
+  <div class="lectura-modal-body" id="lectura-modal-body"></div>
+</div>
+
+<div class="comparar" id="comparar" role="dialog" aria-label="Comparar diagonal">
+  <div class="comparar-cab"><span><b>⇄ comparar</b> · <span id="cmp-titulo"></span></span><span class="mapa-close" onclick="cerrarComparar()">cerrar ×</span></div>
+  <div class="comparar-cuerpo" id="cmp-cuerpo">
+    <svg class="cmp-banda" id="cmp-banda"></svg>
+    <section class="comparar-col"><h3>origen<i id="cmp-orig-t"></i><span class="cmp-orden" id="cmp-orig-o" hidden></span></h3><div class="comparar-texto" id="cmp-orig"></div></section>
+    <section class="comparar-centro" id="cmp-centro">
+      <div class="cmp-cen-cab">diagonal</div>
+      <h2 class="cmp-diag-titulo" id="cmp-diag-titulo" hidden></h2>
+      <dl class="cmp-rel" id="cmp-rel"></dl>
+      <div class="cmp-em-texto" id="cmp-em"></div>
+      <div class="cmp-gloss" id="cmp-gloss"></div>
+    </section>
+    <section class="comparar-col"><h3>destino<i id="cmp-dest-t"></i><span class="cmp-orden" id="cmp-dest-o" hidden></span></h3><div class="comparar-texto" id="cmp-dest"></div></section>
+  </div>
+</div>
+
+<div class="mapa-overlay" id="mapa-overlay"></div>
+<div class="mapa-modal" id="mapa-modal">
+  <div class="mapa-modal-head">
+    <span>Las diagonales de este texto</span>
+    <span class="mapa-close" id="mapa-close">cerrar ×</span>
+  </div>
+  <div class="mapa-modal-body" id="mapa-modal-body"></div>
+</div>
+
+<script src="../diagonal.js"></script>
+<script src="../resaltador.js"></script>
+<script src="../lectura-extra.js"></script>
+<script src="../mareas.js"></script>
+<script>
+const SLUG = '___SLUG___';
+const CHAPTERS = ___CHAPTERSDATA___;
+const ACCIONES = ___ACCIONESDATA___;
+const LEMAS = ___LEMASDATA___;
+const FECHA_OBRA = ___FECHAOBRA___;
+// Posteo de una diagonal (#dg-…): sus citas en todo el corpus, o null.
+const DIAGONAL_POSTEO = ___DIAGONALDATA___;
+let currentIdx = 0;
+// Fijado múltiple (traído del PR #3): cada entrada es un fragmento fijado.
+let pinnedList = [];
+const COLOR_TIPO = { diagonal: 'var(--mark)', nota: 'var(--green)', marginalia: 'var(--red)', hojear: 'var(--violet)', lamina: 'var(--mark-lt)' };
+let modoRecorrido = localStorage.getItem('p314b_recorrido') === '1';
+let SUBGRAFO_LABELS = {}; // instrumento id -> label, best-effort (solo para la tarjeta de diagonal)
+// «indiferibilidad › indiferir no discernible»: el instrumento y, si la hay,
+// su subcategoría (el lema del instrumento). conHtml: subcategoría atenuada.
+function instrumentoTexto(t, conHtml) {
+  if (!t || !t.instrumento) return '';
+  const label = SUBGRAFO_LABELS[t.instrumento] || t.instrumento_nuevo_label || t.instrumento;
+  const lema = t.instrumento_lema || '';
+  if (conHtml) return escHtml(label) + (lema ? ' <small>› ' + escHtml(lema) + '</small>' : '');
+  return label + (lema ? ' › ' + lema : '');
+}
+(async function cargarSubgrafo(){
+  try {
+    const r = await fetch('../subgrafo.json', {cache:'no-store'});
+    if (!r.ok) return;
+    const data = await r.json();
+    (data.instrumentos||[]).forEach(i => { SUBGRAFO_LABELS[i.id] = i.label; });
+  } catch(e) { /* sin server local o sin subgrafo.json: la tarjeta muestra el id crudo del instrumento */ }
+})();
+
+// Las diagonales que salen de esta obra, con lo que ya trae la página
+// (ACCIONES): fragmento, destino e instrumento. No lee nada de afuera.
+function renderMapaObra() {
+  const cuerpo = document.getElementById('mapa-modal-body');
+  const items = [];
+  Object.values(ACCIONES).forEach(a => (a.tipos || []).forEach(t => {
+    if (t.tipo !== 'diagonal') return;
+    const r = t._resuelto || {};
+    const idx = CHAPTERS.findIndex(c => c.id === a.capitulo);
+    const cap = idx >= 0 ? (CHAPTERS[idx].number || CHAPTERS[idx].title || '') : '';
+    const destino = r._pendiente ? 'destino aún no publicado'
+      : r._roto ? 'destino roto'
+      : r.mismaObra ? 'en este texto' : [r.tituloObra, r.tituloCapitulo].filter(Boolean).join(' · ');
+    items.push(`<div class="mapa-item" data-id="${a.id}">
+      <div class="mapa-frag">«${(a.fragmento || '').replace(/</g, '&lt;')}»</div>
+      <div class="mapa-dest">${cap ? cap + ' → ' : '→ '}${destino}${t.instrumento ? ' · ' + (SUBGRAFO_LABELS[t.instrumento] || t.instrumento) : ''}</div>
+    </div>`);
+  }));
+  cuerpo.innerHTML = items.length
+    ? `<div class="mapa-resumen">${items.length} diagonal${items.length === 1 ? '' : 'es'} salen de este texto</div><div class="mapa-lista">${items.join('')}</div>`
+    : '<div class="mapa-empty">Este texto todavía no tiene diagonales publicadas.</div>';
+  cuerpo.querySelectorAll('.mapa-item').forEach(el => el.addEventListener('click', () => {
+    cerrarMapaObra();
+    const a = ACCIONES[el.dataset.id];
+    const idx = CHAPTERS.findIndex(c => c.id === a.capitulo);
+    if (idx >= 0 && idx !== currentIdx) { pendingArrival = a.id; goChapterSlide(idx); }
+    else scrollYPreactivar(a.id);
+  }));
+}
+function abrirMapaObra() {
+  document.getElementById('mapa-overlay').classList.add('open');
+  document.getElementById('mapa-modal').classList.add('open');
+  renderMapaObra();
+}
+function cerrarMapaObra() {
+  document.getElementById('mapa-overlay').classList.remove('open');
+  document.getElementById('mapa-modal').classList.remove('open');
+}
+document.getElementById('btn-mapa').addEventListener('click', abrirMapaObra);
+document.getElementById('mapa-close').addEventListener('click', cerrarMapaObra);
+document.getElementById('mapa-overlay').addEventListener('click', cerrarMapaObra);
+
+function accionesDeAccionMark(mark) {
+  return (mark.dataset.accion || '').split(',').filter(Boolean).map(id => ACCIONES[id]).filter(Boolean);
+}
+
+/* ── Lámina: visor de PDF en el ala izquierda ──
+   pdf.js y el visor se cargan recién al abrir la primera lámina. */
+let laminaAbierta = null, laminaVisor = null, laminaScripts = null;
+function cargarScript(src) {
+  return new Promise((ok, mal) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => mal(new Error('no se pudo cargar ' + src)); document.head.appendChild(s); });
+}
+function scriptsLamina() {
+  if (!laminaScripts) laminaScripts = (window.pdfjsLib ? Promise.resolve() : cargarScript('../vendor/pdfjs-3.11.174/pdf.min.js'))
+    .then(() => { pdfjsLib.GlobalWorkerOptions.workerSrc = '../vendor/pdfjs-3.11.174/pdf.worker.min.js'; })
+    .then(() => window.PDFViewerCore ? null : cargarScript('../pdf-viewer-core.js'));
+  return laminaScripts;
+}
+function panelLamina() {
+  let p = document.getElementById('lamina-panel');
+  if (p) return p;
+  p = document.createElement('aside');
+  p.id = 'lamina-panel'; p.className = 'lamina-panel'; p.hidden = true;
+  p.setAttribute('aria-label', 'Lámina');
+  p.innerHTML = '<div class="lamina-barra"><span class="tit" id="lamina-tit"></span><span id="lamina-pag"></span>' +
+    '<button id="lamina-menos" title="Alejar">−</button><button id="lamina-mas" title="Acercar">+</button>' +
+    '<button id="lamina-ir" title="Ir a esa página (dejar este texto)">abrir ↗</button><button id="lamina-cerrar" title="Cerrar">×</button></div><div class="lamina-visor" id="lamina-visor"></div>';
+  document.body.appendChild(p);
+  p.addEventListener('click', e => e.stopPropagation());
+  document.getElementById('lamina-cerrar').addEventListener('click', cerrarLamina);
+  document.getElementById('lamina-ir').addEventListener('click', () => {
+    if (!laminaAbierta || !laminaAbierta.ir) return;
+    pushBackStack();
+    window.location.href = laminaAbierta.ir;
+  });
+  document.getElementById('lamina-mas').addEventListener('click', () => laminaVisor && laminaVisor.setZoom(laminaVisor.getZoom() * 1.2));
+  document.getElementById('lamina-menos').addEventListener('click', () => laminaVisor && laminaVisor.setZoom(laminaVisor.getZoom() / 1.2));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && laminaAbierta) cerrarLamina(); });
+  return p;
+}
+function ubicarLamina(p) {
+  // Ocupa el ala izquierda (hasta la columna de texto); si no hay lugar,
+  // la pantalla entera.
+  const col = document.getElementById('text-body').getBoundingClientRect().left;
+  const ancho = Math.floor(col - 20);
+  p.classList.toggle('completa', ancho < 340);
+  p.style.width = ancho < 340 ? '' : ancho + 'px';
+  return ancho < 340 ? window.innerWidth : ancho;
+}
+function cerrarLamina() {
+  const p = document.getElementById('lamina-panel');
+  if (p) p.hidden = true;
+  if (laminaVisor) { try { laminaVisor.destruir(); } catch (e) {} laminaVisor = null; }
+  if (laminaAbierta && laminaAbierta.mark) laminaAbierta.mark.classList.remove('lamina-abierta', 'hojear-abierta');
+  laminaAbierta = null;
+}
+// Hojear: a dónde lleva un destino (id de acción u «obra:<slug>[#p=N]»).
+// Devuelve la página y el ancla, o null si todavía no está publicado.
+function urlDeHojear(destinoId) {
+  const id = String(destinoId || '');
+  if (id.startsWith('obra:')) {
+    const r = resueltoDe(id);
+    if (!r || r._pendiente || r._roto) return null;
+    if (r.mismaObra) return { pagina: SLUG + '.html', ancla: '', titulo: r.tituloObra || '' };
+    if (!r.archivo) return null;
+    return { pagina: r.archivo, ancla: r.pdf_pagina ? '#pagina=' + r.pdf_pagina : '', titulo: r.tituloCapitulo || r.tituloObra || '' };
+  }
+  const d = ACCIONES[id];
+  if (d && CHAPTERS.some(c => c.id === d.capitulo)) {
+    const cap = CHAPTERS.find(c => c.id === d.capitulo);
+    return { pagina: SLUG + '.html', ancla: '#accion=' + encodeURIComponent(id), titulo: (cap && (cap.title || cap.titulo)) || '' };
+  }
+  const r = resueltoDe(id);
+  if (!r || r._pendiente || r._roto || !r.archivo) return null;
+  return { pagina: r.archivo, ancla: '#accion=' + encodeURIComponent(id), titulo: [r.tituloObra, r.tituloCapitulo].filter(Boolean).join(' · ') };
+}
+// Hojear abre el destino en el ala izquierda, como una lámina: no se deja
+// este texto. «abrir ↗» en la barra sí lleva a esa página.
+function alternarHojear(destinoId, mark) {
+  const clave = 'hojear:' + destinoId;
+  if (laminaAbierta && laminaAbierta.clave === clave) { cerrarLamina(); return; }
+  const u = urlDeHojear(destinoId);
+  if (!u) { alert('Este destino todavía no está disponible.'); return; }
+  cerrarLamina();
+  const p = panelLamina();
+  p.classList.add('modo-hojear');
+  laminaAbierta = { clave, mark, ir: u.pagina + u.ancla };
+  if (mark) mark.classList.add('hojear-abierta');
+  p.hidden = false;
+  ubicarLamina(p);
+  document.getElementById('lamina-tit').textContent = 'hojear · ' + (u.titulo || u.pagina.replace(/\.html$/, ''));
+  const marco = document.createElement('iframe');
+  marco.className = 'hojear-marco';
+  marco.title = 'Destino del hojear';
+  marco.src = u.pagina + '?panel=1' + u.ancla;
+  const visor = document.getElementById('lamina-visor');
+  visor.innerHTML = '';
+  visor.appendChild(marco);
+}
+async function alternarLamina(t, mark) {
+  const clave = t.archivo + '#' + (t.pagina || 1);
+  if (laminaAbierta && laminaAbierta.clave === clave) { cerrarLamina(); return; }
+  cerrarLamina();
+  const p = panelLamina();
+  p.classList.remove('modo-hojear');
+  laminaAbierta = { clave, mark };
+  mark.classList.add('lamina-abierta');
+  p.hidden = false;
+  const ancho = ubicarLamina(p);
+  document.getElementById('lamina-tit').textContent = t.archivo.replace(/^laminas\//, '');
+  document.getElementById('lamina-pag').textContent = '';
+  const visor = document.getElementById('lamina-visor');
+  visor.innerHTML = '<div class="lamina-msg">cargando la lámina…</div>';
+  try {
+    await scriptsLamina();
+    if (!laminaAbierta || laminaAbierta.clave !== clave) return;
+    laminaVisor = await PDFViewerCore.montar({
+      contenedor: visor,
+      datos: { url: new URL('../Archivo/' + t.archivo, document.baseURI).href },
+      escalaInicial: Math.max(0.5, Math.min(2.2, (ancho - 40) / 612)),
+      onPaginaVisible: (n, total) => { document.getElementById('lamina-pag').textContent = n + ' / ' + total; },
+      onError: e => { visor.innerHTML = '<div class="lamina-msg">No se pudo abrir la lámina (' + (e && e.message || e) + ').</div>'; }
+    });
+    // zoom inicial: la página ocupa el ancho del ala (cada PDF tiene su tamaño)
+    const pg = visor.querySelector('.pvcore-page');
+    if (pg && pg.offsetWidth) {
+      const f = (Math.min(ancho, visor.clientWidth || ancho) - 28) / pg.offsetWidth;
+      if (f > 0 && Math.abs(f - 1) > 0.05) laminaVisor.setZoom(laminaVisor.getZoom() * f);
+    }
+    if (t.pagina > 1) setTimeout(() => laminaVisor && laminaVisor.irAPagina(t.pagina), 60);
+  } catch (e) {
+    visor.innerHTML = '<div class="lamina-msg">No se pudo abrir la lámina (' + e.message + ').</div>';
+  }
+}
+window.addEventListener('resize', () => { const p = document.getElementById('lamina-panel'); if (p && !p.hidden) ubicarLamina(p); });
+
+// Tipo dominante para estilo visual: diagonal > hojear > marginalia/nota.
+// El ancla puro (sin nada más bajo ninguno de los ids del fragmento)
+// no tiene dominante — no recibe clase, no recibe listeners.
+function tipoDominante(acciones) {
+  const todos = acciones.flatMap(a => a.tipos || []);
+  if (todos.some(t => t.tipo === 'diagonal')) return 'diagonal';
+  if (todos.some(t => t.tipo === 'hojear')) return 'hojear';
+  if (todos.some(t => t.tipo === 'lamina')) return 'lamina';
+  if (todos.some(t => t.tipo === 'marginalia')) return 'marginalia';
+  if (todos.some(t => t.tipo === 'nota')) return 'nota';
+  if (todos.some(t => t.tipo === 'transclusion')) return 'transclusion';
+  return null; // solo ancla(s)
+}
+
+function renderChapter(idx, opts) {
+  opts = opts || {};
+  currentIdx = idx;
+  const ch = CHAPTERS[idx];
+  if (!ch) return;
+
+  if (!opts.skipSave && !document.documentElement.classList.contains('en-panel')) localStorage.setItem(SLUG + '_pos', idx);
+  if (!opts.skipSave) EXTRA.paso(SLUG, idx, document.querySelector('.index-title') ? document.querySelector('.index-title').textContent : '', CHAPTERS.length);
+
+  // ch.number es texto libre, editable en el taller, sin valor
+  // predefinido: si está vacío no se muestra nada (ni "Capítulo" ni
+  // un número inferido de la posición) — así una unidad como un
+  // prólogo puede no llevar numeración y mostrar solo su título.
+  // Sin prefijo "Cap." fijo acá tampoco: ch.number ya trae lo que la
+  // autora eligió escribir (o nada), se usa tal cual.
+  document.getElementById('nav-chapter-label').textContent =
+    (ch.number ? (ch.number + ' · ') : '') + (ch.title||'');
+
+  const hdr = document.getElementById('page-header');
+  hdr.innerHTML = `
+    ${ch.part ? `<p style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:10px;">${ch.part}</p>` : ''}
+    ${ch.number ? `<p class="chapter-number">${ch.number}</p>` : ''}
+    <h1 class="chapter-title">${ch.title||'Sin título'}</h1>
+    <div class="chapter-rule"></div>
+  `;
+
+  // Body — ya viene con las marcas <span class="accion-mark"
+  // data-accion="id[,id2]"> embebidas por el taller al momento de
+  // escribir. No hay reemplazo por fragmento en tiempo de lectura:
+  // eso era el mecanismo viejo (frágil, dependía de que el texto no
+  // cambiara). Acá el ancla vive en el HTML mismo.
+  const bodyEl = document.getElementById('text-body');
+  let html = ch.body || '';
+  if (!html.includes('<')) {
+    html = html.split(/\n{2,}/).map(p => '<p>'+p+'</p>').join('');
+  }
+  bodyEl.classList.toggle('poesia-body', !!ch.poesia);
+  // Interlineado elegido en el taller para este capítulo (si hay):
+  // lo que se ve al escribir es lo que se publica.
+  bodyEl.style.lineHeight = ch.lineHeight || '';
+  // Imágenes pegadas desde Word que apuntan al disco de quien escribió
+  // (file:///C:/…): no cargan en ningún navegador, solo ensucian.
+  bodyEl.innerHTML = html.replace(/<img\b[^>]*\bsrc\s*=\s*["']?file:[^>]*>/gi, '');
+  renderMath(bodyEl);
+  aplicarHomofonos(bodyEl);
+  pintarTransclusiones(bodyEl);
+
+  const navLabelFor = c => (c.number ? (c.number + ' · ') : '') + (c.title||'');
+  const nav = document.getElementById('chapter-nav');
+  if (modoRecorrido) {
+    const diagsSalientes = Object.values(ACCIONES)
+      .filter(a => a.capitulo === ch.id)
+      .flatMap(a => (a.tipos||[]).filter(t => t.tipo === 'diagonal').map(t => t));
+    if (diagsSalientes.length) {
+      nav.innerHTML = `<div class="recorrido-nav">${diagsSalientes.map(t => {
+        const base = t.titulo || t.resumen || t.emergente || 'sin emergente';
+        const txt = escHtml(base.slice(0,80) + (base.length>80?'…':''));
+        return `<button class="recorrido-link" onclick="irAAccion('${t.destino}')">↗ seguir diagonal — ${txt}</button>`;
+      }).join('')}</div>`;
+    } else {
+      nav.innerHTML = `<div class="recorrido-nav recorrido-empty">Sin diagonales salientes en esta unidad.
+        ${idx < CHAPTERS.length-1 ? `<button onclick="goChapter(${idx+1})">seguir linealmente — ${navLabelFor(CHAPTERS[idx+1])} →</button>` : ''}</div>`;
+    }
+  } else {
+    nav.innerHTML = `
+      ${idx > 0 ? `<button onclick="goChapter(${idx-1})">← ${navLabelFor(CHAPTERS[idx-1])}</button>` : '<span></span>'}
+    ${idx < CHAPTERS.length-1 ? `<button onclick="goChapter(${idx+1})">${navLabelFor(CHAPTERS[idx+1])} →</button>` : '<span></span>'}
+  `;
+  }
+
+  document.querySelectorAll('.index-item').forEach((item, i) => {
+    item.classList.toggle('active', i === idx);
+  });
+
+  clearPin();
+  if (!opts.skipScroll) window.scrollTo({ top: 0, behavior: 'smooth' });
+  bindAcciones();
+  lecturaTrasCapitulo();
+  buildSubNav();
+
+  if (pendingArrival) {
+    const target = pendingArrival;
+    pendingArrival = null;
+    setTimeout(() => scrollYPreactivar(target), 60);
+  }
+}
+
+/* ── Transclusión ──
+   El pasaje de otro lado, entero, debajo del párrafo que lo convoca. No
+   es una copia: generar_obra lo vuelve a leer del original en cada
+   publicación, así que si el original cambia, cambia acá. */
+function pintarTransclusiones(root) {
+  const hechas = new Set();
+  root.querySelectorAll('.accion-mark[data-accion]').forEach(m => {
+    accionesDeAccionMark(m).forEach(a => (a.tipos || []).forEach(t => {
+      if (t.tipo !== 'transclusion' || hechas.has(a.id)) return;
+      hechas.add(a.id);
+      const r = t._resuelto || {};
+      const bloque = m.closest('p, li, blockquote') || m;
+      const el = document.createElement('aside');
+      el.className = 'transclusion'; el.dataset.accion = a.id;
+      if (r._roto || r._pendiente || !r.parrafo) {
+        el.innerHTML = '<div class="tr-pend">' + (r._roto ? 'el pasaje transcluido ya no existe' : 'el pasaje transcluido todavía no está en línea') + '</div>';
+      } else {
+        const frag = (r.fragmento || '').trim();
+        let txt = escHtml(r.parrafo);
+        if (frag && t.alcance !== 'fragmento') { const i = r.parrafo.indexOf(frag); if (i >= 0) txt = escHtml(r.parrafo.slice(0, i)) + '<mark>' + escHtml(frag) + '</mark>' + escHtml(r.parrafo.slice(i + frag.length)); }
+        if (t.alcance === 'fragmento' && frag) txt = escHtml(frag);
+        el.innerHTML = '<div class="tr-texto">' + txt + '</div><button type="button" class="tr-de">— ' + escHtml(r.tituloObra || '') + (r.tituloCapitulo && r.tituloCapitulo !== r.tituloObra ? ', ' + escHtml(r.tituloCapitulo) : '') + ' ↗</button>';
+        el.querySelector('.tr-de').addEventListener('click', e => { e.stopPropagation(); irAAccion(t.destino); });
+      }
+      bloque.after(el);
+    }));
+  });
+}
+
+// ── Notación formal (KaTeX) ──
+/* ── Homofonías ──
+   Las marca la autora en el taller, una por una: <span class="homo"
+   data-otra="vos">voz</span> dentro del texto. Al leer, cuando la línea
+   pasa el tercio superior de la pantalla la palabra cambia por la otra,
+   y vuelve si el lector sube. Ocupa siempre el ancho de la más larga. */
+let homoPendiente = false;
+const homoQuieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function aplicarHomofonos(root) {
+  const homos = root.querySelectorAll('.homo[data-otra]');
+  homos.forEach(h => { h.dataset.orig = h.textContent; });
+  if (homos.length) (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => reservarHomos(root));
+}
+function reservarHomos(root) {
+  root.querySelectorAll('.homo[data-otra]').forEach(h => {
+    h.style.width = '';
+    const actual = h.textContent, med = [];
+    [h.dataset.orig, h.dataset.otra].forEach(x => { h.textContent = x; med.push(h.getBoundingClientRect().width); });
+    h.textContent = actual;
+    h.style.width = Math.ceil(Math.max(...med)) + 'px';
+  });
+}
+function cambiarHomo(h, texto, ms) {
+  if (homoQuieto || !window.baffle) { h.textContent = texto; return; }
+  baffle(h, { characters: '░▒▓<>/·', speed: 55 }).start().text(() => texto).reveal(ms);
+}
+function homosAlScroll() {
+  homoPendiente = false;
+  const vh = innerHeight;
+  document.querySelectorAll('#text-body .homo[data-otra]').forEach(h => {
+    if (!LECT.homo) { if (h.dataset.cambiada) { delete h.dataset.cambiada; h.textContent = h.dataset.orig; } return; }
+    if (LECT.retro && h.dataset.cond && !VISTAS.has(h.dataset.cond)) return;
+    const top = h.getBoundingClientRect().top;
+    if (!h.dataset.cambiada && top < vh * 0.33 && top > 0) { h.dataset.cambiada = '1'; cambiarHomo(h, h.dataset.otra, 900); }
+    else if (h.dataset.cambiada && top > vh * 0.45) { delete h.dataset.cambiada; cambiarHomo(h, h.dataset.orig, 700); }
+  });
+}
+addEventListener('scroll', () => { if (!homoPendiente && document.querySelector('#text-body .homo[data-otra]')) { homoPendiente = true; requestAnimationFrame(homosAlScroll); } }, { passive: true });
+addEventListener('resize', () => { const b = document.getElementById('text-body'); if (b) reservarHomos(b); });
+
+/* ── Opciones de lectura (del laboratorio) ──
+   Cada lector elige; se guarda en este navegador.
+   Por defecto queda lo que hace a la lectura en diagonal (notas, diagonales,
+   homófonos de la autora, retrolegibilidad); los efectos que mueven o tiñen
+   el texto (palabras de a una, color sintético, desvanecer, estela) se
+   prenden a pedido, o con una «intención» (ver INTENCIONES). */
+const LECT_DEF = { inter: true, marg: 'auto', abrir: 'click', palabras: false, sintetico: false, centro: false, homo: true, estela: false, retro: true };
+const LECT_VER = 2;
+const LECT = Object.assign({}, LECT_DEF);
+try {
+  const guardado = JSON.parse(localStorage.getItem('p314b_lectura') || '{}') || {};
+  // Antes de la versión 2 se guardaba todo junto, también lo que nadie
+  // eligió: los efectos que ahora vienen apagados vuelven a su valor nuevo.
+  if ((guardado.v || 1) < 2) { ['palabras', 'sintetico', 'centro'].forEach(k => delete guardado[k]); }
+  Object.assign(LECT, guardado, { v: LECT_VER });
+} catch (e) {}
+document.documentElement.dataset.letra = LECT.letra || 'm';
+document.documentElement.dataset.renglon = LECT.renglon || 'normal';
+const LECT_OPS = [['inter', 'notas y diagonales'], ['palabras', 'palabras de a una'], ['sintetico', 'color sintético'],
+                  ['centro', 'desvanecer lejos del centro'], ['homo', 'homófonos'], ['estela', 'estela'], ['retro', 'retrolegibilidad']];
+function guardarLect() { try { localStorage.setItem('p314b_lectura', JSON.stringify(LECT)); } catch (e) {} }
+// Lo abierto en esta visita (palabras de a una y retrolegibilidad).
+const VISTAS = new Set((() => { try { return JSON.parse(sessionStorage.getItem('p314b_vistas') || '[]'); } catch (e) { return []; } })());
+function marcarVistas(ids) {
+  let nuevo = false;
+  ids.forEach(id => { if (!VISTAS.has(id)) { VISTAS.add(id); nuevo = true; } });
+  if (!nuevo) return;
+  try { sessionStorage.setItem('p314b_vistas', JSON.stringify([...VISTAS])); } catch (e) {}
+  pintarUmbrales();
+}
+const pocaAnimacion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Intenciones: para no tener que saber qué hace cada opción, el lector
+   elige para qué viene y se prende solo lo que sirve para eso. Ninguna
+   prende todo: lo que se suma de más se tapa entre sí. Después se puede
+   ajustar a mano en «a medida». La explicación larga está en ayuda.html. */
+const INTENCIONES = [
+  ['corrido', 'leer de corrido', 'Solo el texto: sin marcas ni efectos.',
+    { marcas: 'ninguna', lect: { inter: false, homo: false }, rt: {}, ex: {} }],
+  ['diagonal', 'leer en diagonal', 'Lo de siempre: notas, marginalias y diagonales; nada se mueve.',
+    { marcas: 'todas', lect: {}, rt: {}, ex: {} }],
+  ['saltar', 'saltar de texto en texto', 'Solo las diagonales, y lo que está lejos de donde leés se apaga.',
+    { marcas: 'diagonales', lect: { centro: true, estela: true }, rt: {}, ex: {} }],
+  ['estudiar', 'estudiar el texto', 'Términos del glosario y nodos, familias de palabras y dónde se espesa.',
+    { marcas: 'todas', lect: {}, rt: { glosario: true, nodos: true }, ex: { sismo: true, parientes: true } }],
+  ['jugar', 'jugar con el texto', 'Las lecturas que lo deforman: oír mal, mismizar, palabras de a una.',
+    { marcas: 'diagonales', lect: { palabras: true, sintetico: true }, rt: {}, ex: { oir: true, mismizar: true } }],
+];
+const LECT_EFECTOS = ['inter', 'palabras', 'sintetico', 'centro', 'homo', 'estela', 'retro'];
+function intencionDe(c) {
+  return Object.assign({}, ...LECT_EFECTOS.map(k => ({ [k]: LECT_DEF[k] })), c.lect);
+}
+function aplicarIntencion(c) {
+  Object.assign(LECT, intencionDe(c));
+  guardarLect();
+  if (window.MARCAS) MARCAS.aplicar(c.marcas);
+  RESALTAR.fijar(c.rt);
+  EXTRA.fijar(c.ex);
+  clearPin();
+  aplicarLectura();
+}
+function intencionActual() {
+  const igual = (a, b) => JSON.stringify(Object.keys(a).filter(k => a[k]).sort()) === JSON.stringify(Object.keys(b).filter(k => b[k]).sort());
+  const marcas = document.documentElement.dataset.marcas || 'todas';
+  const hit = INTENCIONES.find(([, , , c]) => c.marcas === marcas
+    && LECT_EFECTOS.every(k => !!LECT[k] === !!intencionDe(c)[k])
+    && igual(RESALTAR.estado(), c.rt) && igual(EXTRA.estado(), c.ex));
+  return hit ? hit[0] : null;
+}
+function pintarIntenciones() {
+  const el = document.getElementById('lect-intencion');
+  if (!el) return;
+  const ya = intencionActual();
+  el.innerHTML = '<div class="lect-sub">¿para qué venís?</div><div class="lect-int">'
+    + INTENCIONES.map(([k, t, d]) => `<button type="button" class="lect-int-op" data-int="${k}" aria-pressed="${ya === k}"><b>${t}</b><span>${d}</span></button>`).join('')
+    + '</div><div class="lect-sub lect-medida">a medida' + (ya ? '' : ' <i>(ahora)</i>')
+    + ' · <a href="../ayuda.html#intenciones" target="_blank" rel="noopener">qué hace cada cosa ↗</a></div>';
+  el.querySelectorAll('[data-int]').forEach(b => b.addEventListener('click', e => {
+    e.stopPropagation();
+    const i = INTENCIONES.find(x => x[0] === b.dataset.int);
+    if (i) aplicarIntencion(i[3]);
+  }));
+}
+function pintarPanelLectura() {
+  pintarIntenciones();
+  const ops = document.getElementById('lect-ops');
+  ops.innerHTML = '';
+  LECT_OPS.forEach(([k, t]) => {
+    const b = document.createElement('button');
+    b.className = 'lect-op'; b.textContent = t; b.setAttribute('aria-pressed', String(!!LECT[k]));
+    b.addEventListener('click', e => { e.stopPropagation(); LECT[k] = !LECT[k]; guardarLect(); aplicarLectura(); });
+    ops.appendChild(b);
+  });
+  document.getElementById('lect-marg').value = LECT.marg;
+  document.getElementById('lect-abrir').value = LECT.abrir;
+  document.getElementById('lect-letra').value = LECT.letra || 'm';
+  document.getElementById('lect-renglon').value = LECT.renglon || 'normal';
+  document.getElementById('legend-uso').textContent = LECT.abrir === 'hover' ? 'Hover: ala · Click: fija' : 'Mouse: resalta · Click: abre';
+}
+// Resaltar términos (glosario, nodos, instrumentos, lemas): resaltador.js.
+RESALTAR.panel(document.getElementById('lect-resaltar'), () => RESALTAR.pintar(document.getElementById('text-body')));
+// Otras lecturas (oír mal a propósito, sismógrafo, partitura, huella): lectura-extra.js.
+EXTRA.panel(document.getElementById('lect-extra'), () => renderChapter(currentIdx, { skipSave: true }));
+// Mareas: si este texto tiene horario (mareas.json) y no es su hora, se vela.
+MAREAS.velar(SLUG, '../');
+function aplicarLectura() {
+  pintarPanelLectura();
+  // Tamaño de letra e interlineado del cuerpo (lo demás no cambia).
+  document.documentElement.dataset.letra = LECT.letra || 'm';
+  document.documentElement.dataset.renglon = LECT.renglon || 'normal';
+  document.body.classList.toggle('sin-inter', !LECT.inter);
+  document.body.classList.toggle('centro', !!LECT.centro);
+  document.body.classList.toggle('sint', !!LECT.sintetico);
+  if (!LECT.inter) { clearPin(); hideWings(); }
+  pintarEstelas();
+  lecturaTrasCapitulo();
+}
+(function () {
+  const panel = document.getElementById('lect-panel'), btn = document.getElementById('btn-lectura');
+  const abrirP = v => { panel.classList.toggle('open', v); btn.setAttribute('aria-expanded', String(v)); if (v) pintarIntenciones(); };
+  btn.addEventListener('click', e => { e.stopPropagation(); abrirP(!panel.classList.contains('open')); });
+  document.getElementById('lect-cerrar').addEventListener('click', e => { e.stopPropagation(); abrirP(false); });
+  panel.addEventListener('click', e => { e.stopPropagation(); setTimeout(pintarIntenciones, 0); });
+  document.addEventListener('click', () => abrirP(false));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') abrirP(false); });
+  document.getElementById('lect-marg').addEventListener('change', e => { LECT.marg = e.target.value; guardarLect(); clearPin(); aplicarLectura(); });
+  document.getElementById('lect-abrir').addEventListener('change', e => { LECT.abrir = e.target.value; guardarLect(); pintarPanelLectura(); });
+  document.getElementById('lect-letra').addEventListener('change', e => { LECT.letra = e.target.value; guardarLect(); aplicarLectura(); });
+  document.getElementById('lect-renglon').addEventListener('change', e => { LECT.renglon = e.target.value; guardarLect(); aplicarLectura(); });
+})();
+
+// Lo que depende del capítulo en pantalla: se rehace al cambiar de capítulo,
+// de opción o de ancho.
+function lecturaTrasCapitulo() {
+  if (!document.getElementById('text-body')) return;
+  RESALTAR.pintar(document.getElementById('text-body'));
+  EXTRA.pintar(document.getElementById('text-body'));
+  pintarUmbrales();
+  pintarSintetico();
+  pintarMarginalias();
+  lecturaAlScroll();
+}
+
+// Retrolegibilidad: una acción con "umbral" se abre recién después de
+// haber abierto esa otra en la misma visita.
+function umbralPendiente(ids) {
+  if (!LECT.retro) return null;
+  for (const id of ids) {
+    const u = (ACCIONES[id] || {}).umbral;
+    if (u && !VISTAS.has(u)) return u;
+  }
+  return null;
+}
+function pintarUmbrales() {
+  document.querySelectorAll('#text-body .accion-mark[data-clave-accion]').forEach(m => {
+    m.classList.toggle('cerrada', !!umbralPendiente((m.dataset.claveAccion || '').split(',')));
+  });
+}
+function avisoUmbral(m, previa) {
+  document.querySelectorAll('.aviso-umbral').forEach(x => x.remove());
+  const r = m.getBoundingClientRect(), f = ((ACCIONES[previa] || {}).fragmento || '').trim();
+  const d = document.createElement('div'); d.className = 'aviso-umbral';
+  d.textContent = 'Esto se abre después de leer «' + f.slice(0, 40) + (f.length > 40 ? '…' : '') + '».';
+  d.style.left = Math.max(8, Math.min(r.left, innerWidth - 300)) + 'px'; d.style.top = (r.bottom + 8) + 'px';
+  document.body.appendChild(d); setTimeout(() => d.remove(), 3500);
+}
+
+// Palabras de a una: la primera vez que se abre cada interacción en la visita.
+function envolverPalabras(el) {
+  const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT), nodos = [];
+  let n; while ((n = w.nextNode())) if (n.nodeValue.trim()) nodos.push(n);
+  const pals = [];
+  nodos.forEach(t => {
+    const f = document.createDocumentFragment();
+    t.nodeValue.split(/(\s+)/).forEach(p => {
+      if (!p) return;
+      if (/^\s+$/.test(p)) { f.appendChild(document.createTextNode(p)); return; }
+      const s = document.createElement('span'); s.className = 'pal'; s.textContent = p; f.appendChild(s); pals.push(s);
+    });
+    t.parentNode.replaceChild(f, t);
+  });
+  return pals;
+}
+function aparecerPalabras(contenedores, ids) {
+  if (!LECT.palabras || pocaAnimacion || !ids.some(id => !VISTAS.has(id))) return;
+  contenedores.forEach(c => c.querySelectorAll('.accion-text, .diagonal-emergente, .lectura-modal-body > p').forEach(tx => {
+    const pals = envolverPalabras(tx);
+    const paso = Math.max(12, Math.min(45, 2600 / Math.max(1, pals.length)));
+    pals.forEach((p, i) => setTimeout(() => p.classList.add('v'), 60 + i * paso));
+  }));
+}
+
+// Color sintético: letra por letra, del color de una interacción al de la otra.
+function pintarSintetico() {
+  if (!LECT.sintetico) return;
+  document.querySelectorAll('#text-body .accion-mark[data-multi]:not([data-sint])').forEach(m => {
+    m.dataset.sint = '1';
+    const tipos = accionesDeAccionMark(m).flatMap(a => (a.tipos || []).map(t => t.tipo)).filter(t => t && t !== 'ancla');
+    const a = COLOR_TIPO[tipos[0]] || 'var(--ink)', b = COLOR_TIPO[tipos[1]] || a;
+    const w = document.createTreeWalker(m, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest('.homo, .katex') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+    const nodos = []; let n; while ((n = w.nextNode())) nodos.push(n);
+    const total = nodos.reduce((k, t) => k + t.nodeValue.length, 0);
+    let i = 0;
+    nodos.forEach(t => {
+      const f = document.createDocumentFragment();
+      [...t.nodeValue].forEach(ch => {
+        const s = document.createElement('span'); s.className = 'ch'; s.textContent = ch;
+        const p = Math.round(i++ / Math.max(1, total - 1) * 100);
+        s.style.setProperty('--c', 'color-mix(in oklab, ' + a + ' ' + (100 - p) + '%, ' + b + ')');
+        f.appendChild(s);
+      });
+      t.parentNode.replaceChild(f, t);
+    });
+  });
+}
+
+// Marginalias: a la izquierda alineadas con su fragmento; la que no entra
+// antes del final del texto va debajo de su párrafo. También: todas debajo,
+// debajo con un botón, o en el ala al tocar (como antes).
+function marginaliasDelCapitulo() {
+  // Un fragmento que cruza párrafos o formatos queda partido en varias
+  // marcas con el mismo id: la marginalia va una sola vez, en la primera
+  // marca con texto.
+  const out = [], vistas = new Set();
+  document.querySelectorAll('#text-body .accion-mark[data-lapiz]').forEach(m => {
+    if (!m.textContent.trim()) return;
+    accionesDeAccionMark(m).forEach(a => (a.tipos || []).forEach((t, i) => {
+      if (t.tipo !== 'marginalia' || vistas.has(a.id + ':' + i)) return;
+      vistas.add(a.id + ':' + i);
+      out.push({ m, t, a });
+    }));
+  });
+  return out;
+}
+function pintarMarginalias() {
+  const fijas = document.getElementById('marg-fijas'), body = document.getElementById('text-body');
+  fijas.innerHTML = '';
+  body.querySelectorAll('.marg-lista, .marg-btn').forEach(x => x.remove());
+  document.body.classList.remove('hay-marg-fijas');
+  if (LECT.marg === 'ala') return;
+  const modo = (!alasVisibles() && LECT.marg === 'auto') ? 'abajo' : LECT.marg;
+  const items = marginaliasDelCapitulo();
+  let abajo = items;
+  if (modo === 'auto') {
+    abajo = [];
+    const base = fijas.getBoundingClientRect().top + scrollY;
+    const fin = body.getBoundingClientRect().bottom + scrollY - base;
+    let piso = 0;
+    items.sort((x, y) => x.m.getBoundingClientRect().top - y.m.getBoundingClientRect().top).forEach(it => {
+      const c = document.createElement('div');
+      c.className = 'marg-fija' + (it.t.lector ? ' lector' : ''); c.dataset.accion = it.a.id; c.innerHTML = parrafos(it.t.contenido) + vozBtn(it.t);
+      fijas.appendChild(c);
+      const top = Math.max(it.m.getBoundingClientRect().top + scrollY - base, piso);
+      if (top + c.offsetHeight > fin) { c.remove(); abajo.push(it); return; }
+      c.style.top = top + 'px'; piso = top + c.offsetHeight + 18;
+      document.body.classList.add('hay-marg-fijas');
+    });
+  }
+  const bloques = [...body.children];
+  bloques.forEach((p, i) => {
+    const its = abajo.filter(x => p.contains(x.m));
+    if (!its.length) return;
+    const lista = document.createElement('div'); lista.className = 'marg-lista'; lista.id = 'marg-' + i;
+    lista.innerHTML = its.map(({ m, t, a }) => '<div data-accion="' + a.id + '"' + (t.lector ? ' class="lector"' : '') + '><span class="q">«' + escHtml(m.textContent.slice(0, 60)) + (m.textContent.length > 60 ? '…' : '') + '»</span>' + escHtml(t.contenido) + vozBtn(t) + '</div>').join('');
+    if (modo === 'boton') {
+      lista.hidden = true;
+      const b = document.createElement('button'); b.className = 'marg-btn'; b.textContent = its.length;
+      b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-controls', lista.id); b.title = its.length + ' marginalia(s)';
+      b.addEventListener('click', e => { e.stopPropagation(); lista.hidden = !lista.hidden; b.setAttribute('aria-expanded', String(!lista.hidden)); });
+      p.appendChild(b);
+    }
+    p.after(lista);
+  });
+}
+function destacarMarginalia(ids) {
+  const el = [...document.querySelectorAll('.marg-fija, .marg-lista > div')].find(x => ids.includes(x.dataset.accion));
+  if (!el) return;
+  const lista = el.closest('.marg-lista');
+  if (lista && lista.hidden) { lista.hidden = false; const b = lista.previousElementSibling && lista.previousElementSibling.querySelector('.marg-btn'); if (b) b.setAttribute('aria-expanded', 'true'); }
+  el.classList.add('activa'); setTimeout(() => el.classList.remove('activa'), 1600);
+}
+function escHtml(x) { return String(x || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+// Desvanecer lejos del centro + estela.
+let lectPendiente = false;
+const estelasVistas = new Set();
+let rastroEstela = [];
+try { rastroEstela = JSON.parse(sessionStorage.getItem('p314b_estela') || '[]'); } catch (e) {}
+function ponerEstela(e) {
+  const g = document.createElement('div'); g.className = 'estela';
+  g.textContent = e.t; g.style.left = e.x + 'vw'; g.style.top = e.y + 'vh'; g.style.fontSize = e.f + 'px';
+  document.body.appendChild(g);
+}
+function pintarEstelas() {
+  document.querySelectorAll('.estela').forEach(g => g.remove());
+  estelasVistas.clear();
+  if (LECT.estela) rastroEstela.forEach(ponerEstela);
+}
+function nuevaEstela(texto) {
+  const pal = texto.split(/\s+/).filter(Boolean);
+  if (!pal.length) return;
+  const ini = Math.floor(Math.random() * Math.max(1, pal.length - 3));
+  const izq = Math.random() < .5;
+  const e = { t: pal.slice(ini, ini + 2 + Math.floor(Math.random() * 3)).join(' '), x: izq ? 1 + Math.random() * 12 : 74 + Math.random() * 14, y: 12 + Math.random() * 76, f: 12 + Math.round(Math.random() * 7) };
+  rastroEstela.push(e); if (rastroEstela.length > 400) rastroEstela.shift();
+  try { sessionStorage.setItem('p314b_estela', JSON.stringify(rastroEstela)); } catch (x) {}
+  ponerEstela(e);
+}
+function lecturaAlScroll() {
+  lectPendiente = false;
+  const vh = innerHeight, centro = vh / 2;
+  document.querySelectorAll('#text-body .accion-mark[data-visual]').forEach(m => {
+    const r = m.getBoundingClientRect();
+    if (LECT.centro) {
+      const f = Math.max(0.12, Math.min(1, 1 - Math.abs((r.top + r.bottom) / 2 - centro) / (vh * 0.5)));
+      m.style.setProperty('--a', f.toFixed(2));
+    } else m.style.removeProperty('--a');
+    if (LECT.estela) {
+      // Cada fragmento marcado que sale por arriba deja unas palabras a los
+      // costados; se acumulan en la visita.
+      if (r.bottom < 90 && !estelasVistas.has(m)) { estelasVistas.add(m); nuevaEstela(m.textContent); }
+      else if (r.top > vh * .6) estelasVistas.delete(m);
+    }
+  });
+}
+addEventListener('scroll', () => { if (!lectPendiente) { lectPendiente = true; requestAnimationFrame(lecturaAlScroll); } }, { passive: true });
+addEventListener('resize', () => { clearTimeout(window._lectR); window._lectR = setTimeout(() => { pintarMarginalias(); lecturaAlScroll(); }, 200); });
+(document.fonts ? document.fonts.ready : Promise.resolve()).then(() => pintarMarginalias());
+
+// Expandir: colación de la diagonal (texto base · emergente · citado), con
+// las palabras en común subrayadas (se compara por raíz, a la manera de CollateX).
+async function cargarDestino(origenId, destinoId) {
+  const acc = ACCIONES[origenId];
+  const t = (acc.tipos || []).find(x => x.tipo === 'diagonal' && x.destino === destinoId) || {};
+  const r = t._resuelto || {};
+  if (r.mismaObra || ACCIONES[destinoId]) {
+    const d = ACCIONES[destinoId];
+    return { chD: CHAPTERS.find(c => c.id === d.capitulo), obraD: document.title, d, misma: true, fecha: FECHA_OBRA };
+  }
+  if (r._pendiente || r._roto || !r.archivo) throw new Error('el destino todavía no está publicado');
+  const datos = await datosDeObra(r.archivo);
+  const d = datos.acciones[destinoId];
+  if (!d) throw new Error('no se encontró el ancla en el texto de destino');
+  return { chD: datos.chapters.find(c => c.id === d.capitulo), obraD: r.tituloObra || '', d, misma: false, fecha: datos.fecha || '' };
+}
+function textoPlano(html) { const d = document.createElement('div'); d.innerHTML = String(html).replace(/<\/(p|div|h[1-6]|li|blockquote)>|<br\s*\/?>/gi, '$& '); return d.textContent.replace(/\s+/g, ' ').trim(); }
+// ¿cuál es anterior? En la misma obra, por el lugar que ocupan (capítulo y,
+// dentro del capítulo, posición de la cita). Entre obras, por fecha de escritura.
+function ordenRelativo(o, d) {
+  if (o.misma) {
+    const a = o.capIdx * 1e7 + Math.max(0, o.pos), b = d.capIdx * 1e7 + Math.max(0, d.pos);
+    if (a === b) return { o: '', d: '' };
+    return a < b ? { o: 'anterior en el texto', d: 'posterior en el texto' } : { o: 'posterior en el texto', d: 'anterior en el texto' };
+  }
+  const fo = Date.parse(o.fecha), fd = Date.parse(d.fecha);
+  if (isNaN(fo) || isNaN(fd)) return { o: o.fecha ? 'escrito ' + o.fecha : 'sin fecha de escritura', d: d.fecha ? 'escrito ' + d.fecha : 'sin fecha de escritura' };
+  if (fo === fd) return { o: 'misma fecha de escritura', d: 'misma fecha de escritura' };
+  return fo < fd ? { o: 'escrito antes · ' + o.fecha, d: 'escrito después · ' + d.fecha } : { o: 'escrito después · ' + o.fecha, d: 'escrito antes · ' + d.fecha };
+}
+// Expandir vive en diagonal.js (compartido con los posteos-PDF). Acá solo
+// se le da el texto de cada lado: el párrafo donde está la cita.
+function parrafoDeCita(ch, id, frag) {
+  const html = cuerpoDe(ch), bl = bloquesDe(html, id, frag);
+  return bl.bloques.slice(bl.i0, bl.i1 + 1).map(textoPlano).join(' ');
+}
+window.DIAG_HOST = {
+  async par(origenId, destinoId) {
+    const acc = ACCIONES[origenId];
+    const chO = CHAPTERS.find(c => c.id === acc.capitulo) || CHAPTERS[currentIdx];
+    const o = { parrafo: parrafoDeCita(chO, origenId, acc.fragmento || ''), frag: acc.fragmento || '',
+      etiqueta: [document.title, tituloUnidad(chO)].filter(Boolean).join(' · ') };
+    let d;
+    try {
+      const { chD, obraD, d: dd, misma, fecha } = await cargarDestino(origenId, destinoId);
+      if (!chD) throw new Error('no se encontró el capítulo de destino');
+      d = { parrafo: parrafoDeCita(chD, destinoId, (dd && dd.fragmento) || ''), frag: (dd && dd.fragmento) || '',
+        etiqueta: [obraD, tituloUnidad(chD)].filter(Boolean).join(' · ') };
+      const posDe = (ch, frag) => { const f = (frag || '').replace(/\s+/g, ' ').trim(); return f ? textoPlano(cuerpoDe(ch)).indexOf(f) : -1; };
+      const ord = ordenRelativo({ misma, capIdx: CHAPTERS.indexOf(chO), pos: posDe(chO, acc.fragmento), fecha: FECHA_OBRA },
+        { capIdx: misma ? CHAPTERS.indexOf(chD) : 0, pos: posDe(chD, d.frag), fecha });
+      o.orden = ord.o; d.orden = ord.d;
+    } catch (e) {
+      const t = (acc.tipos || []).find(x => x.tipo === 'diagonal' && x.destino === destinoId) || {};
+      d = { frag: ((t._resuelto || {}).fragmento || ''), etiqueta: DG.destinoLabel(t._resuelto || {}), error: 'no se pudo cargar el texto de destino: ' + (e.message || e) };
+    }
+    return { o, d };
+  }
+};
+function abrirColacion(origenId, destinoId) { DG.expandir(origenId, destinoId); }
+// Lo que la autora cambia desde la tarjeta (nodos, concepto) se ve al toque.
+DG.alCambiar = () => pintarAlas(null);
+document.body.classList.toggle('sin-inter', !LECT.inter);
+document.body.classList.toggle('centro', !!LECT.centro);
+document.body.classList.toggle('sint', !!LECT.sintetico);
+pintarPanelLectura();
+pintarEstelas();
+
+function renderMath(el) {
+  if (!window.renderMathInElement) return;
+  try {
+    renderMathInElement(el, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '\\[', right: '\\]', display: true },
+        { left: '$', right: '$', display: false },
+        { left: '\\(', right: '\\)', display: false }
+      ],
+      throwOnError: false
+    });
+  } catch (e) { console.warn('KaTeX render error:', e); }
+}
+window.addEventListener('DOMContentLoaded', () => {
+  renderMath(document.getElementById('text-body'));
+});
+
+// ── Sub-navegación de capítulo ──
+let subnavObserver = null;
+function buildSubNav() {
+  const bar = document.getElementById('chapter-subnav');
+  const bodyEl = document.getElementById('text-body');
+  const heads = Array.from(bodyEl.querySelectorAll('h2, h3'));
+
+  if (subnavObserver) { subnavObserver.disconnect(); subnavObserver = null; }
+
+  if (!heads.length) {
+    bar.classList.remove('active');
+    bar.innerHTML = '';
+    document.documentElement.style.setProperty('--subnav-h', '0px');
+    return;
+  }
+
+  heads.forEach((h, i) => { if (!h.id) h.id = 'sub-' + currentIdx + '-' + i; });
+
+  bar.innerHTML = heads.map(h =>
+    `<span class="subnav-pill" data-target="${h.id}">${h.textContent}</span>`
+  ).join('');
+  bar.classList.add('active');
+  document.documentElement.style.setProperty('--subnav-h', bar.offsetHeight + 'px');
+
+  bar.querySelectorAll('.subnav-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const target = document.getElementById(pill.dataset.target);
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+
+  subnavObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const pill = bar.querySelector(`.subnav-pill[data-target="${entry.target.id}"]`);
+      if (!pill) return;
+      bar.querySelectorAll('.subnav-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+    });
+  }, { rootMargin: '-96px 0px -70% 0px', threshold: 0 });
+
+  heads.forEach(h => subnavObserver.observe(h));
+}
+
+function goChapter(idx) { renderChapter(idx); }
+
+function goChapterSlide(idx, opts) {
+  const page = document.querySelector('.book-page');
+  const dir = idx > currentIdx ? 1 : -1;
+  page.classList.add(dir > 0 ? 'slide-out-left' : 'slide-out-right');
+  setTimeout(() => {
+    renderChapter(idx, opts);
+    page.classList.remove('slide-out-left', 'slide-out-right');
+    page.classList.add(dir > 0 ? 'slide-in-right' : 'slide-in-left');
+    setTimeout(() => page.classList.remove('slide-in-right', 'slide-in-left'), 260);
+  }, 220);
+}
+
+// ── Acciones: binding genérico ──
+// Reemplaza a los tres binds viejos (diagonal/marginalia/hojear).
+// Cada .accion-mark puede llevar 1+ ids (superpuestos); cada id puede
+// traer 1+ tipos (Agregar acción). El hover/click normal muestra TODO
+// lo que cuelga de esos ids. La llegada por hipervínculo (más abajo)
+// usa el mismo motor pero acotado a un solo id.
+function bindAcciones() {
+  document.querySelectorAll('.accion-mark').forEach(mark => {
+    const acciones = accionesDeAccionMark(mark);
+    const dominante = tipoDominante(acciones);
+
+    if (!dominante) {
+      // Ancla pura: función=fijar id, sin display ni listeners.
+      mark.removeAttribute('data-visual');
+      return;
+    }
+    mark.dataset.visual = dominante;
+    // Solo transclusión: el pasaje ya está a la vista debajo del párrafo;
+    // la marca solo lo señala (clic: lo destaca).
+    if (dominante === 'transclusion') {
+      mark.title = 'transclusión: el pasaje de otro texto está debajo del párrafo';
+      mark.addEventListener('click', e => {
+        e.stopPropagation();
+        const ids = acciones.map(a => a.id);
+        const t = [...document.querySelectorAll('aside.transclusion')].find(x => ids.includes(x.dataset.accion));
+        if (t) { t.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); t.classList.add('activa'); setTimeout(() => t.classList.remove('activa'), 1400); }
+      });
+      return;
+    }
+
+    const ids = acciones.map(a => a.id);
+    mark.dataset.claveAccion = claveDe(ids);
+
+    // AGREGADO: linea partida cuando el fragmento carga mas de una accion.
+    const tiposVisibles = acciones.flatMap(a => (a.tipos || []).map(t => t.tipo)).filter(t => t && t !== 'ancla');
+    if (tiposVisibles.length > 1) {
+      const n = tiposVisibles.length;
+      mark.dataset.multi = n;
+      mark.style.backgroundImage = 'linear-gradient(90deg, ' + tiposVisibles.map((t, i) => {
+        const c = 'color-mix(in oklab, ' + (COLOR_TIPO[t] || 'var(--ink-ghost)') + ' 65%, transparent)';
+        return c + ' ' + (i / n * 100) + '%, ' + c + ' ' + ((i + 1) / n * 100) + '%';
+      }).join(', ') + ')';
+    }
+
+    const tiposMarca = acciones.flatMap(a => (a.tipos || []).map(t => t.tipo));
+    if (tiposMarca.includes('marginalia')) mark.dataset.lapiz = '1';
+    const soloMarginalia = tiposMarca.every(t => t === 'marginalia' || t === 'ancla');
+    // Lámina: el hover solo avisa (estilo de la marca); el clic abre o
+    // cierra el PDF en el ala izquierda. Si el fragmento lleva además otras
+    // acciones, esas siguen mostrándose al pasar el mouse.
+    const lamina = acciones.flatMap(a => a.tipos || []).find(t => t.tipo === 'lamina');
+    const soloLamina = !!lamina && tiposMarca.every(t => t === 'lamina' || t === 'ancla');
+    if (lamina) mark.title = 'lámina: clic para ver el PDF';
+    // Hojear: igual que la lámina, el clic abre (o cierra) el destino en el
+    // ala izquierda. Si el fragmento lleva otras acciones, su tarjeta
+    // conserva el enlace «Hojear a…», que también abre el ala.
+    const hojear = acciones.flatMap(a => a.tipos || []).find(t => t.tipo === 'hojear');
+    const soloHojear = !lamina && !!hojear && tiposMarca.every(t => t === 'hojear' || t === 'ancla');
+    if (soloHojear) mark.title = 'hojear: clic para ver el destino al costado';
+    mark.addEventListener('mouseenter', () => { if (soloLamina || soloHojear) return; if (LECT.abrir === 'hover' && LECT.inter && !mark.classList.contains('cerrada')) pintarAlas({ ids: ids, el: mark }); });
+    mark.addEventListener('mouseleave', () => { if (LECT.abrir === 'hover') pintarAlas(null); });
+    mark.addEventListener('click', e => {
+      e.stopPropagation();
+      if (lamina) { alternarLamina(lamina, mark); marcarVistas(ids); return; }
+      if (soloHojear) { alternarHojear(hojear.destino, mark); marcarVistas(ids); return; }
+      if (soloMarginalia && LECT.marg !== 'ala') { marcarVistas(ids); destacarMarginalia(ids); return; }
+      if (!LECT.inter) { destacarMarginalia(ids); return; }
+      const umbral = umbralPendiente(ids);
+      if (umbral) { avisoUmbral(mark, umbral); return; }
+      // Sin alas visibles (pantalla angosta) la anotacion se abre en la
+      // columna de lectura, que si no quedaba inaccesible.
+      if (!alasVisibles()) { abrirAccionesEnLectura(ids); return; }
+      const key = claveDe(ids);
+      if (estaFijado(key)) { desfijar(key); return; }
+      pinnedList.push({ key: key, ids: ids });
+      sincronizarMarcasFijadas();
+      pintarAlas(null);
+      marcarVistas(ids);
+    });
+  });
+
+  document.addEventListener('click', () => { clearPin(); }, { once: false });
+}
+
+// ids: lista de ids de acción a mostrar (todas las agrupadas en el
+// fragmento hovereado/cliqueado, o — en llegada por hipervínculo —
+// una sola, la apuntada específicamente).
+function cardsDeAcciones(ids) {
+  const acciones = ids.map(id => ACCIONES[id]).filter(Boolean);
+
+  // Ala izquierda: nota, marginalia, hojear.
+  const cardsIzq = [], notasDer = [];
+  // AGREGADO: cada tarjeta recibe la clase de su tipo ("nota"/"marginalia"/"hojear")
+  // para habilitar el accent de color por tipo definido en el CSS de arriba.
+  acciones.forEach(accion => {
+    (accion.tipos || []).forEach(t => {
+      if (t.tipo === 'nota') {
+        // Con las marginalias fijas a la izquierda, las notas pasan al ala derecha.
+        (LECT.marg === 'auto' && alasVisibles() ? notasDer : cardsIzq).push(`<div class="accion-card nota"><div class="accion-label">nota</div>${bloqueTexto(t.contenido, 'accion-text', { tipo: 'nota', fragmento: accion.fragmento })}</div>`);
+      } else if (t.tipo === 'marginalia') {
+        if (LECT.marg !== 'ala') return;   // ya están a la vista, fijas o debajo del párrafo
+        // Sin label que aclare su naturaleza — a diferencia de la
+        // nota, la marginalia se muestra tal cual, sin marco.
+        cardsIzq.push(`<div class="accion-card marginalia">${bloqueTexto(t.contenido, 'accion-text', { tipo: 'marginalia', fragmento: accion.fragmento })}${vozBtn(t)}</div>`);
+      } else if (t.tipo === 'hojear') {
+        const r = t._resuelto || {};
+        const label = r._pendiente ? 'destino aún no publicado' : r._roto ? 'destino roto' : (r.tituloCapitulo || r.tituloObra || t.destino);
+        cardsIzq.push(`
+          <div class="accion-card hojear">
+            <div class="accion-label">hojear</div>
+            ${t.cita_relevancia ? `<div class="accion-text">"${t.cita_relevancia}"</div>` : ''}
+            ${(r._pendiente || r._roto) ? `<div class="accion-pending">${label}</div>` : `<span class="accion-goto" onclick="alternarHojear('${t.destino}', null)">Hojear a ${label}</span>`}
+          </div>
+        `);
+      }
+    });
+  });
+
+  // Ala derecha: diagonal — ruteo fijo, siempre acá, aunque el mismo
+  // fragmento también tenga tipos de la izquierda (ambas alas pueden
+  // estar activas a la vez). La tarjeta la arma diagonal.js.
+  const cardsDer = [];
+  // una tarjeta por destino, o una sola con todos (diagonales_juntas)
+  // una tarjeta por destino, o una sola con todos (diagonales_juntas)
+  acciones.forEach(accion => cardsDer.push(...DG.tarjetas(accion)));
+
+  return { izq: cardsIzq, der: notasDer.concat(cardsDer) };
+}
+
+function claveDe(ids) { return ids.join(','); }
+function estaFijado(k) { return pinnedList.some(p => p.key === k); }
+
+function desfijar(key) {
+  const i = pinnedList.findIndex(p => p.key === key);
+  if (i < 0) return;
+  pinnedList.splice(i, 1);
+  sincronizarMarcasFijadas();
+  pintarAlas(null);
+}
+
+function sincronizarMarcasFijadas() {
+  document.querySelectorAll('.accion-mark').forEach(m => {
+    const k = m.dataset.claveAccion || '';
+    if (k) m.classList.toggle('pinned', estaFijado(k));
+  });
+}
+
+function cabeceraGrupo(g, varias) {
+  if (!varias) return '';
+  const frag = (ACCIONES[g.ids[0]] || {}).fragmento || '';
+  const corto = frag.length > 64 ? frag.slice(0, 64) + '\u2026' : frag;
+  return '<div class="grupo-cab"><q>' + corto + '</q>'
+    + (g.hover ? '' : '<span class="grupo-quitar" title="desfijar" onclick="event.stopPropagation();desfijar(\'' + g.key + '\')">\u00d7</span>')
+    + '</div>';
+}
+
+function claseDensidad(n) {
+  if (n <= 1) return '';
+  if (n === 2) return 'dens-2';
+  if (n === 3) return 'dens-3';
+  return 'dens-4';
+}
+
+function pintarAlas(hover) {
+  const wl = document.getElementById('wing-left');
+  const wr = document.getElementById('wing-right');
+  const layout = document.getElementById('layout');
+
+  const grupos = pinnedList.slice();
+  let anclaEl = null;
+  if (hover && !estaFijado(claveDe(hover.ids))) {
+    grupos.push({ key: claveDe(hover.ids), ids: hover.ids, hover: true });
+    anclaEl = hover.el;
+  }
+  if (!grupos.length) { hideWings(); return; }
+
+  const varias = grupos.length > 1;
+  const izq = [], der = [];
+  grupos.forEach(g => {
+    const c = cardsDeAcciones(g.ids);
+    const cab = cabeceraGrupo(g, varias);
+    const cls = 'grupo' + (g.hover ? ' es-hover' : '');
+    if (c.izq.length) izq.push('<div class="' + cls + '">' + cab + c.izq.join('') + '</div>');
+    if (c.der.length) der.push('<div class="' + cls + '">' + cab + c.der.join('') + '</div>');
+  });
+
+  const barra = pinnedList.length
+    ? '<div class="pin-indicator">' + pinnedList.length + ' fijada' + (pinnedList.length > 1 ? 's' : '')
+      + ' <span class="pin-clear" onclick="event.stopPropagation();clearPin()">limpiar</span></div>'
+    : '';
+
+  wl.innerHTML = izq.length ? barra + izq.join('') : '';
+  wr.innerHTML = der.length ? (izq.length ? '' : barra) + der.join('') : '';
+  wl.className = 'wing-content ' + claseDensidad(izq.length);
+  wr.className = 'wing-content ' + claseDensidad(der.length);
+  wl.classList.toggle('active', izq.length > 0);
+  wr.classList.toggle('active', der.length > 0);
+  document.body.classList.toggle('alas-activas', izq.length + der.length > 0);
+
+  aparecerPalabras([wl, wr], grupos.flatMap(g => g.ids));
+  if (pinnedList.length) {
+    [wl, wr].forEach(w => { w.classList.add('apilado'); w.style.top = ''; });
+  } else {
+    [wl, wr].forEach(w => w.classList.remove('apilado'));
+    const base = anclaEl.getBoundingClientRect().top - layout.getBoundingClientRect().top - 8;
+    [wl, wr].forEach(w => ubicarEntera(w, base, layout));
+  }
+}
+
+/* AGREGADO: el ala colgaba exactamente del fragmento, asi que una tarjeta alta
+   anclada cerca del borde inferior salia cortada y obligaba a scrollear para
+   leerla. Ahora se sube lo justo para que entre entera. */
+function ubicarEntera(el, topDeseado, layout) {
+  if (!el.classList.contains('active')) return;
+  el.style.top = topDeseado + 'px';
+  const layoutTop = layout.getBoundingClientRect().top + window.scrollY;
+  const alto = el.offsetHeight;
+  const margen = 16;
+  const cs = getComputedStyle(document.documentElement);
+  const navH = (parseFloat(cs.getPropertyValue('--nav-h')) || 52) + (parseFloat(cs.getPropertyValue('--subnav-h')) || 0);
+  const minTop = window.scrollY + navH + margen - layoutTop;
+  const maxTop = window.scrollY + window.innerHeight - alto - margen - layoutTop;
+  el.style.top = Math.max(minTop, Math.min(topDeseado, Math.max(minTop, maxTop))) + 'px';
+}
+
+// La llegada por hipervinculo sigue entrando por aca.
+function showAccionWings(ids, fragEl, isPinned) {
+  if (!isPinned) { pintarAlas({ ids: ids, el: fragEl }); return; }
+  const key = claveDe(ids);
+  if (!estaFijado(key)) pinnedList.push({ key: key, ids: ids });
+  sincronizarMarcasFijadas();
+  if (fragEl) fragEl.classList.add('pinned');
+  pintarAlas(null);
+}
+
+/* AGREGADO (excerpt + leer completo). bloqueTexto() decide, por largo, si el
+   texto entra entero en el ala o si se muestra recortado con salida a la
+   columna de lectura. parrafos() ademas respeta los saltos de linea del JSON,
+   que antes se perdian y dejaban todo como un bloque unico ilegible. */
+const TEXTOS_LARGOS = {};
+const LARGO_MAX_ALA = 420;
+/* «leer completo» del ala corresponde al comparativo: por ahora no se ofrece
+   en las diagonales (su cuerpo es el resumen, entero). Poner en true para volver. */
+const LEER_COMPLETO_DIAGONAL = false;
+function parrafos(txt) {
+  const s = String(txt == null ? '' : txt);
+  if (/<p|<br|<div/i.test(s)) return s;
+  return s.split(/\n+/).map(p => p.trim()).filter(Boolean).map(p => '<p>' + p + '</p>').join('');
+}
+// Voz recitando (acción «voz de lector» con audio, Archivo/voces/): un
+// botón que suena una sola a la vez; tocarlo de nuevo pausa.
+function vozBtn(t) {
+  if (!t || !t.audio || !/^voces\/[A-Za-z0-9._-]+$/.test(t.audio)) return '';
+  return '<button type="button" class="voz-btn" data-audio="' + escHtml(t.audio) + '" aria-label="oír recitado"><span class="voz-ic">▶</span> oír <span class="voz-barra"><i></i></span></button>';
+}
+let vozSonando = null;
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('.voz-btn');
+  if (!b) return;
+  e.stopPropagation(); e.preventDefault();
+  const url = new URL('../Archivo/' + b.dataset.audio, document.baseURI).href;
+  const pintar = (btn, on) => { btn.classList.toggle('sonando', on); const ic = btn.querySelector('.voz-ic'); if (ic) ic.textContent = on ? '❚❚' : '▶'; };
+  if (vozSonando && vozSonando.url === url && vozSonando.btn === b) {
+    if (vozSonando.a.paused) { vozSonando.a.play(); pintar(b, true); } else { vozSonando.a.pause(); pintar(b, false); }
+    return;
+  }
+  if (vozSonando) { vozSonando.a.pause(); pintar(vozSonando.btn, false); vozSonando.btn.style.removeProperty('--voz-p'); }
+  const a = new Audio(url);
+  vozSonando = { a, url, btn: b };
+  a.addEventListener('timeupdate', () => { if (a.duration) b.style.setProperty('--voz-p', (100 * a.currentTime / a.duration).toFixed(1) + '%'); });
+  a.addEventListener('ended', () => { pintar(b, false); b.style.removeProperty('--voz-p'); vozSonando = null; });
+  a.addEventListener('error', () => { pintar(b, false); b.title = 'no se pudo cargar el audio'; vozSonando = null; });
+  a.play().then(() => pintar(b, true), () => pintar(b, false));
+}, true);
+
+/* AGREGADO: cabecera de la columna de lectura. Diagonal lleva concepto, cita
+   de base, cita de destino, destino e "ir hacia"; nota lleva cita de base y se
+   nombra como nota; marginalia lleva solo cita de base, sin nombrarse. */
+function metaLectura(ctx) {
+  if (!ctx) return '';
+  const filas = [];
+  if (ctx.relacion) filas.push(['tipo de relación', escHtml(ctx.relacion)]);
+  if (ctx.concepto) filas.push(['instrumento', escHtml(ctx.concepto)]);
+  if (ctx.destinoLabel) filas.push(['destino', ctx.destinoLabel]);
+  let html = '';
+  if (filas.length) html += '<dl class="lectura-meta">' + filas.map(function(f){ return '<dt>' + f[0] + '</dt><dd>' + f[1] + '</dd>'; }).join('') + '</dl>';
+  if (ctx.fragmento) html += '<div class="lectura-cita"><div class="lectura-cita-label">cita de base</div><q>' + ctx.fragmento + '</q></div>';
+  if (ctx.citaDestino) html += '<div class="lectura-cita"><div class="lectura-cita-label">cita de destino</div><q>' + ctx.citaDestino + '</q></div>';
+  if (ctx.destino) html += ctx.tipo === 'hojear'
+    ? '<span class="accion-goto lectura-ir" onclick="cerrarLectura();alternarHojear(\'' + ctx.destino + '\', null)">Ver al costado</span>'
+    : '<span class="accion-goto lectura-ir" onclick="cerrarLectura();irAAccion(\'' + ctx.destino + '\')">Ir hacia</span>';
+  if (ctx.destino && ctx.origen && ctx.tipo === 'diagonal') html += '<span class="accion-goto lectura-ir" onclick="cerrarLectura();abrirComparar(\'' + ctx.origen + '\',\'' + ctx.destino + '\')">⇄ comparar los dos textos</span>';
+  return html ? '<div class="lectura-meta-wrap">' + html + '</div>' : '';
+}
+
+const ETIQUETA_TIPO = { diagonal: 'Diagonal', nota: 'Nota', hojear: 'Hojear', marginalia: '' };
+
+function bloqueTexto(txt, cls, ctx) {
+  const plano = String(txt == null ? '' : txt);
+  const html = parrafos(plano);
+  if (plano.replace(/<[^>]+>/g, '').length <= LARGO_MAX_ALA) return '<div class="' + cls + '">' + html + '</div>';
+  const uid = 'tl' + Math.random().toString(36).slice(2, 8);
+  TEXTOS_LARGOS[uid] = { ctx: ctx || {}, html: html };
+  return '<div class="' + cls + ' texto-largo clamp">' + html + '</div>'
+    + '<span class="leer-completo" onclick="event.stopPropagation();abrirLectura(\'' + uid + '\')">leer completo \u2192</span>';
+}
+
+function pintarLectura(tipo, etiqueta, cuerpoHtml) {
+  const modal = document.getElementById('lectura-modal');
+  modal.className = 'lectura-modal open' + (tipo ? ' tipo-' + tipo : '');
+  document.getElementById('lectura-modal-label').textContent = etiqueta || '';
+  const body = document.getElementById('lectura-modal-body');
+  body.innerHTML = cuerpoHtml;
+  body.scrollTop = 0;
+  document.getElementById('lectura-overlay').classList.add('open');
+}
+
+function abrirLectura(uid) {
+  const t = TEXTOS_LARGOS[uid];
+  if (!t) return;
+  const ctx = t.ctx || {};
+  pintarLectura(ctx.tipo, ETIQUETA_TIPO[ctx.tipo] || '', metaLectura(ctx) + t.html);
+}
+
+function cerrarLectura() {
+  document.getElementById('lectura-overlay').classList.remove('open');
+  document.getElementById('lectura-modal').classList.remove('open');
+}
+
+function alasVisibles() {
+  // Ojo: #wing-right es el .wing-content, no la columna. La que se apaga por
+  // media query es la columna .wing-right, asi que hay que mirar esa.
+  const w = document.querySelector('.wing.wing-right') || document.querySelector('.wing-right');
+  return !!w && getComputedStyle(w).display !== 'none';
+}
+
+/* AGREGADO: vuelca todas las acciones de un fragmento a la columna de lectura,
+   con su etiqueta de tipo, para pantallas donde no hay alas. */
+function abrirAccionesEnLectura(ids) {
+  const acciones = ids.map(id => ACCIONES[id]).filter(Boolean);
+  const partes = [];
+  const tipos = [];
+  acciones.forEach(accion => {
+    (accion.tipos || []).forEach(t => {
+      const r = t._resuelto || {};
+      if (t.tipo === 'marginalia' && LECT.marg !== 'ala') return;   // ya está debajo de su párrafo
+      if (t.tipo === 'nota' || t.tipo === 'marginalia') {
+        tipos.push(t.tipo);
+        partes.push((t.tipo === 'marginalia' ? '' : '<div class="lectura-tipo">nota</div>')
+          + metaLectura({ tipo: t.tipo, fragmento: accion.fragmento })
+          + parrafos(t.contenido) + vozBtn(t));
+      } else if (t.tipo === 'diagonal') {
+        tipos.push('diagonal');
+        // con varios destinos juntos, la tarjeta única va una vez (con la primera)
+        if (accion.diagonales_juntas && (accion.tipos || []).filter(x => x.tipo === 'diagonal').length > 1) {
+          if ((accion.tipos || []).find(x => x.tipo === 'diagonal') === t) partes.push('<div class="lectura-tipo">diagonales</div>' + DG.tarjetas(accion)[0]);
+        } else partes.push('<div class="lectura-tipo">diagonal</div>' + DG.tarjeta(accion, t, r));
+      } else if (t.tipo === 'hojear') {
+        tipos.push('hojear');
+        partes.push('<div class="lectura-tipo">hojear</div>'
+          + metaLectura({
+              tipo: 'hojear',
+              fragmento: accion.fragmento,
+              destinoLabel: r.tituloCapitulo || r.tituloObra || '',
+              destino: t.destino
+            })
+          + (t.cita_relevancia ? parrafos(t.cita_relevancia) : ''));
+      }
+    });
+  });
+  if (!partes.length) return;
+  // Si todas las acciones del fragmento son del mismo tipo, la ventana toma su
+  // color; si estan mezcladas queda neutra y cada bloque se identifica solo.
+  const unico = tipos.every(x => x === tipos[0]) ? tipos[0] : '';
+  const etiqueta = unico ? (ETIQUETA_TIPO[unico] || '') : 'Anotaciones';
+  // Con un solo tipo, la ventana ya lo nombra: el rótulo de cada bloque sobra.
+  const cuerpo = partes.join('<hr class="lectura-sep">');
+  pintarLectura(unico, etiqueta, unico ? cuerpo.replace(/<div class="lectura-tipo">[^<]*<\/div>/g, '') : cuerpo);
+  aparecerPalabras([document.getElementById('lectura-modal-body')], ids);
+  marcarVistas(ids);
+}
+function hideWings() {
+  document.getElementById('wing-left').classList.remove('active');
+  document.getElementById('wing-right').classList.remove('active');
+  document.body.classList.remove('alas-activas');
+  // En el posteo de una diagonal, las alas en reposo son sus citas.
+  if (DIAGONAL_POSTEO) DG.alasPosteo();
+}
+document.getElementById('lectura-overlay').addEventListener('click', cerrarLectura);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarLectura(); });
+(function () {
+  const lg = document.getElementById('legend');
+  try { if (localStorage.getItem('p314b_leyenda_oculta') === '1') lg.style.display = 'none'; } catch (e) {}
+  document.getElementById('legend-cerrar').addEventListener('click', e => {
+    e.stopPropagation(); lg.style.display = 'none';
+    try { localStorage.setItem('p314b_leyenda_oculta', '1'); } catch (e2) {}
+  });
+})();
+
+function clearPin() {
+  if (!pinnedList.length) return;
+  pinnedList = [];
+  document.querySelectorAll('.accion-mark.pinned').forEach(m => m.classList.remove('pinned'));
+  hideWings();
+}
+
+// ── Navegación por ID ──
+// Único punto de entrada para "Ir a" / "Hojear a": resuelve si el
+// destino vive en esta misma obra (navegación interna, con o sin
+// cambio de capítulo) o en otra (navegación real de página, con
+// back-bar). Al llegar, pre-activa SOLO el id apuntado — no el resto
+// de lo que comparta ese fragmento.
+
+// ── Comparar una diagonal ──
+// Origen · diagonal · destino. Cada lado muestra el párrafo donde está la cita
+// (y solo ese: el resto se abre a pedido, de a un párrafo o entero); en el
+// medio, la diagonal con su título, su causa (tipo de relación), su instrumento
+// y el emergente, cuyas expresiones con referencia (p. ej. «Este sujeto») se
+// pueden tocar para ver a qué remiten en cada texto. Si el destino es de otra
+// obra, se lee su página publicada (solo cuando se pide).
+const PAGINAS_OBRA = {};
+async function datosDeObra(archivo) {
+  if (!PAGINAS_OBRA[archivo]) {
+    PAGINAS_OBRA[archivo] = fetch(archivo).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(html => {
+      const ch = /const CHAPTERS = (\[[\s\S]*?\]);\n/.exec(html);
+      const ac = /const ACCIONES = (\{[\s\S]*?\});\n/.exec(html);
+      const fe = /const FECHA_OBRA = ("(?:[^"\\]|\\.)*");/.exec(html);
+      if (!ch || !ac) throw new Error('la página no trae los datos esperados');
+      return { chapters: JSON.parse(ch[1]), acciones: JSON.parse(ac[1]), fecha: fe ? JSON.parse(fe[1]) : '' };
+    });
+  }
+  return PAGINAS_OBRA[archivo];
+}
+function tituloUnidad(ch) { return [ch.number, ch.title].filter(Boolean).join(' · '); }
+function marcasDe(cont, id) {
+  return [...cont.querySelectorAll('.accion-mark')].filter(m => (m.dataset.accion || '').split(',').includes(id));
+}
+function marcaDe(cont, id) { return marcasDe(cont, id)[0] || null; }
+function cuerpoDe(ch) {
+  let html = ch.body || '';
+  if (!html.includes('<')) html = html.split(/\n{2,}/).map(p => '<p>' + p + '</p>').join('');
+  return html.replace(/<img\b[^>]*\bsrc\s*=\s*["']?file:[^>]*>/gi, '');
+}
+// Envuelve en <span class=clase> cada aparición de un texto (aunque cruce
+// nodos, por ejemplo una marca de otra acción). Devuelve los spans creados.
+function envolverTexto(cont, str, clase, datos, soloPrimera) {
+  const objetivo = String(str || '').replace(/\s+/g, ' ').trim();
+  if (!objetivo) return [];
+  const w = document.createTreeWalker(cont, NodeFilter.SHOW_TEXT), nodos = []; let plano = '', n;
+  while ((n = w.nextNode())) { nodos.push({ n, ini: plano.length }); plano += n.nodeValue.replace(/\s/g, ' '); }
+  const rx = new RegExp(objetivo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s+'), 'g');
+  const hallazgos = []; let m;
+  while ((m = rx.exec(plano))) { hallazgos.push([m.index, m.index + m[0].length]); if (soloPrimera) break; if (!m[0].length) rx.lastIndex++; }
+  const spans = [];
+  hallazgos.reverse().forEach(([a, b]) => {
+    nodos.forEach(({ n, ini }) => {
+      const fin = ini + n.nodeValue.length;
+      if (fin <= a || ini >= b) return;
+      const r = document.createRange(); r.setStart(n, Math.max(a, ini) - ini); r.setEnd(n, Math.min(b, fin) - ini);
+      const sp = document.createElement('span'); sp.className = clase;
+      Object.keys(datos || {}).forEach(k => { sp.dataset[k] = datos[k]; });
+      r.surroundContents(sp); spans.push(sp);
+    });
+  });
+  return spans.reverse();
+}
+function desenvolver(cont, clase) {
+  cont.querySelectorAll('span.' + clase).forEach(sp => sp.replaceWith(document.createTextNode(sp.textContent)));
+  cont.normalize();
+}
+// Bloques (párrafos) de un capítulo y cuáles contienen la cita.
+function bloquesDe(html, id, frag) {
+  const d = document.createElement('div'); d.innerHTML = html;
+  let hijos = [...d.children];
+  if (hijos.length === 1 && hijos[0].children.length > 1) hijos = [...hijos[0].children];
+  if (!hijos.length) hijos = [d];
+  let idx = hijos.map((b, i) => (b.matches && b.matches('.accion-mark') ? [b] : [...b.querySelectorAll('.accion-mark')]).some(m => (m.dataset.accion || '').split(',').includes(id)) ? i : -1).filter(i => i >= 0);
+  if (!idx.length && frag) {
+    const f = frag.replace(/\s+/g, ' ').trim();
+    idx = hijos.map((b, i) => b.textContent.replace(/\s+/g, ' ').includes(f) ? i : -1).filter(i => i >= 0);
+  }
+  if (!idx.length) idx = [0];
+  return { bloques: hijos.map(b => b.outerHTML), i0: Math.min(...idx), i1: Math.max(...idx) };
+}
+const CMP = { A: null, B: null, t: null, origenId: '', destinoId: '' };
+function nuevoLado(elId, html, id, frag) {
+  const b = bloquesDe(html, id, frag);
+  return { el: document.getElementById(elId), id, bloques: b.bloques, i0: b.i0, i1: b.i1, ini: b.i0, fin: b.i1 };
+}
+function pintarLado(S, primera) {
+  const el = S.el, antes = el.scrollHeight, top = el.scrollTop;
+  const arriba = S.ini, abajo = S.bloques.length - 1 - S.fin;
+  let h = '';
+  if (arriba > 0) h += '<div class="cmp-mas"><button data-mas="ant">↑ un párrafo más</button>' + (arriba > 1 ? '<button data-mas="antT">↑ todo lo anterior (' + arriba + ')</button>' : '') + '</div>';
+  for (let i = S.ini; i <= S.fin; i++) h += '<div class="cmp-bloque' + (i < S.i0 || i > S.i1 ? ' cmp-extra' : '') + '">' + S.bloques[i] + '</div>';
+  if (abajo > 0) h += '<div class="cmp-mas"><button data-mas="sig">↓ un párrafo más</button>' + (abajo > 1 ? '<button data-mas="sigT">↓ todo lo siguiente (' + abajo + ')</button>' : '') + '</div>';
+  el.innerHTML = h;
+  marcasDe(el, S.id).forEach(m => m.classList.add('cmp-frag'));
+  renderMath(el);
+  if (primera) { const f = el.querySelector('.cmp-frag'); el.scrollTop = f ? Math.max(0, f.offsetTop - el.clientHeight / 3) : 0; }
+  else el.scrollTop = top + (el.scrollHeight - antes) * (S.creceArriba ? 1 : 0);
+  S.creceArriba = false;
+}
+function expandirLado(S, como) {
+  if (como === 'ant') { S.ini = Math.max(0, S.ini - 1); S.creceArriba = true; }
+  if (como === 'antT') { S.ini = 0; S.creceArriba = true; }
+  if (como === 'sig') S.fin = Math.min(S.bloques.length - 1, S.fin + 1);
+  if (como === 'sigT') S.fin = S.bloques.length - 1;
+  pintarLado(S, false); dibujarBanda();
+}
+async function abrirComparar(origenId, destinoId) {
+  clearPin(); cerrarLectura();
+  const acc = ACCIONES[origenId];
+  if (!acc) return;
+  const t = (acc.tipos || []).find(x => x.tipo === 'diagonal' && x.destino === destinoId) || {};
+  const r = t._resuelto || {};
+  const cmp = document.getElementById('comparar');
+  const orig = document.getElementById('cmp-orig'), dest = document.getElementById('cmp-dest');
+  const chO = CHAPTERS.find(c => c.id === acc.capitulo) || CHAPTERS[currentIdx];
+  Object.assign(CMP, { t, origenId, destinoId, A: null, B: null });
+  document.getElementById('cmp-titulo').textContent = document.title;
+  document.getElementById('cmp-orig-t').textContent = [document.title, tituloUnidad(chO)].filter(Boolean).join(' · ');
+  dest.innerHTML = '<div class="comparar-cargando">cargando el destino…</div>';
+  document.getElementById('cmp-dest-t').textContent = r.mismaObra ? document.title : (r.tituloObra || '');
+  ['cmp-orig-o', 'cmp-dest-o'].forEach(i => { document.getElementById(i).hidden = true; });
+  // centro: título, causa (tipo de relación), instrumento, emergente con sus referencias
+  const tit = document.getElementById('cmp-diag-titulo');
+  tit.textContent = t.titulo || ''; tit.hidden = !t.titulo;
+  const filas = [];
+  if (t.tipo_relacion) filas.push(['causa · tipo de relación', escHtml(t.tipo_relacion)]);
+  const it = instrumentoTexto(t, true); if (it) filas.push(['instrumento', it]);
+  if ((t.lemas || []).length) filas.push(['nodos', t.lemas.map(escHtml).join(' · ')]);
+  document.getElementById('cmp-rel').innerHTML = filas.map(f => '<dt>' + f[0] + '</dt><dd>' + f[1] + '</dd>').join('');
+  const em = document.getElementById('cmp-em');
+  em.innerHTML = t.emergente ? parrafos(t.emergente) : '';
+  (t.referencias || []).forEach((rf, i) => { if (rf && rf.expr) envolverTexto(em, rf.expr, 'cmp-ref', { ref: i }); });
+  document.getElementById('cmp-gloss').className = 'cmp-gloss';
+  document.getElementById('cmp-centro').scrollTop = 0;
+  document.getElementById('cmp-banda').innerHTML = '';
+  cmp.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  CMP.A = nuevoLado('cmp-orig', cuerpoDe(chO), origenId, acc.fragmento || '');
+  pintarLado(CMP.A, true);
+  requestAnimationFrame(dibujarBanda);
+  try {
+    const { chD, obraD, d, misma, fecha } = await cargarDestino(origenId, destinoId);
+    if (!chD) throw new Error('no se encontró el capítulo de destino');
+    document.getElementById('cmp-dest-t').textContent = [obraD, tituloUnidad(chD)].filter(Boolean).join(' · ');
+    CMP.B = nuevoLado('cmp-dest', cuerpoDe(chD), destinoId, (d && d.fragmento) || '');
+    pintarLado(CMP.B, true);
+    const posDe = (ch, frag) => { const f = (frag || '').replace(/\s+/g, ' ').trim(); return f ? textoPlano(cuerpoDe(ch)).indexOf(f) : -1; };
+    const ord = ordenRelativo({ misma, capIdx: CHAPTERS.indexOf(chO), pos: posDe(chO, acc.fragmento), fecha: FECHA_OBRA },
+      { capIdx: misma ? CHAPTERS.indexOf(chD) : 0, pos: posDe(chD, d && d.fragmento), fecha });
+    [['cmp-orig-o', ord.o], ['cmp-dest-o', ord.d]].forEach(([i, tx]) => { const e = document.getElementById(i); e.textContent = tx; e.hidden = !tx; });
+    requestAnimationFrame(dibujarBanda);
+  } catch (e) {
+    dest.innerHTML = '<div class="comparar-cargando">No se pudo cargar el destino: ' + String(e.message || e).replace(/</g, '&lt;') + '</div>';
+  }
+}
+// Tocar una expresión del emergente: marca a qué remite en cada texto.
+function mostrarReferente(i) {
+  const rf = (CMP.t.referencias || [])[i]; if (!rf) return;
+  const gl = document.getElementById('cmp-gloss');
+  document.querySelectorAll('#cmp-em .cmp-ref').forEach(e => e.classList.toggle('activa', e.dataset.ref == i));
+  const lados = [['origen', rf.fuente, CMP.A], ['destino', rf.remitente, CMP.B]];
+  let h = '<strong>«' + escHtml(rf.expr) + '»</strong>';
+  lados.forEach(([nombre, texto, S]) => {
+    if (!S) return;
+    desenvolver(S.el, 'cmp-refto');
+    if (!texto) { h += '<b>' + nombre + '</b><i>sin referente cargado</i>'; return; }
+    let sp = envolverTexto(S.el, texto, 'cmp-refto', {}, true);
+    if (!sp.length && (S.ini > 0 || S.fin < S.bloques.length - 1)) { S.ini = 0; S.fin = S.bloques.length - 1; pintarLado(S, false); sp = envolverTexto(S.el, texto, 'cmp-refto', {}, true); }
+    if (sp[0]) S.el.scrollTop = Math.max(0, sp[0].offsetTop - S.el.clientHeight / 3);
+    h += '<b>' + nombre + '</b>«' + escHtml(texto) + '»' + (sp.length ? '' : ' <i>(no aparece en este texto)</i>');
+  });
+  gl.innerHTML = h; gl.className = 'cmp-gloss open';
+  requestAnimationFrame(dibujarBanda);
+}
+// La relación: dos cintas curvas, de cada cita al encabezado de la diagonal.
+function dibujarBanda() {
+  const cmp = document.getElementById('comparar');
+  if (!cmp.classList.contains('open')) return;
+  const svg = document.getElementById('cmp-banda');
+  if (getComputedStyle(svg).display === 'none') return;
+  const C = document.getElementById('cmp-cuerpo').getBoundingClientRect();
+  const cen = document.getElementById('cmp-centro').getBoundingClientRect();
+  const y0 = cen.top - C.top + 20, y1 = y0 + 44;
+  const cinta = (colEl, lado) => {
+    const f = colEl.querySelector('.cmp-frag'); if (!f) return '';
+    const col = colEl.getBoundingClientRect(), rs = f.getClientRects();
+    const clamp = y => Math.max(col.top, Math.min(col.bottom, y)) - C.top;
+    const a1 = clamp(rs[0].top), a2 = Math.min(a1 + 110, Math.max(a1 + 2, clamp(rs[rs.length - 1].bottom)));
+    const ax = (lado === 'izq' ? col.right : col.left) - C.left, bx = (lado === 'izq' ? cen.left : cen.right) - C.left, mx = (ax + bx) / 2;
+    return '<path d="M' + ax + ',' + a1 + ' C' + mx + ',' + a1 + ' ' + mx + ',' + y0 + ' ' + bx + ',' + y0 + ' L' + bx + ',' + y1 + ' C' + mx + ',' + y1 + ' ' + mx + ',' + a2 + ' ' + ax + ',' + a2 + ' Z" fill="color-mix(in oklab,var(--mark) 11%,transparent)" stroke="color-mix(in oklab,var(--mark) 45%,transparent)" stroke-width="1" stroke-dasharray="3 4"/>';
+  };
+  svg.setAttribute('viewBox', '0 0 ' + C.width + ' ' + C.height);
+  svg.innerHTML = cinta(document.getElementById('cmp-orig'), 'izq') + cinta(document.getElementById('cmp-dest'), 'der');
+}
+function cerrarComparar() {
+  document.getElementById('comparar').classList.remove('open');
+  document.body.style.overflow = '';
+}
+['cmp-orig', 'cmp-dest'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('scroll', () => requestAnimationFrame(dibujarBanda), { passive: true });
+  el.addEventListener('click', e => {
+    const b = e.target.closest('[data-mas]'); if (!b) return;
+    expandirLado(id === 'cmp-orig' ? CMP.A : CMP.B, b.dataset.mas);
+  });
+});
+document.getElementById('cmp-em').addEventListener('click', e => { const r = e.target.closest('.cmp-ref'); if (r) mostrarReferente(+r.dataset.ref); });
+window.addEventListener('resize', () => requestAnimationFrame(dibujarBanda));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarComparar(); });
+document.getElementById('comparar').addEventListener('click', e => e.stopPropagation());
+
+/* Hojear hacia una obra entera («obra:<slug>») o a una página de una obra
+   PDF («obra:<slug>#p=<n>»): no hay ancla del otro lado, se abre la obra. */
+function resueltoDe(destinoId) {
+  let r = null;
+  Object.values(ACCIONES).forEach(a => (a.tipos || []).forEach(t => { if (t.destino === destinoId && t._resuelto) r = t._resuelto; }));
+  return r;
+}
+function irAObra(destinoId) {
+  const r = resueltoDe(destinoId);
+  if (!r || r._pendiente || r._roto) { alert('Este destino todavía no está disponible.'); return; }
+  if (r.mismaObra) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (!r.archivo) { alert('Este destino todavía no está disponible.'); return; }
+  pushBackStack();
+  window.location.href = r.archivo + (r.pdf_pagina ? '#pagina=' + r.pdf_pagina : '');
+}
+
+function irAAccion(destinoId) {
+  if (String(destinoId).startsWith('obra:')) return irAObra(destinoId);
+  const destino = ACCIONES[destinoId];
+  // Buscar en las acciones de la obra actual primero (más simple:
+  // basta con mirar si algún .accion-mark ya renderizado, en algún
+  // capítulo de CHAPTERS, referencia este id — lo sabemos por
+  // ACCIONES mismo, ya viene filtrado a esta obra si pertenece a ella).
+  if (destino) {
+    const capIdx = CHAPTERS.findIndex(c => c.id === destino.capitulo);
+    if (capIdx >= 0) {
+      if (capIdx === currentIdx) {
+        clearPin();
+        scrollYPreactivar(destinoId);
+      } else {
+        // El destino cae en otro capítulo de esta misma obra:
+        // pendingArrival se consume dentro del renderChapter que
+        // goChapterSlide dispara internamente.
+        pendingArrival = destinoId;
+        goChapterSlide(capIdx);
+      }
+      return;
+    }
+  }
+  // No está en esta obra — puede ser cruzada. Buscamos su _resuelto
+  // en cualquier tipo de cualquier acción visible ahora mismo (ya
+  // tiene archivo/tituloObra calculados por generar_obra.py).
+  let resuelto = null;
+  Object.values(ACCIONES).forEach(a => (a.tipos||[]).forEach(t => {
+    if (t.destino === destinoId && t._resuelto) resuelto = t._resuelto;
+  }));
+  if (!resuelto || resuelto._pendiente || resuelto._roto || !resuelto.archivo) {
+    alert('Este destino todavía no está disponible.');
+    return;
+  }
+  pushBackStack();
+  window.location.href = resuelto.archivo + '#accion=' + encodeURIComponent(destinoId);
+}
+
+let pendingArrival = null;
+function scrollYPreactivar(id) {
+  // data-accion es coma-separado ("id1,id2"), no espacio-separado, así
+  // que no se puede resolver con un selector de atributo simple.
+  const el = Array.from(document.querySelectorAll('.accion-mark')).find(m => (m.dataset.accion||'').split(',').includes(id));
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.add('arrival-flash');
+  setTimeout(() => el.classList.remove('arrival-flash'), 1600);
+  el.classList.add('pinned');
+  setTimeout(() => showAccionWings([id], el, true), 300);
+}
+
+// ── Back-bar (volver entre obras) ──
+// sessionStorage porque cruzar de obra es un load de página nuevo —
+// no hay estado de JS que sobreviva. Pila simple de {archivo,titulo}.
+function pushBackStack() {
+  const stack = JSON.parse(sessionStorage.getItem('p314b-backstack') || '[]');
+  stack.push({ archivo: SLUG + '.html', titulo: '___TITULO___' });
+  sessionStorage.setItem('p314b-backstack', JSON.stringify(stack));
+}
+function renderBackBar() {
+  const bar = document.getElementById('back-bar');
+  const stack = JSON.parse(sessionStorage.getItem('p314b-backstack') || '[]');
+  if (!stack.length) { bar.classList.remove('active'); return; }
+  const prev = stack[stack.length - 1];
+  bar.textContent = ' volver a ' + prev.titulo;
+  bar.classList.add('active');
+  bar.onclick = () => {
+    stack.pop();
+    sessionStorage.setItem('p314b-backstack', JSON.stringify(stack));
+    window.location.href = prev.archivo;
+  };
+}
+
+// Index
+document.getElementById('btn-index').addEventListener('click', () => {
+  document.getElementById('index-panel').classList.toggle('active');
+  document.getElementById('overlay-bg').classList.toggle('active');
+});
+document.getElementById('overlay-bg').addEventListener('click', () => {
+  document.getElementById('index-panel').classList.remove('active');
+  document.getElementById('overlay-bg').classList.remove('active');
+});
+document.querySelectorAll('.index-item').forEach((item, i) => {
+  item.addEventListener('click', () => {
+    document.getElementById('index-panel').classList.remove('active');
+    document.getElementById('overlay-bg').classList.remove('active');
+    renderChapter(i);
+  });
+});
+
+// Theme toggle
+document.getElementById('btn-recorrido').addEventListener('click', () => {
+  modoRecorrido = !modoRecorrido;
+  localStorage.setItem('p314b_recorrido', modoRecorrido ? '1' : '0');
+  document.getElementById('btn-recorrido').classList.toggle('active', modoRecorrido);
+  renderChapter(currentIdx, { skipScroll: true, skipSave: true });
+});
+document.getElementById('btn-recorrido').classList.toggle('active', modoRecorrido);
+
+const MODOS = ['oscuro', 'alto-contraste', 'manuscrito', 'glosa'];
+const MODO_LABELS = { oscuro: '◑ oscuro', 'alto-contraste': '◑ alto contraste', manuscrito: '◑ manuscrito', glosa: '◑ glosa' };
+function aplicarModo(m) {
+  if (m === 'oscuro') document.documentElement.removeAttribute('data-modo');
+  else document.documentElement.dataset.modo = m;
+  // El nombre del modo va en .lbl: en móvil queda solo el ícono.
+  document.getElementById('btn-theme').innerHTML = '◑<span class="lbl">' + (MODO_LABELS[m] || m).replace(/^◑/, '') + '</span>';
+  localStorage.setItem(SLUG + '_modo', m);
+  localStorage.setItem('p314b_modo', m);   // el modo elegido sigue en las otras obras
+}
+document.getElementById('btn-theme').addEventListener('click', () => {
+  const actual = document.documentElement.dataset.modo || 'oscuro';
+  aplicarModo(MODOS[(MODOS.indexOf(actual) + 1) % MODOS.length]);
+});
+
+// Exportar PDF limpio — arma todos los capítulos concatenados y sin
+// marcas dentro de #text-body solo mientras dura la impresión, y
+// restaura la vista de lectura normal apenas se cierra el diálogo.
+function exportarPdfLimpio() {
+  const originalHeader = document.getElementById('page-header').innerHTML;
+  const originalBody = document.getElementById('text-body').innerHTML;
+  const allHtml = CHAPTERS.map(ch => {
+    let body = ch.body || '';
+    if (!body.includes('<')) body = body.split(/\n{2,}/).map(p => '<p>'+p+'</p>').join('');
+    const label = (ch.number ? (ch.number + ' · ') : '') + (ch.title||'Sin título');
+    const lh = ch.lineHeight ? ` style="line-height:${String(ch.lineHeight).replace(/[^0-9.]/g,'')}"` : '';
+    return `<div class="print-chapter"${lh}><div class="print-chapter-head">${label}</div>${body}</div>`;
+  }).join('');
+  document.getElementById('page-header').innerHTML = `<h1 class="chapter-title">___TITULO___</h1>`;
+  document.getElementById('text-body').innerHTML = allHtml;
+  renderMath(document.getElementById('text-body'));
+  window.print();
+  const restaurar = () => {
+    document.getElementById('page-header').innerHTML = originalHeader;
+    document.getElementById('text-body').innerHTML = originalBody;
+    renderMath(document.getElementById('text-body'));
+    window.removeEventListener('afterprint', restaurar);
+  };
+  window.addEventListener('afterprint', restaurar);
+}
+document.getElementById('btn-pdf').addEventListener('click', exportarPdfLimpio);
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && currentIdx < CHAPTERS.length-1) goChapter(currentIdx+1);
+  if (e.key === 'ArrowLeft' && currentIdx > 0) goChapter(currentIdx-1);
+  if (e.key === 'Escape') clearPin();
+});
+
+// Init
+aplicarModo(localStorage.getItem(SLUG + '_modo') || localStorage.getItem('p314b_modo') || 'oscuro');
+
+renderBackBar();
+
+// Llegada por hipervínculo con id específico (#accion=ID) tiene
+// prioridad sobre la posición guardada — si alguien te mandó a un
+// punto puntual, no lo pisa el "seguir donde ibas". #capitulo=ID es
+// el mismo mecanismo pero para saltar directo a una unidad sin
+// apuntar a una acción puntual (lo usa el buscador de index.html).
+const hashMatch = /^#accion=([^&]+)/.exec(window.location.hash);
+const hashCapMatch = /^#capitulo=([^&]+)/.exec(window.location.hash);
+// Desde el buscador del índice: #capitulo=ID&buscar=texto lleva al pasaje.
+const hashBuscar = /[#&]buscar=([^&]+)/.exec(window.location.hash);
+// Un pasaje citado (copiar enlace sobre una selección): #capitulo=ID&cita=texto.
+const hashCita = /[#&]cita=([^&]+)/.exec(window.location.hash);
+if (hashMatch) {
+  const targetId = decodeURIComponent(hashMatch[1]);
+  const accion = ACCIONES[targetId];
+  const capIdx = accion ? CHAPTERS.findIndex(c => c.id === accion.capitulo) : -1;
+  renderChapter(capIdx >= 0 ? capIdx : 0, { skipScroll: true });
+  setTimeout(() => scrollYPreactivar(targetId), 60);
+} else if (hashCapMatch) {
+  const targetChId = decodeURIComponent(hashCapMatch[1]);
+  const capIdx = CHAPTERS.findIndex(c => c.id === targetChId);
+  renderChapter(capIdx >= 0 ? capIdx : 0, (hashBuscar || hashCita) ? { skipScroll: true } : undefined);
+  if (hashCita) setTimeout(() => marcarTexto(decodeURIComponent(hashCita[1]), 'cita', false), 80);
+  else if (hashBuscar) setTimeout(() => irAlHallazgo(decodeURIComponent(hashBuscar[1])), 80);
+} else {
+  const savedPos = parseInt(localStorage.getItem(SLUG + '_pos') || '0');
+  const idxIni = Math.min(savedPos, CHAPTERS.length-1);
+  renderChapter(idxIni, { skipScroll: true });
+  // Seguir leyendo: además de la unidad, vuelve a la altura donde quedó.
+  const alto = /^(\d+):([\d.]+)$/.exec(localStorage.getItem(SLUG + '_y') || '');
+  if (alto && +alto[1] === idxIni && +alto[2] > 0) {
+    setTimeout(() => { window.scrollTo(0, +alto[2] * (document.documentElement.scrollHeight - window.innerHeight)); }, 120);
+  }
+}
+if (DIAGONAL_POSTEO) DG.montarPosteo(DIAGONAL_POSTEO);
+
+// Buscador: marca la primera aparición del texto buscado (sin importar
+// mayúsculas ni tildes, como el índice), la lleva al tercio de la
+// pantalla y la deja resaltada unos segundos. Un pasaje citado usa lo
+// mismo con otra marca, que queda. Los espacios no cuentan al comparar:
+// una cita puede cruzar párrafos, cursivas o marcas.
+function irAlHallazgo(q) { marcarTexto(q, 'hallazgo', true); }
+function marcarTexto(q, clase, desvanecer) {
+  const norm = t => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const qn = norm(q).replace(/\s+/g, '');
+  if (!qn) return null;
+  const cuerpo = document.getElementById('text-body');
+  const recorrer = document.createTreeWalker(cuerpo, NodeFilter.SHOW_TEXT);
+  let plano = '', mapa = [], n;
+  while ((n = recorrer.nextNode())) {
+    const t = n.nodeValue;
+    for (let i = 0; i < t.length; i++) {
+      if (/\s/.test(t[i])) continue;
+      for (const ch of norm(t[i])) { plano += ch; mapa.push([n, i]); }
+    }
+  }
+  const at = plano.indexOf(qn);
+  if (at < 0) return null;
+  // Un tramo por nodo de texto: cada uno se envuelve en su propia marca.
+  const tramos = new Map();
+  for (let k = at; k < at + qn.length; k++) {
+    const [nodo, i] = mapa[k];
+    const t = tramos.get(nodo);
+    if (t) t[1] = i; else tramos.set(nodo, [i, i]);
+  }
+  const marcas = [];
+  tramos.forEach(([i0, i1], nodo) => {
+    const r = document.createRange();
+    r.setStart(nodo, i0); r.setEnd(nodo, i1 + 1);
+    const m = document.createElement('mark'); m.className = clase;
+    r.surroundContents(m); marcas.push(m);
+  });
+  const caja = marcas[0].getBoundingClientRect();
+  window.scrollTo({ top: caja.top + window.scrollY - window.innerHeight * 0.33, behavior: pocaAnimacion ? 'auto' : 'smooth' });
+  if (desvanecer) setTimeout(() => marcas.forEach(m => m.classList.add('hallazgo-fin')), 4000);
+  return marcas;
+}
+
+// Seguir leyendo: dónde quedó la lectura (unidad y altura de esta obra,
+// y la última obra leída para el aviso del índice). Solo en este
+// navegador; no sale de acá.
+(function(){
+  if (document.documentElement.classList.contains('en-panel')) return;
+  function guardar(){
+    try {
+      const ch = CHAPTERS[currentIdx] || {};
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const y = h > 0 ? Math.round(window.scrollY / h * 1000) / 1000 : 0;
+      localStorage.setItem(SLUG + '_y', currentIdx + ':' + y);
+      const tit = document.querySelector('.top-nav .book-title');
+      localStorage.setItem('p314b_ultima', JSON.stringify({
+        archivo: location.pathname.split('/').pop(),
+        titulo: tit ? tit.textContent.trim() : SLUG,
+        donde: (ch.number ? ch.number + ' · ' : '') + (ch.title || ''),
+        t: Date.now()
+      }));
+    } catch (e) {}
+  }
+  let espera = null;
+  window.addEventListener('scroll', () => { clearTimeout(espera); espera = setTimeout(guardar, 400); }, { passive: true });
+  window.addEventListener('pagehide', guardar);
+  setTimeout(guardar, 600);
+})();
+</script>
+
+<script id="p314b-marcas">
+(function(){
+  var MODOS=['todas','diagonales','ninguna'], KEY='p314b_marcas';
+  var b=document.getElementById('btn-marcas');
+  function aplicar(m){ if(MODOS.indexOf(m)<0) m='todas'; document.documentElement.dataset.marcas=m;
+    if(b){ b.querySelector('.lbl').textContent=' marcas: '+m; b.setAttribute('aria-pressed', m==='todas'?'false':'true'); }
+    try{localStorage.setItem(KEY,m);}catch(e){} }
+  aplicar((function(){try{return localStorage.getItem(KEY);}catch(e){return null;}})()||'todas');
+  window.MARCAS={aplicar:aplicar};
+  if(b) b.addEventListener('click',function(){ var a=document.documentElement.dataset.marcas||'todas'; aplicar(MODOS[(MODOS.indexOf(a)+1)%MODOS.length]); if(window.pintarIntenciones) pintarIntenciones(); });
+  // j / k: acción siguiente / anterior visible; Enter la abre
+  var actual=null;
+  function marcas(){ var m=document.documentElement.dataset.marcas||'todas';
+    return Array.prototype.filter.call(document.querySelectorAll('.accion-mark[data-visual]:not([data-visual="ancla"]):not(.dg-dormida)'),function(el){
+      if(m==='ninguna') return false; if(m==='diagonales' && el.dataset.visual!=='diagonal') return false; return el.offsetParent!==null; }); }
+  document.addEventListener('keydown',function(e){
+    if(e.metaKey||e.ctrlKey||e.altKey) return;
+    var tg=e.target; if(tg && (tg.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName))) return;
+    if(e.key==='j'||e.key==='k'){ var L=marcas(); if(!L.length) return; e.preventDefault();
+      var i=actual?L.indexOf(actual):-1;
+      if(i<0){ var y=window.innerHeight*0.3; i=e.key==='j'?L.findIndex(function(el){return el.getBoundingClientRect().top>y;})-1:L.findIndex(function(el){return el.getBoundingClientRect().top>y;}); if(i<-1)i=L.length-1; }
+      i=e.key==='j'?Math.min(L.length-1,i+1):Math.max(0,i-1);
+      if(actual) actual.classList.remove('foco-teclado'); actual=L[i]; actual.classList.add('foco-teclado');
+      var r=actual.getBoundingClientRect(); window.scrollBy({top:r.top-window.innerHeight*0.35,behavior:'smooth'}); }
+    else if(e.key==='Enter' && actual && document.contains(actual)){ e.preventDefault(); actual.click(); }
+  });
+})();
+</script>
+
+<script id="p314b-riel">
+(function(){
+  var COL={diagonal:'var(--mark)',nota:'var(--green)',marginalia:'var(--red)',hojear:'var(--violet)'};
+  var riel=document.createElement('div'); riel.className='riel-marcas'; riel.setAttribute('aria-hidden','true'); document.body.appendChild(riel);
+  var pend=false;
+  function dibujar(){ pend=false; var m=document.documentElement.dataset.marcas||'todas';
+    var alto=document.documentElement.scrollHeight, h=riel.clientHeight; if(!h||!alto) return;
+    var L=document.querySelectorAll('.accion-mark[data-visual]:not([data-visual="ancla"]):not(.dg-dormida)'), html='', usados={};
+    Array.prototype.forEach.call(L,function(el,i){ var v=el.dataset.visual; if(m==='diagonales'&&v!=='diagonal') return; if(!el.offsetParent) return;
+      var y=Math.round((el.getBoundingClientRect().top+scrollY)/alto*(h-4)); var k=v+y; if(usados[k]) return; usados[k]=1;
+      html+='<i data-i="'+i+'" style="top:'+y+'px;background:'+(COL[v]||'var(--ink-soft)')+'" title="'+v+'"></i>'; });
+    riel.innerHTML=html; }
+  function pedir(){ if(!pend){ pend=true; requestAnimationFrame(dibujar); } }
+  riel.addEventListener('click',function(e){ var i=e.target.dataset&&e.target.dataset.i; if(i==null) return;
+    var el=document.querySelectorAll('.accion-mark[data-visual]:not([data-visual="ancla"]):not(.dg-dormida)')[+i]; if(!el) return;
+    window.scrollTo({top:el.getBoundingClientRect().top+scrollY-window.innerHeight*0.35,behavior:'smooth'});
+    el.classList.add('arrival-flash'); setTimeout(function(){el.classList.remove('arrival-flash');},1700); });
+  new MutationObserver(pedir).observe(document.getElementById('text-body')||document.body,{childList:true,subtree:true});
+  new MutationObserver(pedir).observe(document.documentElement,{attributes:true,attributeFilter:['data-marcas','data-modo','data-dg-filtro']});
+  window.addEventListener('resize',pedir); window.addEventListener('load',pedir); setTimeout(pedir,600);
+})();
+</script>
+<script src="../recorrido.js"></script>
+<script id="p314b-citar">
+/* El lector como fragmento: sobre un pasaje seleccionado, «dejar una
+   frase» arma un correo a la autora con el pasaje, la frase y una línea
+   «p314b-lector:» que el taller sabe leer (acción «voz de lector»). Si la
+   autora la suma, entra al texto como una marginalia firmada y fechada.
+   Sin correo en lector.json, el botón no aparece. Nada pasa por un
+   servidor: es el programa de correo de quien lee. Con «clave» en
+   lector.json, el mensaje sale cifrado (OpenPGP) desde el navegador: solo
+   la autora lo lee; Proton lo descifra solo al llegar. */
+// OpenPGP.js (vendor/, versión fija) se carga solo cuando alguien manda una frase.
+function cifrarConClave(archivoClave, texto) {
+  var cargar = window.openpgp ? Promise.resolve() : new Promise(function (ok, mal) {
+    var sc = document.createElement('script'); sc.src = '../vendor/openpgp-6.3.2/openpgp.min.js';
+    sc.onload = ok; sc.onerror = mal; document.head.appendChild(sc);
+  });
+  return cargar.then(function () { return fetch('../' + archivoClave, { cache: 'no-cache' }); })
+    .then(function (r) { if (!r.ok) throw new Error('sin clave'); return r.text(); })
+    .then(function (armada) { return openpgp.readKey({ armoredKey: armada }); })
+    .then(function (clave) { return openpgp.createMessage({ text: texto }).then(function (m) { return openpgp.encrypt({ message: m, encryptionKeys: clave }); }); });
+}
+(function(){
+  if (document.documentElement.classList.contains('en-panel')) return;
+  fetch('../lector.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (cfg) {
+    var correo = (cfg && cfg.correo || '').trim();
+    if (!correo) return;
+    var cuerpo = document.getElementById('text-body');
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'lector-btn'; btn.hidden = true; btn.textContent = '✎ dejar una frase';
+    document.body.appendChild(btn);
+    var pasaje = '';
+    function revisar() {
+      var s = getSelection();
+      if (!s.rangeCount || s.isCollapsed) { btn.hidden = true; return; }
+      var r = s.getRangeAt(0);
+      if (!cuerpo.contains(r.commonAncestorContainer)) { btn.hidden = true; return; }
+      var t = s.toString().replace(/\s+/g, ' ').trim();
+      if (t.length < 4) { btn.hidden = true; return; }
+      pasaje = t.length > 300 ? t.slice(0, 300) + '…' : t;
+      var c = r.getBoundingClientRect();
+      btn.style.left = Math.max(80, Math.min(innerWidth - 80, c.left + c.width / 2)) + 'px';
+      btn.style.top = (c.top + scrollY - 8) + 'px';
+      btn.hidden = false;
+    }
+    document.addEventListener('mouseup', function () { setTimeout(revisar, 0); });
+    document.addEventListener('selectionchange', function () { var s = getSelection(); if (!s.rangeCount || s.isCollapsed) btn.hidden = true; });
+    btn.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation(); btn.hidden = true;
+      var ch = CHAPTERS[currentIdx] || {};
+      var f = document.createElement('div');
+      f.className = 'lector-form'; f.setAttribute('role', 'dialog'); f.setAttribute('aria-label', 'dejar una frase');
+      f.innerHTML = '<div>sobre</div><q>' + escHtml(pasaje) + '</q>'
+        + '<label>tu frase<textarea maxlength="600"></textarea></label>'
+        + '<label>firma (opcional)<input type="text" maxlength="60"></label>'
+        + '<div class="lf-nota">Se abre tu programa de correo con todo listo para mandar. Si la autora la suma, tu frase queda en el margen de este pasaje, con tu firma y la fecha.</div>'
+        + '<div class="lf-acc"><button type="button" data-no>cancelar</button><button type="button" data-si>enviar por correo</button></div>';
+      document.body.appendChild(f);
+      var ta = f.querySelector('textarea'); ta.focus();
+      function cerrar() { f.remove(); }
+      f.querySelector('[data-no]').addEventListener('click', cerrar);
+      f.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') cerrar(); });
+      f.addEventListener('click', function (ev) { ev.stopPropagation(); });
+      f.querySelector('[data-si]').addEventListener('click', function () {
+        var frase = ta.value.trim();
+        if (!frase) { ta.focus(); return; }
+        var firma = f.querySelector('input').value.trim();
+        var hoy = new Date(), fecha = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+        var datos = { obra: SLUG, capitulo: ch.id || '', pasaje: pasaje, frase: frase, firma: firma, fecha: fecha };
+        var titulo = (document.querySelector('.index-title') || {}).textContent || SLUG;
+        var cuerpoMail = 'Sobre «' + pasaje + '» (' + titulo + ', ' + (ch.title || '') + '):\n\n' + frase + '\n\n' + (firma ? '— ' + firma + '\n\n' : '')
+          + '(para el taller, no borrar)\np314b-lector: ' + JSON.stringify(datos);
+        var asunto = 'p314b · una frase de lector';
+        var enviar = function (texto, cifrado) {
+          var mailto = 'mailto:' + encodeURIComponent(correo) + '?subject=' + encodeURIComponent(asunto) + '&body=' + encodeURIComponent(texto);
+          if (!cifrado) { location.href = mailto; cerrar(); return; }
+          // Cifrado: se muestra el bloque, con «abrir correo» y «copiar», por
+          // si el programa de correo corta un enlace tan largo.
+          f.innerHTML = '<div>tu frase va cifrada con la clave de la autora</div>'
+            + '<div class="lf-nota">Solo ella puede leerla (clave ' + escHtml(cfg.huella || '') + '). Ni este sitio ni el correo ven lo que escribiste.</div>'
+            + '<textarea readonly style="font-family:var(--font-mono);font-size:10.5px;min-height:150px"></textarea>'
+            + '<div class="lf-nota">Si el correo se abre vacío, copiá el bloque y mandalo a ' + escHtml(correo) + '.</div>'
+            + '<div class="lf-acc"><button type="button" data-no>cerrar</button><button type="button" data-copiar>copiar</button><button type="button" data-abrir>abrir correo</button></div>';
+          f.querySelector('textarea').value = texto;
+          f.querySelector('[data-no]').addEventListener('click', cerrar);
+          f.querySelector('[data-copiar]').addEventListener('click', function () { (window.p314bCopiar || function (t) { navigator.clipboard.writeText(t); })(texto); this.textContent = 'copiado ✓'; });
+          f.querySelector('[data-abrir]').addEventListener('click', function () { location.href = mailto; });
+        };
+        if (!cfg.clave) { enviar(cuerpoMail, false); return; }
+        var boton = f.querySelector('[data-si]'); boton.disabled = true; boton.textContent = 'cifrando…';
+        cifrarConClave(cfg.clave, cuerpoMail).then(function (armado) { enviar(armado, true); })
+          .catch(function () { boton.disabled = false; boton.textContent = 'enviar sin cifrar'; boton.onclick = function () { enviar(cuerpoMail, false); }; });
+      });
+    });
+  });
+})();
+
+/* Citar un pasaje: al seleccionar texto aparece «copiar enlace». El enlace
+   lleva a esta unidad y deja el pasaje marcado (#capitulo=ID&cita=texto). */
+(function(){
+  if (document.documentElement.classList.contains('en-panel')) return;
+  var cuerpo = document.getElementById('text-body');
+  var btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'cita-btn'; btn.hidden = true; btn.textContent = '⧉ copiar enlace';
+  document.body.appendChild(btn);
+  var texto = '';
+  function ocultar() { btn.hidden = true; }
+  function revisar() {
+    var s = getSelection();
+    if (!s.rangeCount || s.isCollapsed) return ocultar();
+    var r = s.getRangeAt(0);
+    if (!cuerpo.contains(r.commonAncestorContainer)) return ocultar();
+    var t = s.toString().replace(/\s+/g, ' ').trim();
+    if (t.length < 4) return ocultar();
+    // Hasta 300 caracteres, cortando en un espacio: el enlace no se vuelve eterno.
+    if (t.length > 300) { t = t.slice(0, 300); t = t.slice(0, t.lastIndexOf(' ') > 200 ? t.lastIndexOf(' ') : 300); }
+    texto = t;
+    var c = r.getBoundingClientRect();
+    btn.style.left = Math.max(70, Math.min(innerWidth - 70, c.left + c.width / 2)) + 'px';
+    btn.style.top = (c.top + scrollY - 8) + 'px';
+    btn.hidden = false;
+  }
+  document.addEventListener('mouseup', function () { setTimeout(revisar, 0); });
+  document.addEventListener('keyup', function (e) { if (e.shiftKey || e.key === 'Shift') revisar(); });
+  document.addEventListener('selectionchange', function () { var s = getSelection(); if (!s.rangeCount || s.isCollapsed) ocultar(); });
+  btn.addEventListener('mousedown', function (e) { e.preventDefault(); });   // no pierde la selección
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var ch = CHAPTERS[currentIdx] || {};
+    p314bCopiar(location.origin + location.pathname + '#capitulo=' + encodeURIComponent(ch.id || '') + '&cita=' + encodeURIComponent(texto));
+    ocultar();
+  });
+})();
+</script>
+
+<script id="p314b-inmersiva">
+/* Lectura inmersiva: la barra se esconde al bajar y vuelve al subir, una
+   línea arriba muestra el avance del capítulo, F pasa a pantalla completa
+   y Mayús+J / Mayús+K cambian de capítulo (j / k solas van de marca en marca). */
+(function(){
+  if (document.documentElement.classList.contains('en-panel')) return;
+  var raiz = document.documentElement;
+  var linea = document.createElement('div'); linea.className = 'progreso-lectura'; linea.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(linea);
+  var antes = scrollY, pend = false;
+  function abiertoAlgo() { return document.querySelector('#index-panel.active, .lectura-modal.open, dialog[open]'); }
+  function alScroll() {
+    pend = false;
+    var y = scrollY, h = raiz.scrollHeight - innerHeight;
+    linea.style.transform = 'scaleX(' + (h > 0 ? Math.min(1, y / h) : 0) + ')';
+    if (y < 120 || abiertoAlgo()) raiz.classList.remove('barra-oculta');
+    else if (y > antes + 8) raiz.classList.add('barra-oculta');
+    else if (y < antes - 8) raiz.classList.remove('barra-oculta');
+    if (Math.abs(y - antes) > 8) antes = y;
+  }
+  addEventListener('scroll', function () { if (!pend) { pend = true; requestAnimationFrame(alScroll); } }, { passive: true });
+  addEventListener('resize', alScroll);
+  new MutationObserver(alScroll).observe(document.getElementById('text-body'), { childList: true });
+  // La barra vuelve si el puntero va arriba de todo.
+  addEventListener('mousemove', function (e) { if (e.clientY < 24) raiz.classList.remove('barra-oculta'); }, { passive: true });
+  document.addEventListener('keydown', function (e) {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    var tg = e.target; if (tg && (tg.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName))) return;
+    if ((e.key === 'f' || e.key === 'F') && !e.shiftKey) {
+      e.preventDefault();
+      if (document.fullscreenElement) document.exitFullscreen(); else if (raiz.requestFullscreen) raiz.requestFullscreen().catch(function () {});
+    } else if (e.shiftKey && (e.key === 'J' || e.key === 'K')) {
+      e.preventDefault();
+      var n = currentIdx + (e.key === 'J' ? 1 : -1);
+      if (n >= 0 && n < CHAPTERS.length) goChapter(n);
+    }
+  });
+})();
+</script>
+<dialog class="guia-marcas" id="guia-marcas" aria-labelledby="guia-tit">
+  <div class="guia-cab"><span id="guia-tit">Cómo leer las marcas</span><button type="button" id="guia-cerrar">cerrar ×</button></div>
+  <div class="guia-cuerpo">
+    <dl><dt style="text-decoration:underline solid var(--mark) 2px">diagonal</dt><dd>Une este fragmento con otro, en este texto o en otro. Al tocarla se abre su tarjeta: qué relación tienen y «ir al destino».</dd><dt style="text-decoration:underline dotted var(--violet) 2px">hojear ↗</dt><dd>Abre al costado otro texto o página para mirarlo sin salir de este.</dd><dt style="text-decoration:underline dashed var(--green) 2px">nota</dt><dd>Un comentario sobre el fragmento marcado.</dd><dt style="text-decoration:underline wavy var(--red) 2px">marginalia</dt><dd>Un comentario al margen, junto al párrafo.</dd><dt style="text-decoration:underline double var(--mark-lt) 2px">lámina ◫</dt><dd>Abre una imagen o un PDF que acompaña al texto.</dd><dt style="text-decoration:underline dotted var(--ink-muted) 2px">transclusión</dt><dd>Debajo del párrafo aparece, entero, un pasaje de otro texto. No es una copia: si el original cambia, cambia acá.</dd></dl>
+    <p>Con el mouse, pasar por una marca la resalta y tocarla la abre (se puede cambiar en ⚙ lectura). Con el teclado, j / k van a la marca siguiente o anterior y Enter la abre. ◈ marcas elige si se ven todas, solo las diagonales o ninguna.</p>
+    <p>Al seleccionar un pasaje aparece «copiar enlace»: quien lo abra llega a ese pasaje marcado. ← → o Mayús+J / Mayús+K cambian de capítulo, y F pasa a pantalla completa.</p>
+  </div>
+</dialog>
+<script>
+(function(){
+  var d=document.getElementById('guia-marcas'); if(!d||!d.showModal) return;
+  document.querySelectorAll('[data-guia]').forEach(function(b){ b.addEventListener('click',function(e){ e.stopPropagation(); d.showModal(); }); });
+  document.getElementById('guia-cerrar').addEventListener('click',function(){ d.close(); });
+  d.addEventListener('click',function(e){ if(e.target===d) d.close(); });
+})();
+</script>
+<script src="../visita.js"></script>
+</body>
+</html>

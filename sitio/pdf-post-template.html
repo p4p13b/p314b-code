@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script>if(/[?&]panel=1\b/.test(location.search))document.documentElement.classList.add("en-panel");</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>___TITULO___ — p314b</title>
+<link rel="stylesheet" href="../vendor/fuentes-5.3.0/fuentes.css">
+<script src="../vendor/pdfjs-3.11.174/pdf.min.js"></script>
+<script src="../comun.js"></script>
+<script src="../autor.js"></script>
+<script src="../pdf-viewer-core.js"></script>
+<script src="../diagonal.js"></script>
+<script src="../mareas.js"></script>
+<script src="../lectura-extra.js"></script>
+<link rel="stylesheet" href="../pdf-post.css">
+
+</head>
+<body>
+<a class="saltar" href="#pdf-centro">saltar al PDF</a>
+
+<nav class="top-nav">
+  <div class="left">
+    <a class="nav-btn nav-volver" href="../index.html" title="Volver al corpus">←<span class="lbl"> corpus</span></a>
+    <button class="nav-btn" id="btn-index">☰<span class="lbl"> Índice</span></button>
+    <button class="nav-btn" id="btn-recorrido" title="Fijar todas las diagonales de este PDF, sin importar la página actual, para elegir por dónde seguir">⤳<span class="lbl"> recorrido</span></button>
+    <button class="nav-btn" id="btn-mapa" title="Mapa relacional de este texto">◇<span class="lbl"> mapa</span></button>
+    <span class="book-title">___TITULO___</span>
+    <span class="pdf-badge">PDF</span>
+  </div>
+  <div class="right">
+    <button class="nav-btn" id="btn-acciones-toggle">◈<span class="lbl"> acciones</span></button>
+    <button class="nav-btn" id="btn-theme">◑<span class="lbl"> manuscrito</span></button>
+  </div>
+</nav>
+
+<div class="back-bar" id="back-bar"></div>
+
+<div class="overlay-bg" id="overlay-bg"></div>
+<aside class="index-panel" id="index-panel">
+  <div class="index-title">___TITULO___</div>
+  <div id="index-list"></div>
+</aside>
+
+<main class="layout" id="layout">
+  <aside class="wing wing-left"><div class="wing-content" id="wing-left"></div></aside>
+
+  <div class="center" id="pdf-centro" tabindex="-1">
+    <div class="pdf-toolbar">
+      <button id="pv-prev">←</button>
+      <span id="pv-pageinfo"><input id="pv-pagina" type="text" inputmode="numeric" value="—" aria-label="Ir a la página" title="Escribí un número y Enter"> / <span id="pv-total">—</span></span>
+      <button id="pv-next">→</button>
+      <span id="pv-del-libro" class="pv-del-libro" hidden></span>
+      <span style="width:1px;height:16px;background:var(--rule);margin:0 4px;"></span>
+      <button id="pv-zoom-out">−</button>
+      <span id="pv-zoominfo">—</span>
+      <button id="pv-zoom-in">+</button>
+      <button id="pv-gemela" hidden title="La misma página en la otra tirada del cut-up, al costado, con lo que cambia">◫ gemela</button>
+    </div>
+    <div id="pv-container" class="pvcore-wrap"></div>
+    <div class="pv-franja" id="pv-franja" hidden aria-label="Páginas con marcas"></div>
+  </div>
+
+  <aside class="wing wing-right"><div class="wing-content" id="wing-right"></div></aside>
+</main>
+
+<div class="hoja-movil" id="hoja-movil" hidden>
+  <button class="hoja-tira" id="hoja-tira"><span id="hoja-resumen"></span><span id="hoja-flecha">▴</span></button>
+  <div class="hoja-cuerpo" id="hoja-cuerpo"></div>
+</div>
+
+<div class="legend">
+  <strong>Lectura</strong>
+  <span class="dot diagonal"></span>diagonal&nbsp;
+  <span class="dot hojear"></span>hojear&nbsp;
+  <span class="dot nota"></span>nota&nbsp;
+  <span class="dot marginalia"></span>marginalia<br>
+  <span style="opacity:0.75;">◈ acciones de esta página · ⤳ recorrido</span><br>
+  <button type="button" class="guia-abrir" data-guia>¿cómo leer las marcas?</button>
+</div>
+
+<div class="mapa-overlay" id="mapa-overlay"></div>
+<div class="mapa-modal" id="mapa-modal">
+  <div class="mapa-modal-head">
+    <span>Este texto en la matriz relacional</span>
+    <span class="mapa-close" id="mapa-close">cerrar ×</span>
+  </div>
+  <div class="mapa-modal-body" id="mapa-modal-body"></div>
+</div>
+
+<script>
+const SLUG = '___SLUG___';
+// Mareas: si este texto tiene horario (mareas.json) y no es su hora, se vela.
+MAREAS.velar(SLUG, '../');
+// Huella (propia y colectiva): abrir este PDF cuenta como un paso.
+addEventListener('DOMContentLoaded', () => EXTRA.paso(SLUG, 0, document.title.replace(/\s+—.*$/, ''), 1));
+const PDF_ARCHIVO = ___PDFARCHIVO___;
+const PARTES = ___PARTESDATA___;
+const ACCIONES = ___ACCIONESDATA___;
+
+/* ── Una parte sola (?parte=ID): el mismo PDF, limitado a las páginas de
+   esa entrada de la estructura (la vista «partes» del índice abre así
+   cada poemario interno, sin generar un archivo nuevo). La barra cuenta
+   desde 1; por dentro (acciones, citas, #pagina=N) las páginas siguen
+   siendo las del PDF entero. Una página fuera del rango abre el libro. ── */
+const PARTE = (() => {
+  const id = new URLSearchParams(location.search).get('parte');
+  const p = id && PARTES.find(x => x.id === id);
+  return p && p.paginaDesde && p.paginaHasta ? p : null;
+})();
+const DESDE = PARTE ? PARTE.paginaDesde : 1;
+const enParte = n => !PARTE || (n >= PARTE.paginaDesde && n <= PARTE.paginaHasta);
+// Esta página tal como se abrió (con ?parte=), para volver a ella.
+const ESTA = SLUG + '.html' + (PARTE ? '?parte=' + encodeURIComponent(PARTE.id) : '');
+const CLAVE_PAG = SLUG + (PARTE ? '--' + PARTE.id : '') + '_pag';
+if (PARTE) {
+  document.getElementById('pv-del-libro').hidden = false;
+  const libro = document.querySelector('.top-nav .book-title').textContent;
+  document.querySelector('.top-nav .book-title').textContent = (PARTE.titulo || 'Sin título') + ' · ' + libro;
+  document.title = (PARTE.titulo || 'Sin título') + ' · ' + document.title;
+}
+function irAPag(n) {
+  if (!visor || !n) return;
+  if (!enParte(n)) { pushBackStack(); window.location.href = SLUG + '.html#pagina=' + n; return; }
+  visor.irAPagina(n);
+}
+
+const $ = id => document.getElementById(id);
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* La tarjeta de diagonal y Expandir los arma diagonal.js (igual que en las
+   obras de texto). Acá solo se le da el texto de cada lado: la página del
+   PDF donde está la cita. */
+async function textoDeAccion(id) {
+  const a = ACCIONES[id];
+  if (!a || a.pdf_pagina == null || !visor || !visor.textoPagina) return '';
+  try { return await visor.textoPagina(a.pdf_pagina); } catch (e) { return ''; }
+}
+window.DIAG_HOST = {
+  async par(origenId, destinoId) {
+    const a = ACCIONES[origenId] || {};
+    const t = (a.tipos || []).find(x => x.tipo === 'diagonal' && x.destino === destinoId) || {};
+    const r = t._resuelto || {};
+    const o = { parrafo: await textoDeAccion(origenId), frag: a.fragmento || '', etiqueta: document.title.replace(/\s+—\s+p314b$/, '') + (a.pdf_pagina != null ? ' · pág. ' + a.pdf_pagina : '') };
+    // Destino en otra obra de texto: su párrafo sale de la página publicada.
+    const d = { parrafo: ACCIONES[destinoId] ? await textoDeAccion(destinoId) : await DG.parrafoEnObra(r.archivo, destinoId, r.fragmento), frag: r.fragmento || '',
+      etiqueta: DG.destinoLabel(r) + (r.pdf_pagina != null ? ' · pág. ' + r.pdf_pagina : '') };
+    if (r.mismaObra && a.pdf_pagina != null && r.pdf_pagina != null && a.pdf_pagina !== r.pdf_pagina) {
+      o.orden = a.pdf_pagina < r.pdf_pagina ? 'anterior en el texto' : 'posterior en el texto';
+      d.orden = a.pdf_pagina < r.pdf_pagina ? 'posterior en el texto' : 'anterior en el texto';
+    }
+    return { o, d };
+  }
+};
+DG.alCambiar = () => renderAlas(visor ? visor.paginaActual : 1);
+
+let visor = null;
+let acccionesOn = true;
+let modoRecorrido = localStorage.getItem('p314b_recorrido') === '1';
+
+/* ─── Mini-mapa — mismo estado que obra-template.html: vacío mientras se
+   reconstruye la matriz relacional (Fase 2b/2c). ─── */
+function renderMapaObra() {
+  $('mapa-modal-body').innerHTML =
+    '<div class="mapa-empty">La matriz relacional se está reconstruyendo. Todavía no hay relaciones confirmadas para mostrar acá.</div>';
+}
+function abrirMapaObra() {
+  $('mapa-overlay').classList.add('open');
+  $('mapa-modal').classList.add('open');
+  renderMapaObra();
+}
+function cerrarMapaObra() {
+  $('mapa-overlay').classList.remove('open');
+  $('mapa-modal').classList.remove('open');
+}
+$('btn-mapa').addEventListener('click', abrirMapaObra);
+$('mapa-close').addEventListener('click', cerrarMapaObra);
+$('mapa-overlay').addEventListener('click', cerrarMapaObra);
+
+/* ─── Acciones ancladas a página: se agrupan por pdf_pagina.
+   No requieren fragmento embebido en el texto (el PDF no es HTML) —
+   la relación es puramente por número de página, asignada en el
+   taller al crear cada una. ACCIONES ya viene filtrado a esta obra
+   desde construir_acciones_embebidas() (generar_obra.py) — ese filtro
+   además APLANA cada entrada a {id, capitulo, fragmento, pdf_pagina,
+   tipos}, sin envoltorio "origen" (así lee obra-template.html también,
+   ver a.capitulo/a.fragmento ahí) — por eso acá se lee a.pdf_pagina
+   directo, no a.origen.pdf_pagina. ─── */
+const ACCIONES_POR_PAGINA = {};
+Object.values(ACCIONES).forEach(a => {
+  const pag = a.pdf_pagina;
+  if (pag == null) return;
+  (ACCIONES_POR_PAGINA[pag] || (ACCIONES_POR_PAGINA[pag] = [])).push(a);
+});
+
+/* ── La cita sobre la página: cada acción guarda su fragmento (lo que se
+   seleccionó en el taller, o la cita de la matriz al tender). Se busca
+   palabra por palabra en la capa de texto de pdf.js y se resaltan los
+   trozos que lo forman. Si no está entero (la capa de texto parte o une
+   palabras distinto), el tramo más largo que sí está, de 4 palabras o más. ── */
+const PALABRA_RE = /[\p{L}\p{N}]+/gu;
+const palabrasDe = s => (String(s || '').toLowerCase().match(PALABRA_RE) || []).filter(w => w !== 'nbsp');
+function tramoEnCapa(toks, ps) {
+  const pos = new Map();
+  toks.forEach((t, i) => { if (!pos.has(t.w)) pos.set(t.w, []); pos.get(t.w).push(i); });
+  let mejor = null;
+  for (let a = 0; a < ps.length; a++) {
+    for (const i of pos.get(ps[a]) || []) {
+      let k = 0;
+      while (a + k < ps.length && i + k < toks.length && toks[i + k].w === ps[a + k]) k++;
+      if (!mejor || k > mejor.k) mejor = { i, k };
+      if (k === ps.length) return mejor;
+    }
+  }
+  return mejor && mejor.k >= Math.min(4, ps.length) ? mejor : null;
+}
+function marcarCitas(n, capa) {
+  const acciones = ACCIONES_POR_PAGINA[n] || [];
+  if (!acciones.length) return;
+  const toks = [];
+  capa.querySelectorAll('span').forEach(sp => palabrasDe(sp.textContent).forEach(w => toks.push({ w, sp })));
+  if (!toks.length) return;
+  const destino = (/^#accion=([^&]+)/.exec(location.hash) || [])[1];
+  acciones.forEach(a => {
+    const ps = palabrasDe(a.fragmento);
+    if (!ps.length) return;
+    const r = tramoEnCapa(toks, ps);
+    if (!r) return;
+    const diag = (a.tipos || []).some(t => t.tipo === 'diagonal');
+    for (let j = r.i; j < r.i + r.k; j++) {
+      const sp = toks[j].sp;
+      sp.classList.add('pv-marca');
+      if (diag) sp.classList.add('pv-diag');
+      if (!sp.dataset.accion) sp.dataset.accion = a.id;
+      if (destino && decodeURIComponent(destino) === a.id) sp.classList.add('pv-activa');
+    }
+  });
+}
+// Tocar una cita marcada lleva a su tarjeta en el ala (si no se está
+// seleccionando texto para copiar).
+document.addEventListener('click', e => {
+  const sp = e.target.closest && e.target.closest('.pvcore-textlayer span.pv-marca');
+  if (!sp || document.body.classList.contains('sin-acciones')) return;
+  const sel = window.getSelection();
+  if (sel && sel.toString().trim()) return;
+  const card = document.querySelector('#wing-right .dg-card[data-accion="' + CSS.escape(sp.dataset.accion) + '"]');
+  if (!card) return;
+  card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  card.classList.add('pv-destello');
+  setTimeout(() => card.classList.remove('pv-destello'), 1200);
+});
+
+/* ── Franja de páginas: una raya por cada página con acciones, a su
+   altura en el documento (las de diagonal, en color). Tocarla va a la
+   página. ── */
+function pintarFranja(total) {
+  const fr = $('pv-franja');
+  const pags = Object.keys(ACCIONES_POR_PAGINA).map(Number).filter(p => p >= DESDE && p < DESDE + total).sort((x, y) => x - y);
+  if (!pags.length || total < 2) { fr.hidden = true; return; }
+  fr.innerHTML = pags.map(p => {
+    const as = ACCIONES_POR_PAGINA[p];
+    const nd = as.reduce((s, a) => s + (a.tipos || []).filter(t => t.tipo === 'diagonal').length, 0);
+    const otras = as.reduce((s, a) => s + (a.tipos || []).filter(t => !/^(diagonal|ancla|ancla-diagonal)$/.test(t.tipo)).length, 0);
+    const que = [nd ? nd + (nd === 1 ? ' diagonal' : ' diagonales') : '', otras ? otras + (otras === 1 ? ' nota u hojeo' : ' notas u hojeos') : ''].filter(Boolean).join(' · ') || 'ancla';
+    return `<button type="button" class="${nd ? 'diag' : ''}" style="top:${((p - DESDE + 0.5) / total * 100).toFixed(3)}%" data-p="${p}" title="pág. ${p} · ${que}" aria-label="Ir a la página ${p}: ${que}"></button>`;
+  }).join('') + '<i class="pv-aqui" id="pv-aqui"></i>';
+  fr.hidden = false;
+  fr.querySelectorAll('button').forEach(b => b.addEventListener('click', () => irAPag(+b.dataset.p)));
+}
+function franjaAqui(n, total) {
+  const m = $('pv-aqui');
+  if (m && total) m.style.top = ((n - DESDE + 0.5) / total * 100).toFixed(3) + '%';
+}
+
+function parteDePagina(n) {
+  // Con niveles (título › parte › capítulo › sección) puede haber varias
+  // que contienen la página: vale la más profunda (la última que empieza).
+  const hits = PARTES.filter(p => n >= p.paginaDesde && n <= p.paginaHasta);
+  return hits.length ? hits[hits.length - 1] : null;
+}
+
+/* ── Índice — panel oculto/toggleable, igual que obra-template.html,
+   poblado con PARTES (rangos de página) en vez de capítulos. ── */
+function renderIndice(paginaActual) {
+  const list = $('index-list');
+  if (!PARTES.length) { list.innerHTML = '<div class="index-empty">Sin partes definidas — navegá con ← → o la barra de zoom.</div>'; return; }
+  const activa = parteDePagina(paginaActual);
+  // En una parte sola: ella y lo que tiene adentro, y el libro entero.
+  const lista = PARTE ? PARTES.filter(p => p === PARTE || ((p.nivel != null ? p.nivel : 1) > (PARTE.nivel != null ? PARTE.nivel : 1) && enParte(p.paginaDesde))) : PARTES;
+  list.innerHTML = (PARTE ? `<a class="index-item index-libro" href="${SLUG}.html"><span class="num">↗</span><span class="name">el libro entero</span></a>` : '') + lista.map(p => `
+    <a class="index-item nivel-${p.nivel != null ? p.nivel : 1}${activa && activa.id === p.id ? ' active' : ''}" data-desde="${p.paginaDesde}" style="padding-left:${(p.nivel != null ? p.nivel : 1) * 14}px">
+      <span class="num">p.${p.paginaDesde - DESDE + 1}–${p.paginaHasta - DESDE + 1}</span>
+      <span class="name">${esc(p.titulo || 'Sin título')}</span>
+    </a>`).join('');
+  list.querySelectorAll('.index-item[data-desde]').forEach(el => {
+    el.addEventListener('click', () => {
+      $('index-panel').classList.remove('active');
+      $('overlay-bg').classList.remove('active');
+      irAPag(parseInt(el.dataset.desde, 10));
+    });
+  });
+}
+$('btn-index').addEventListener('click', () => {
+  $('index-panel').classList.toggle('active');
+  $('overlay-bg').classList.toggle('active');
+});
+$('overlay-bg').addEventListener('click', () => {
+  $('index-panel').classList.remove('active');
+  $('overlay-bg').classList.remove('active');
+});
+
+/* ── Alas — misma convención que obra-template.html: nota/marginalia/
+   hojear siempre a la izquierda, diagonal siempre a la derecha. Sin
+   marcas inline que hoverear (el PDF no es texto editable), así que
+   se muestran directamente las acciones de la página actual mientras
+   "◈ acciones" esté activo — y, en modo recorrido, la derecha muestra
+   TODAS las diagonales del PDF (no solo las de esta página), fijas,
+   para elegir por dónde seguir. ── */
+function renderAlas(n) {
+  const wl = $('wing-left');
+  const wr = $('wing-right');
+
+  // Izquierda: nota / marginalia / hojear de la página actual.
+  if (!acccionesOn) {
+    wl.innerHTML = '';
+    wl.classList.remove('active');
+  } else {
+    const enPagina = ACCIONES_POR_PAGINA[n] || [];
+    const cardsIzq = [];
+    enPagina.forEach(accion => {
+      (accion.tipos || []).forEach(t => {
+        if (t.tipo === 'nota') {
+          cardsIzq.push(`<div class="accion-card nota"><div class="accion-label">nota</div><div class="accion-text">${esc(t.contenido||'')}</div></div>`);
+        } else if (t.tipo === 'marginalia') {
+          cardsIzq.push(`<div class="accion-card marginalia"><div class="accion-text">${esc(t.contenido||'')}</div></div>`);
+        } else if (t.tipo === 'hojear') {
+          const r = t._resuelto || {};
+          const label = r._pendiente ? 'destino aún no publicado' : r._roto ? 'destino roto' : (r.tituloCapitulo || r.tituloObra || t.destino) + (r.pdf_pagina != null && !r.obraEntera ? ' (pág. ' + r.pdf_pagina + ')' : '');
+          cardsIzq.push(`
+            <div class="accion-card hojear">
+              <div class="accion-label">hojear</div>
+              ${t.cita_relevancia ? `<div class="accion-text">"${esc(t.cita_relevancia)}"</div>` : ''}
+              ${(r._pendiente || r._roto) ? `<div class="accion-pending">${esc(label)}</div>` : `<span class="accion-goto" onclick="hojearAlCostado('${t.destino}')">Hojear a ${esc(label)}</span>`}
+            </div>`);
+        }
+      });
+    });
+    wl.innerHTML = cardsIzq.length ? `<div class="ala-label">página ${n}</div>${cardsIzq.join('')}` : '';
+    wl.classList.toggle('active', cardsIzq.length > 0);
+  }
+
+  // Derecha: diagonal — de la página actual, o de todo el PDF si el
+  // modo recorrido está activo.
+  if (modoRecorrido) {
+    const todasDiag = [];
+    Object.values(ACCIONES).forEach(a => (a.tipos||[]).forEach(t => {
+      if (t.tipo === 'diagonal') todasDiag.push({ accion: a, t });
+    }));
+    if (todasDiag.length) {
+      wr.innerHTML = `<div class="ala-label">recorrido · todas las diagonales</div><div class="recorrido-nav">${todasDiag.map(({accion, t}) => {
+        const base = t.titulo || t.resumen || t.emergente || 'sin emergente';
+        const txt = base.slice(0,90) + (base.length>90?'…':'');
+        return `<button class="recorrido-link" onclick="irAAccion('${t.destino}')">↗ ${esc(txt)}<span class="recorrido-pag">pág. ${accion.pdf_pagina ?? '—'}</span></button>`;
+      }).join('')}</div>`;
+    } else {
+      wr.innerHTML = `<div class="ala-label">recorrido</div><div class="recorrido-empty">Sin diagonales en este PDF todavía.</div>`;
+    }
+    wr.classList.add('active');
+  } else if (!acccionesOn) {
+    wr.innerHTML = '';
+    wr.classList.remove('active');
+  } else {
+    const enPagina = ACCIONES_POR_PAGINA[n] || [];
+    const cardsDer = [];
+    // una tarjeta por destino, o una sola con todos (diagonales_juntas)
+    enPagina.forEach(accion => cardsDer.push(...DG.tarjetas(accion)));
+    wr.innerHTML = cardsDer.length ? `<div class="ala-label">página ${n}</div>${cardsDer.join('')}` : '';
+    wr.classList.toggle('active', cardsDer.length > 0);
+  }
+  pintarHojaMovil(n);
+}
+
+/* En pantallas angostas las alas están ocultas: se copia su contenido a
+   la hoja de abajo (con otros ids, para que "+ contenido" abra la suya). */
+const esAngosta = window.matchMedia('(max-width:900px)');
+function pintarHojaMovil(n) {
+  const hoja = $('hoja-movil');
+  const partes = [$('wing-left'), $('wing-right')].filter(w => w.classList.contains('active')).map(w => w.innerHTML);
+  if (!esAngosta.matches || !partes.length) { hoja.hidden = true; return; }
+  const html = partes.join('').replace(/<div class="ala-label">[^<]*<\/div>/g, '').replace(/(id="|getElementById\(')bloque-/g, '$1hbloque-');
+  const cuantas = (html.match(/class="(accion-card|diagonal-card|recorrido-link)/g) || []).length;
+  $('hoja-cuerpo').innerHTML = html;
+  $('hoja-resumen').textContent = (modoRecorrido ? 'recorrido · ' : 'página ' + n + ' · ') + cuantas + (cuantas === 1 ? ' acción' : ' acciones');
+  hoja.hidden = false;
+}
+$('hoja-tira').addEventListener('click', () => {
+  const abierta = $('hoja-movil').classList.toggle('abierta');
+  $('hoja-flecha').textContent = abierta ? '▾' : '▴';
+});
+esAngosta.addEventListener('change', () => renderAlas(visor ? visor.paginaActual : 1));
+
+$('btn-acciones-toggle').addEventListener('click', () => {
+  acccionesOn = !acccionesOn;
+  $('btn-acciones-toggle').classList.toggle('active', acccionesOn);
+  document.body.classList.toggle('sin-acciones', !acccionesOn);
+  renderAlas(visor ? visor.paginaActual : 1);
+});
+$('btn-acciones-toggle').classList.toggle('active', acccionesOn);
+
+$('btn-recorrido').addEventListener('click', () => {
+  modoRecorrido = !modoRecorrido;
+  localStorage.setItem('p314b_recorrido', modoRecorrido ? '1' : '0');
+  $('btn-recorrido').classList.toggle('active', modoRecorrido);
+  renderAlas(visor ? visor.paginaActual : 1);
+});
+$('btn-recorrido').classList.toggle('active', modoRecorrido);
+
+/* ── Navegación por ID — mismo motor que obra-template.html, adaptado
+   a páginas en vez de capítulos: si el destino es una acción de este
+   mismo PDF, basta con ir a su pdf_pagina; si es de otra obra, se
+   resuelve como cruzada (mismo mecanismo de back-bar). ── */
+function irAAccion(destinoId) {
+  // Hojear hacia una obra entera («obra:<slug>») o a una página de una obra
+  // PDF («obra:<slug>#p=<n>»): no hay ancla del otro lado, se abre la obra.
+  if (String(destinoId).startsWith('obra:')) {
+    let r = null;
+    Object.values(ACCIONES).forEach(a => (a.tipos || []).forEach(t => { if (t.destino === destinoId && t._resuelto) r = t._resuelto; }));
+    if (!r || r._pendiente || r._roto) { alert('Este destino todavía no está disponible.'); return; }
+    if (r.mismaObra) { if (r.pdf_pagina) irAPag(r.pdf_pagina); return; }
+    if (!r.archivo) { alert('Este destino todavía no está disponible.'); return; }
+    pushBackStack();
+    window.location.href = r.archivo + (r.pdf_pagina ? '#pagina=' + r.pdf_pagina : '');
+    return;
+  }
+  const destino = ACCIONES[destinoId];
+  if (destino && destino.pdf_pagina != null) {
+    if (!enParte(destino.pdf_pagina)) { pushBackStack(); window.location.href = SLUG + '.html#accion=' + encodeURIComponent(destinoId); return; }
+    if (visor) visor.irAPagina(destino.pdf_pagina);
+    return;
+  }
+  let resuelto = null;
+  Object.values(ACCIONES).forEach(a => (a.tipos||[]).forEach(t => {
+    if (t.destino === destinoId && t._resuelto) resuelto = t._resuelto;
+  }));
+  if (!resuelto || resuelto._pendiente || resuelto._roto || !resuelto.archivo) {
+    alert('Este destino todavía no está disponible.');
+    return;
+  }
+  pushBackStack();
+  window.location.href = resuelto.archivo + '#accion=' + encodeURIComponent(destinoId);
+}
+
+/* ── Hojear al costado: como la lámina de las obras escritas, el destino
+   se abre en el ala izquierda (un marco con esa página) y este PDF queda
+   donde estaba. Dentro de este mismo PDF, simplemente va a la página.
+   «abrir ↗» sí lleva a la otra página. ── */
+let hojearAbierto = null;
+function urlDeHojear(destinoId) {
+  const id = String(destinoId || '');
+  let r = null;
+  Object.values(ACCIONES).forEach(a => (a.tipos || []).forEach(t => { if (t.destino === id && t._resuelto) r = t._resuelto; }));
+  if (id.startsWith('obra:')) {
+    if (!r || r._pendiente || r._roto || r.mismaObra || !r.archivo) return null;
+    return { pagina: r.archivo, ancla: r.pdf_pagina ? '#pagina=' + r.pdf_pagina : '', titulo: r.tituloCapitulo || r.tituloObra || '' };
+  }
+  if (!r || r._pendiente || r._roto || !r.archivo) return null;
+  return { pagina: r.archivo, ancla: '#accion=' + encodeURIComponent(id), titulo: [r.tituloObra, r.tituloCapitulo].filter(Boolean).join(' · ') };
+}
+function cerrarHojear() {
+  const p = document.getElementById('hojear-panel');
+  if (p) { p.hidden = true; p.querySelector('iframe').src = 'about:blank'; }
+  hojearAbierto = null;
+}
+function hojearAlCostado(destinoId) {
+  const id = String(destinoId || '');
+  const enEste = id.startsWith('obra:') ? null : ACCIONES[id];
+  let r = null;
+  Object.values(ACCIONES).forEach(a => (a.tipos || []).forEach(t => { if (t.destino === id && t._resuelto) r = t._resuelto; }));
+  if ((enEste && enEste.pdf_pagina != null) || (r && r.mismaObra)) { cerrarHojear(); irAAccion(id); return; }
+  if (hojearAbierto && hojearAbierto.id === id) { cerrarHojear(); return; }
+  const u = urlDeHojear(id);
+  if (!u) { alert('Este destino todavía no está disponible.'); return; }
+  let p = document.getElementById('hojear-panel');
+  if (!p) {
+    p = document.createElement('aside');
+    p.id = 'hojear-panel'; p.className = 'hojear-panel'; p.hidden = true;
+    p.setAttribute('aria-label', 'Hojear');
+    p.innerHTML = '<div class="hojear-barra"><span class="tit" id="hojear-tit"></span>' +
+      '<button id="hojear-ir" title="Ir a esa página (dejar este PDF)">abrir ↗</button><button id="hojear-cerrar" title="Cerrar">×</button></div>' +
+      '<iframe title="Destino del hojear"></iframe>';
+    document.body.appendChild(p);
+    $('hojear-cerrar').addEventListener('click', cerrarHojear);
+    $('hojear-ir').addEventListener('click', () => { if (!hojearAbierto) return; pushBackStack(); window.location.href = hojearAbierto.ir; });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && hojearAbierto) cerrarHojear(); });
+    window.addEventListener('resize', () => { if (hojearAbierto) ubicarHojear(p); });
+  }
+  if (gemelaAbierta) cerrarGemela();
+  hojearAbierto = { id, ir: u.pagina + u.ancla };
+  $('hojear-tit').textContent = 'hojear · ' + (u.titulo || u.pagina.replace(/\.html$/, ''));
+  ubicarHojear(p);
+  p.querySelector('iframe').src = u.pagina + '?panel=1' + u.ancla;
+  p.hidden = false;
+}
+function ubicarHojear(p) {
+  // El ancho del ala izquierda; si no hay lugar, la pantalla entera.
+  const ala = $('wing-left');
+  const ancho = ala && ala.offsetParent ? Math.floor(ala.getBoundingClientRect().right) : 0;
+  p.classList.toggle('completa', ancho < 340);
+  p.style.width = ancho < 340 ? '' : ancho + 'px';
+}
+
+/* ── Gemela (solo Aire en la cuerda y De embriaguez y pathos: el mismo
+   cuerpo de cut-up en dos tiradas). gemelas.json —lo arma a mano
+   matriz/anexo/scripts/cutup.py— trae, por página, la página gemela de la
+   otra tirada, la clase del par (común / variante / propio) y lo que cambia.
+   Abierta, el panel izquierdo sigue la página que se lee. ── */
+let GEMELAS = null, gemelaAbierta = false, gemelaMarco = null;
+fetch('../gemelas.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).then(d => {
+  GEMELAS = d && d.obras && d.obras[SLUG] ? d.obras[SLUG] : null;
+  if (GEMELAS && !document.documentElement.classList.contains('en-panel')) $('pv-gemela').hidden = false;
+}).catch(() => {});
+function gemelaDe(n) { return GEMELAS ? GEMELAS.paginas[String(n)] || null : null; }
+function cerrarGemela() {
+  const p = document.getElementById('gemela-panel');
+  if (p) { p.hidden = true; if (gemelaMarco) gemelaMarco.src = 'about:blank'; }
+  gemelaAbierta = false; gemelaMarco = null;
+  $('pv-gemela').setAttribute('aria-pressed', 'false');
+}
+function panelGemela() {
+  let p = document.getElementById('gemela-panel');
+  if (p) return p;
+  p = document.createElement('aside');
+  p.id = 'gemela-panel'; p.className = 'hojear-panel'; p.hidden = true;
+  p.setAttribute('aria-label', 'Gemela');
+  p.innerHTML = '<div class="hojear-barra"><span class="tit" id="gemela-tit"></span>' +
+    '<button id="gemela-ir" title="Ir a esa página de la otra tirada">abrir ↗</button><button id="gemela-cerrar" title="Cerrar">×</button></div>' +
+    '<div class="gemela-info" id="gemela-info"></div>';
+  document.body.appendChild(p);
+  $('gemela-cerrar').addEventListener('click', cerrarGemela);
+  $('gemela-ir').addEventListener('click', () => {
+    const g = visor && gemelaDe(visor.paginaActual);
+    if (!g) return;
+    pushBackStack();
+    window.location.href = GEMELAS.otra + '.html#pagina=' + g.p;
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && gemelaAbierta) cerrarGemela(); });
+  window.addEventListener('resize', () => { if (gemelaAbierta) ubicarHojear(p); });
+  return p;
+}
+function actualizarGemela(n) {
+  if (!gemelaAbierta) return;
+  const g = gemelaDe(n), info = $('gemela-info');
+  const otra = esc(GEMELAS.titulo_otra);
+  if (!g) {
+    $('gemela-tit').textContent = 'gemela · pág. ' + n;
+    info.innerHTML = 'Esta página no tiene texto que comparar (portada, figura o separador).';
+    return;
+  }
+  const cl = g.c === 'común' ? 'comun' : g.c;
+  $('gemela-tit').textContent = 'gemela · ' + GEMELAS.titulo_otra + ', pág. ' + g.p;
+  const leyenda = { 'común': 'la misma página en la otra tirada', 'variante': 'el mismo pasaje, con variantes', 'propio': 'sin gemela: esta página es propia de esta tirada; al costado, la más cercana' }[g.c];
+  info.innerHTML = `<span class="cl ${cl}">${esc(g.c)} · ${String(g.s).replace('.', ',')}</span>${esc(leyenda)}` +
+    (g.solo.length ? `<span class="dif">solo acá: ${g.solo.map(w => '<span>' + esc(w) + '</span>').join('')}</span>` : '') +
+    (g.otra.length ? `<span class="dif otra">solo en ${otra}: ${g.otra.map(w => '<span>' + esc(w) + '</span>').join('')}</span>` : '');
+  const destino = GEMELAS.otra + '.html?panel=1#pagina=' + g.p;
+  if (!gemelaMarco) {
+    gemelaMarco = document.createElement('iframe');
+    gemelaMarco.title = 'Página gemela';
+    $('gemela-panel').appendChild(gemelaMarco);
+    gemelaMarco.src = destino;
+  } else {
+    // misma página del marco: solo cambia el ancla (el marco la sigue)
+    try { gemelaMarco.contentWindow.location.hash = '#pagina=' + g.p; } catch (e) { gemelaMarco.src = destino; }
+  }
+}
+$('pv-gemela').addEventListener('click', () => {
+  if (gemelaAbierta) { cerrarGemela(); return; }
+  if (!GEMELAS || !visor) return;
+  if (typeof cerrarHojear === 'function') cerrarHojear();
+  const p = panelGemela();
+  gemelaAbierta = true;
+  $('pv-gemela').setAttribute('aria-pressed', 'true');
+  ubicarHojear(p);
+  p.hidden = false;
+  actualizarGemela(visor.paginaActual);
+});
+// #pagina=N también cuando cambia el ancla sin recargar (así el panel de
+// la gemela sigue a la lectura)
+window.addEventListener('hashchange', () => {
+  const m = /^#pagina=(\d+)$/.exec(window.location.hash);
+  if (m) irAPag(parseInt(m[1], 10));
+});
+
+/* ── Back-bar (volver entre obras) — idéntico a obra-template.html ── */
+function pushBackStack() {
+  const stack = JSON.parse(sessionStorage.getItem('p314b-backstack') || '[]');
+  stack.push({ archivo: ESTA, titulo: PARTE ? PARTE.titulo || '___TITULO___' : '___TITULO___' });
+  sessionStorage.setItem('p314b-backstack', JSON.stringify(stack));
+}
+function renderBackBar() {
+  const bar = $('back-bar');
+  const stack = JSON.parse(sessionStorage.getItem('p314b-backstack') || '[]');
+  if (!stack.length) { bar.classList.remove('active'); return; }
+  const prev = stack[stack.length - 1];
+  bar.textContent = ' volver a ' + prev.titulo;
+  bar.classList.add('active');
+  bar.onclick = () => {
+    stack.pop();
+    sessionStorage.setItem('p314b-backstack', JSON.stringify(stack));
+    window.location.href = prev.archivo;
+  };
+}
+
+/* ── Tema — mismo mecanismo que obra-template.html (data-modo +
+   localStorage por slug); acá se mantienen los 2 modos originales del
+   posteo-PDF (oscuro/manuscrito), ambos ya con el contraste por tipo
+   migrado arriba. ── */
+function aplicarModo(m) {
+  document.documentElement.setAttribute('data-modo', m);
+  localStorage.setItem(SLUG + '_modo', m);
+  $('btn-theme').innerHTML = '◑<span class="lbl"> ' + (m === 'manuscrito' ? 'oscuro' : 'manuscrito') + '</span>';
+}
+$('btn-theme').addEventListener('click', () => {
+  const actual = document.documentElement.getAttribute('data-modo');
+  aplicarModo(actual === 'manuscrito' ? 'oscuro' : 'manuscrito');
+});
+
+async function init() {
+  renderIndice(DESDE);
+  renderBackBar();
+  renderAlas(DESDE);   // aunque el PDF tarde o falle, las acciones se ven
+  const cont = $('pv-container');
+  cont.innerHTML = '<div class="loading-msg">Cargando PDF…</div>';
+
+  if (typeof pdfjsLib === 'undefined') {
+    cont.innerHTML = '<div class="loading-msg">No se pudo cargar pdf.js (¿sin conexión al CDN?).</div>';
+    return;
+  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '../vendor/pdfjs-3.11.174/pdf.worker.min.js';
+  cont.innerHTML = '';
+
+  try {
+    visor = await PDFViewerCore.montar({
+      contenedor: cont,
+      datos: { url: new URL('../Archivo/' + PDF_ARCHIVO, document.baseURI).href },
+      escalaInicial: 1.15,
+      desde: PARTE ? PARTE.paginaDesde : null,
+      hasta: PARTE ? PARTE.paginaHasta : null,
+      onPaginaLista: (n, capa) => marcarCitas(n, capa),
+      onPaginaVisible: (n, total) => {
+        mostrarPagina(n, total);
+        franjaAqui(n, visor ? visor.hasta - visor.desde + 1 : total);
+        guardarPagina(n);
+        renderIndice(n);
+        renderAlas(n);
+        actualizarGemela(n);
+      },
+      onListo: (total) => {
+        $('pv-zoominfo').textContent = Math.round((visor ? visor.getZoom() : 1.15) * 100) + '%';
+      },
+      onError: (e) => {
+        console.error(e);
+      }
+    });
+    mostrarPagina(visor.paginaActual, visor.totalPaginas);
+    pintarFranja(visor.hasta - visor.desde + 1);
+    franjaAqui(visor.paginaActual, visor.hasta - visor.desde + 1);
+    // Dentro del panel de otra página (hojear, gemela): la hoja entra a lo ancho.
+    if (document.documentElement.classList.contains('en-panel')) {
+      const pg = cont.querySelector('.pvcore-page');
+      if (pg && pg.offsetWidth) {
+        const f = (cont.clientWidth - 24) / pg.offsetWidth;
+        if (f > 0 && f < 0.95) visor.setZoom(visor.getZoom() * f);
+      }
+    }
+    $('pv-zoominfo').textContent = Math.round(visor.getZoom() * 100) + '%';
+
+    // Llegada por hipervínculo: #accion=ID salta a la página que ancla
+    // esa acción (igual que obra-template.html); #pagina=N es el mismo
+    // mecanismo pero para un número de página directo, sin pasar por
+    // una acción puntual — lo usa, por ejemplo, el aleatorizador
+    // "Yendo" del index.
+    const hashMatch = /^#accion=([^&]+)/.exec(window.location.hash);
+    const hashPaginaMatch = /^#pagina=(\d+)$/.exec(window.location.hash);
+    if (hashMatch) {
+      const targetId = decodeURIComponent(hashMatch[1]);
+      const accion = ACCIONES[targetId];
+      if (accion && accion.pdf_pagina != null) {
+        irAPag(accion.pdf_pagina);
+      } else {
+        renderAlas(DESDE);
+      }
+    } else if (hashPaginaMatch) {
+      irAPag(parseInt(hashPaginaMatch[1], 10));
+    } else {
+      // Seguir leyendo: la página donde quedó en este navegador (cada
+      // parte recuerda la suya).
+      const g = parseInt(localStorage.getItem(CLAVE_PAG) || '0', 10);
+      if (g > visor.desde && g <= visor.hasta) visor.irAPagina(g);
+      else renderAlas(DESDE);
+    }
+  } catch (e) {
+    cont.innerHTML = `<div class="loading-msg">No se pudo cargar el PDF.<br>Asegurá que <code>${esc(PDF_ARCHIVO)}</code> esté en <code>sitio/Archivo/</code>.<br><span style="opacity:.7;">${esc(e.message||'')}</span></div>`;
+  }
+}
+
+$('pv-prev').addEventListener('click', () => visor && visor.irAPagina(visor.paginaActual - 1));
+$('pv-next').addEventListener('click', () => visor && visor.irAPagina(visor.paginaActual + 1));
+$('pv-zoom-in').addEventListener('click', () => { if (!visor) return; visor.setZoom(visor.getZoom() + 0.15); $('pv-zoominfo').textContent = Math.round(visor.getZoom()*100)+'%'; });
+$('pv-zoom-out').addEventListener('click', () => { if (!visor) return; visor.setZoom(visor.getZoom() - 0.15); $('pv-zoominfo').textContent = Math.round(visor.getZoom()*100)+'%'; });
+
+// Saltar a una página: el número de la barra se puede escribir.
+function mostrarPagina(n, total) {
+  const inp = $('pv-pagina');
+  if (document.activeElement !== inp) inp.value = n - DESDE + 1;
+  $('pv-total').textContent = PARTE ? PARTE.paginaHasta - DESDE + 1 : total;
+  const lib = $('pv-del-libro');
+  if (lib) lib.textContent = 'pág. ' + n + ' del libro';
+}
+$('pv-pagina').addEventListener('focus', e => e.target.select());
+$('pv-pagina').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const n = parseInt(e.target.value, 10);
+    if (visor && n >= 1) visor.irAPagina(n + DESDE - 1);
+    e.target.blur();
+  } else if (e.key === 'Escape') {
+    if (visor) e.target.value = visor.paginaActual - DESDE + 1;
+    e.target.blur();
+  }
+});
+$('pv-pagina').addEventListener('blur', e => { if (visor) e.target.value = visor.paginaActual - DESDE + 1; });
+
+// Seguir leyendo: la página de este PDF y la última obra leída (para el
+// aviso del índice). Solo en este navegador.
+let esperaPag = null;
+function guardarPagina(n) {
+  if (document.documentElement.classList.contains('en-panel')) return;
+  clearTimeout(esperaPag);
+  esperaPag = setTimeout(() => {
+    try {
+      localStorage.setItem(CLAVE_PAG, String(n));
+      const tit = document.querySelector('.top-nav .book-title');
+      localStorage.setItem('p314b_ultima', JSON.stringify({
+        archivo: location.pathname.split('/').pop() + location.search.replace(/[?&]panel=1\b/, ''),
+        titulo: tit ? tit.textContent.trim() : SLUG,
+        donde: 'p. ' + (n - DESDE + 1),
+        t: Date.now()
+      }));
+    } catch (e) {}
+  }, 400);
+}
+
+document.addEventListener('keydown', e => {
+  const tg = e.target;
+  if (tg && (tg.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(tg.tagName))) return;
+  if (!visor) return;
+  if (e.key === 'ArrowRight') visor.irAPagina(visor.paginaActual + 1);
+  if (e.key === 'ArrowLeft') visor.irAPagina(visor.paginaActual - 1);
+  if (e.key === 'Home') { e.preventDefault(); visor.irAPagina(visor.desde); }
+  if (e.key === 'End') { e.preventDefault(); visor.irAPagina(visor.hasta); }
+});
+
+aplicarModo(localStorage.getItem(SLUG + '_modo') || 'oscuro');
+init();
+</script>
+<dialog class="guia-marcas" id="guia-marcas" aria-labelledby="guia-tit">
+  <div class="guia-cab"><span id="guia-tit">Cómo leer las marcas</span><button type="button" id="guia-cerrar">cerrar ×</button></div>
+  <div class="guia-cuerpo">
+    <dl><dt style="text-decoration:underline solid var(--mark) 2px">diagonal</dt><dd>Une este fragmento con otro, en este texto o en otro. Al tocarla se abre su tarjeta: qué relación tienen y «ir al destino».</dd><dt style="text-decoration:underline dotted var(--violet) 2px">hojear ↗</dt><dd>Abre al costado otro texto o página para mirarlo sin salir de este.</dd><dt style="text-decoration:underline dashed var(--green) 2px">nota</dt><dd>Un comentario sobre el fragmento marcado.</dd><dt style="text-decoration:underline wavy var(--red) 2px">marginalia</dt><dd>Un comentario al margen, junto al párrafo.</dd></dl>
+    <p>En un PDF, las marcas de cada página se ven con ◈; ⤳ recorrido junta todas las diagonales del texto.</p>
+  </div>
+</dialog>
+<script>
+(function(){
+  var d=document.getElementById('guia-marcas'); if(!d||!d.showModal) return;
+  document.querySelectorAll('[data-guia]').forEach(function(b){ b.addEventListener('click',function(e){ e.stopPropagation(); d.showModal(); }); });
+  document.getElementById('guia-cerrar').addEventListener('click',function(){ d.close(); });
+  d.addEventListener('click',function(e){ if(e.target===d) d.close(); });
+})();
+</script>
+<script src="../recorrido.js"></script>
+<script src="../visita.js"></script>
+</body>
+</html>

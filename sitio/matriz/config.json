@@ -1,0 +1,28 @@
+{
+  "universo": {
+    "pdfs_manifest": true,
+    "series": [
+      "qoq"
+    ],
+    "posts": [],
+    "posts_publicados": true
+  },
+  "backend": "sentence-transformers",
+  "modelo": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "mostrar_propuestas": true,
+  "pasaje_palabras_minimas": 25,
+  "propuestas_por_instrumento": 40,
+  "max_por_par_de_sitios": 3,
+  "max_por_pasaje": 2,
+  "max_por_obra": 5,
+  "umbral_inicial": 0.9,
+  "robustez_minima": 0.8,
+  "solape_lexico_maximo": 0.2,
+  "propuestas_total": 300,
+  "propuestas_minimas_por_instrumento": 5,
+  "instrumentos_sin_propuestas": [
+    "cc3",
+    "ccc",
+    "cccccc"
+  ]
+}

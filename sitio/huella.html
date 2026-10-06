@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mi huella — p314b</title>
+<meta name="description" content="Lo que leíste en p314b, en qué orden y cuánto tiempo. Se guarda solo en tu navegador.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="vendor/fuentes-5.3.0/fuentes.css">
+<style>
+/* Huella de lectura propia: la arma lectura-extra.js en localStorage
+   (p314b_huella) mientras se lee. Nada sale de este navegador. */
+:root{
+  --bg:#080808;--page:#0d0d0d;--ink:#f5f5f5;--ink-soft:#d0d0d0;--ink-muted:#8a8a8a;--rule:#292929;
+  --line-ctl:color-mix(in oklab,var(--ink) 42%,var(--bg));
+  --mark:#3b82f6;--mark-lt:#60a5fa;--violet:#a78bfa;
+  --font-body:'Newsreader',Georgia,serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f6f4ef;--page:#fbfaf6;--ink:#141414;--ink-soft:#333;--ink-muted:#6b6b6b;--rule:#dcd8cf;--mark:#2563eb;--mark-lt:#1d4ed8;--violet:#7c3aed;}}
+*{box-sizing:border-box;}
+html,body{margin:0;background:var(--bg);color:var(--ink);}
+body{font-family:var(--font-body);-webkit-font-smoothing:antialiased;}
+a{color:inherit;}
+.nav{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 24px;border-bottom:1px solid var(--rule);background:color-mix(in oklab,var(--bg) 92%,transparent);backdrop-filter:blur(10px);}
+.nav-btn,.btn{font-family:var(--font-mono);font-size:13px;color:var(--ink);text-decoration:none;padding:7px 11px;min-height:34px;display:inline-flex;align-items:center;border:1px solid var(--line-ctl);border-radius:3px;background:transparent;cursor:pointer;}
+.nav-btn:hover,.btn:hover{border-color:var(--ink);}
+.btn:focus-visible,.nav-btn:focus-visible,a:focus-visible{outline:2px solid var(--mark-lt);outline-offset:2px;}
+main{max-width:1100px;margin:0 auto;padding:40px 24px 80px;}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-muted);margin:0 0 6px;}
+h1{font-style:italic;font-weight:300;font-size:clamp(44px,8vw,84px);line-height:1;margin:0 0 16px;letter-spacing:-.02em;}
+h2{font-family:var(--font-mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-muted);font-weight:500;margin:44px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--rule);}
+.lede{font-size:18px;line-height:1.55;color:var(--ink-soft);max-width:62ch;margin:0 0 18px;}
+.cifras{display:flex;flex-wrap:wrap;gap:8px 28px;font-family:var(--font-mono);font-size:12px;color:var(--ink-muted);}
+.cifras b{color:var(--ink);font-weight:500;font-size:14px;margin-right:4px;}
+.acciones{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;}
+svg#trayecto{display:block;width:100%;height:auto;border:1px solid var(--rule);border-radius:4px;background:var(--page);}
+.t-arista{fill:none;stroke:var(--violet);stroke-linecap:round;}
+.t-arista.todos{stroke:var(--ink-muted);}
+.capas{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px;}
+.capas .btn[aria-pressed="true"]{border-color:var(--ink);background:color-mix(in oklab,var(--ink) 8%,transparent);}
+.gastados{list-style:none;margin:0;padding:0;font-size:16px;line-height:1.8;}
+.gastados .n{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted);margin-left:8px;}
+.privacidad{font-family:var(--font-mono);font-size:11.5px;line-height:1.7;color:var(--ink-muted);max-width:70ch;}
+.t-punto{fill:var(--ink-muted);}
+.t-punto.leido{fill:var(--violet);}
+.t-etq{font-family:var(--font-body);font-style:italic;font-size:12px;fill:var(--ink-soft);}
+.t-etq.virgen{fill:var(--ink-muted);opacity:.55;}
+.textos{list-style:none;margin:0;padding:0;display:grid;gap:12px;}
+.textos li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;align-items:center;}
+.textos a{font-style:italic;font-size:17px;text-decoration:none;}
+.textos a:hover{text-decoration:underline;}
+.textos .meta{font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted);text-align:right;}
+.celdas{grid-column:1/-1;display:flex;gap:2px;flex-wrap:wrap;}
+.celdas i{width:14px;height:8px;border-radius:1px;background:var(--rule);display:inline-block;}
+.virgenes{columns:2 220px;font-style:italic;color:var(--ink-muted);font-size:16px;line-height:1.7;padding:0;list-style:none;margin:0;}
+.virgenes a{text-decoration:none;}
+.virgenes a:hover{color:var(--ink);text-decoration:underline;}
+.pasos{font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);line-height:1.8;list-style:none;padding:0;margin:0;}
+.pasos time{color:var(--ink-muted);margin-right:10px;}
+.vacio{font-family:var(--font-mono);font-size:13px;color:var(--ink-muted);}
+@media (max-width:700px){main{padding:28px 16px 60px;}}
+</style>
+</head>
+<body>
+<nav class="nav"><a class="nav-btn" href="index.html">← índice</a><span class="eyebrow" style="margin:0">p314b</span></nav>
+<main>
+  <p class="eyebrow">huella de lectura</p>
+  <h1>mi huella</h1>
+  <p class="lede">Por dónde pasaste, en qué orden y cuánto te quedaste. Se guarda solo en este navegador: nadie más la ve, y si borrás los datos del sitio se borra.</p>
+  <p class="lede" style="font-size:14px">Lo que sí sale de tu navegador, mientras la huella no esté pausada (y si tu navegador no pide «no rastrear»): <b>el paso de un texto a otro</b>, y por cada texto <b>cuántos segundos estuviste y qué hiciste adentro</b> (seguir una diagonal, hojear, abrir una nota, tocar un pariente, copiar…), sumado a <b>la hora (entera), tu zona aproximada y el clima de esa zona</b>. No sale tu nombre, tu IP, ni nada que una dos visitas tuyas: no hay cookies ni identificador. Lo ve solo la autora; sirve para estudiar cómo se lee la obra.</p>
+  <div class="cifras" id="cifras"></div>
+  <div class="acciones">
+    <button class="btn" id="pausar" type="button"></button>
+    <button class="btn" id="borrar" type="button">borrar mi huella</button>
+  </div>
+
+  <h2>trayecto</h2>
+  <div class="capas" role="group" aria-label="qué caminos mostrar">
+    <button class="btn" type="button" data-capa="mia" aria-pressed="true">mi huella</button>
+    <button class="btn" type="button" data-capa="todos" aria-pressed="false">la de todos</button>
+  </div>
+  <svg id="trayecto" viewBox="0 0 1000 1000" role="img" aria-label="Los textos en orden cronológico, en ronda; las líneas son los pasos de un texto a otro"></svg>
+
+  <h2>lo leído</h2>
+  <ul class="textos" id="textos"></ul>
+
+  <h2>zonas vírgenes</h2>
+  <ul class="virgenes" id="virgenes"></ul>
+
+  <h2>caminos gastados (de todos)</h2>
+  <ol class="gastados" id="gastados"><li class="vacio">—</li></ol>
+
+  <h2>últimos pasos</h2>
+  <ol class="pasos" id="pasos"></ol>
+
+  <h2>sobre la huella de todos</h2>
+  <p class="privacidad">Cuando pasás de un texto a otro, tu navegador avisa solo ese par («de tal texto a tal otro»). No se guarda quién sos, ni la hora, ni desde dónde: ni IP, ni cookies. Solo se suma uno a la cuenta de ese camino. No se manda nada si pausás tu huella acá arriba, o si tu navegador pide no ser rastreado (Do Not Track o Global Privacy Control).</p>
+</main>
+<script src="comun.js"></script>
+<script>
+(function () {
+  'use strict';
+  const NS = 'http://www.w3.org/2000/svg';
+  const esc = P314.esc;
+  let h = null, op = {};
+  try { h = JSON.parse(localStorage.getItem('p314b_huella') || 'null'); } catch (e) {}
+  try { op = JSON.parse(localStorage.getItem('p314b_extra') || '{}') || {}; } catch (e) {}
+  // el rastro del mapa (recorrido.js): textos abiertos y diagonales seguidas
+  let rastro = { obras: {}, diagonales: {} };
+  try { const r = JSON.parse(localStorage.getItem('p314b_rastro') || '{}'); rastro = { obras: r.obras || {}, diagonales: r.diagonales || {} }; } catch (e) {}
+  h = (h && h.v === 1) ? h : { v: 1, pasos: [], tiempo: {}, titulos: {} };
+
+  const pausar = document.getElementById('pausar');
+  const pintarPausa = () => { pausar.textContent = op.sinHuella ? 'retomar la huella' : 'pausar la huella'; };
+  pintarPausa();
+  pausar.addEventListener('click', () => {
+    op.sinHuella = !op.sinHuella;
+    try { localStorage.setItem('p314b_extra', JSON.stringify(op)); } catch (e) {}
+    pintarPausa();
+  });
+  document.getElementById('borrar').addEventListener('click', () => {
+    if (!confirm('¿Borrar toda tu huella de lectura de este navegador? (también el rastro que marca el mapa)')) return;
+    try { localStorage.removeItem('p314b_huella'); localStorage.removeItem('p314b_rastro'); } catch (e) {}
+    location.reload();
+  });
+
+  const minutos = s => s < 60 ? s + ' s' : s < 3600 ? Math.round(s / 60) + ' min' : (s / 3600).toFixed(1).replace('.', ',') + ' h';
+  const segDe = slug => Object.values(h.tiempo[slug] || {}).reduce((a, b) => a + b, 0);
+
+  fetch('corpus.json', { cache: 'no-cache' }).then(r => r.ok ? r.json() : { obras: [] }).catch(() => ({ obras: [] })).then(c => {
+    const obras = (c.obras || []).filter(o => !o.diagonal && o.en_linea !== false);
+    const porId = new Map(obras.map(o => [o.id, o]));
+    const titulo = id => (porId.get(id) || {}).titulo || h.titulos[id] || id;
+    const leidos = new Set(h.pasos.map(p => p[1]).concat(Object.keys(rastro.obras)));
+    const nDiag = Object.keys(rastro.diagonales).length;
+    const total = Object.keys(h.tiempo).reduce((a, s) => a + segDe(s), 0);
+
+    document.getElementById('cifras').innerHTML =
+      `<span><b>${leidos.size}</b>de ${obras.length} textos</span><span><b>${h.pasos.length}</b>pasos</span><span><b>${minutos(total)}</b>leyendo</span>`
+      + `<span><b>${nDiag}</b>diagonales seguidas · <a href="mapa.html">verlas en el mapa</a></span>`
+      + (h.pasos.length ? `<span>desde el <b>${new Date(h.pasos[0][0] * 1000).toLocaleDateString('es-AR')}</b></span>` : '');
+
+    // trayecto: los textos en ronda, por fecha; una cuerda por cada paso entre dos textos
+    const svg = document.getElementById('trayecto');
+    const orden = obras.slice().sort((a, b) => String(a.fecha_creacion || '').localeCompare(String(b.fecha_creacion || '')));
+    const W = 1000, H = 1000, cx = W / 2, cy = H / 2, R = Math.min(W, H) / 2 - 190;
+    const pos = new Map();
+    orden.forEach((o, i) => { const a = -Math.PI / 2 + i / Math.max(1, orden.length) * Math.PI * 2; pos.set(o.id, [cx + R * Math.cos(a), cy + R * Math.sin(a), a]); });
+    const capaTodos = document.createElementNS(NS, 'g'), capaMia = document.createElementNS(NS, 'g');
+    capaTodos.style.display = 'none';
+    svg.appendChild(capaTodos); svg.appendChild(capaMia);
+    function trazar(capa, mapa, clase) {
+      const max = Math.max(1, ...mapa.values());
+      mapa.forEach((n, k) => {
+        const [a, b] = k.split('|').map(x => pos.get(x));
+        if (!a || !b) return;
+        const p = document.createElementNS(NS, 'path');
+        p.setAttribute('d', `M${a[0]},${a[1]} Q${cx},${cy} ${b[0]},${b[1]}`);
+        p.setAttribute('class', 't-arista ' + clase);
+        p.setAttribute('stroke-width', (0.8 + 4 * n / max).toFixed(2));
+        p.setAttribute('stroke-opacity', (0.25 + 0.7 * n / max).toFixed(2));
+        capa.appendChild(p);
+      });
+    }
+    document.querySelectorAll('[data-capa]').forEach(b => b.addEventListener('click', () => {
+      b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'));
+      capaMia.style.display = document.querySelector('[data-capa="mia"]').getAttribute('aria-pressed') === 'true' ? '' : 'none';
+      capaTodos.style.display = document.querySelector('[data-capa="todos"]').getAttribute('aria-pressed') === 'true' ? '' : 'none';
+    }));
+    const cuerdas = new Map();
+    for (let i = 1; i < h.pasos.length; i++) {
+      const a = h.pasos[i - 1][1], b = h.pasos[i][1];
+      if (a === b || !pos.has(a) || !pos.has(b)) continue;
+      const k = a < b ? a + '|' + b : b + '|' + a;
+      cuerdas.set(k, (cuerdas.get(k) || 0) + 1);
+    }
+    trazar(capaMia, cuerdas, '');
+
+    // la huella de todos (worker/huella.js): pares de textos, sin nada más
+    fetch('/api/huella', { cache: 'no-cache' }).then(r => r.ok ? r.json() : null).catch(() => null).then(d => {
+      const ol = document.getElementById('gastados');
+      if (!d || !d.pares) { ol.innerHTML = '<li class="vacio">La huella de todos solo se ve en el sitio en línea.</li>'; return; }
+      const todos = new Map();
+      Object.entries(d.pares).forEach(([k, n]) => {
+        const [a, b] = k.split('|'), kk = a < b ? a + '|' + b : b + '|' + a;
+        todos.set(kk, (todos.get(kk) || 0) + n);
+      });
+      trazar(capaTodos, todos, 'todos');
+      const top = Object.entries(d.pares).sort((x, y) => y[1] - x[1]).slice(0, 12);
+      ol.innerHTML = top.length ? top.map(([k, n]) => { const [a, b] = k.split('|'); return `<li><a href="obras/${esc((porId.get(a) || {})._file || a + '.html')}">${esc(titulo(a))}</a> → <a href="obras/${esc((porId.get(b) || {})._file || b + '.html')}">${esc(titulo(b))}</a><span class="n">${n}</span></li>`; }).join('')
+        + (d.desde ? `<li class="vacio">desde el ${esc(d.desde)}</li>` : '')
+        : '<li class="vacio">Todavía nadie dejó huella.</li>';
+    });
+    orden.forEach(o => {
+      const [x, y, a] = pos.get(o.id), leido = leidos.has(o.id);
+      const c = document.createElementNS(NS, 'circle');
+      c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', leido ? 3 + Math.min(6, Math.sqrt(segDe(o.id) / 60)) : 2.5);
+      c.setAttribute('class', 't-punto' + (leido ? ' leido' : ''));
+      const t = document.createElementNS(NS, 'title'); t.textContent = o.titulo + (leido ? ' · ' + minutos(segDe(o.id)) : ' · sin leer'); c.appendChild(t);
+      svg.appendChild(c);
+      // la etiqueta sale hacia afuera, siguiendo el radio
+      const e = document.createElementNS(NS, 'text');
+      const der = Math.cos(a) >= 0, grados = a * 180 / Math.PI + (der ? 0 : 180);
+      e.setAttribute('x', x + (der ? 9 : -9)); e.setAttribute('y', y + 4);
+      e.setAttribute('text-anchor', der ? 'start' : 'end');
+      e.setAttribute('transform', `rotate(${grados.toFixed(1)} ${x} ${y})`);
+      e.setAttribute('class', 't-etq' + (leido ? '' : ' virgen'));
+      e.textContent = String(o.titulo || o.id).slice(0, 28);
+      svg.appendChild(e);
+    });
+
+    // lo leído: una celda por parte, más oscura cuanto más tiempo
+    const ul = document.getElementById('textos');
+    const lista = [...leidos].sort((a, b) => segDe(b) - segDe(a));
+    if (!lista.length) ul.innerHTML = '<li class="vacio">Todavía no hay huella: abrí un texto y volvé.</li>';
+    lista.forEach(id => {
+      const o = porId.get(id) || { id, _file: id + '.html' };
+      const t = h.tiempo[id] || {}, n = Math.max((h.partes || {})[id] || 0, (o._chapters || 0), ...Object.keys(t).map(k => +k + 1), 1);
+      const vistos = new Set(h.pasos.filter(p => p[1] === id).map(p => p[2]));
+      const maxT = Math.max(1, ...Object.values(t));
+      let celdas = '';
+      for (let i = 0; i < n; i++) {
+        const s = t[i] || 0, f = s ? 0.25 + 0.75 * Math.min(1, s / maxT) : (vistos.has(i) ? 0.15 : 0);
+        celdas += `<i title="parte ${i + 1}${s ? ' · ' + minutos(s) : vistos.has(i) ? ' · de paso' : ' · sin leer'}"${f ? ` style="background:color-mix(in oklab,var(--violet) ${Math.round(f * 100)}%,var(--rule))"` : ''}></i>`;
+      }
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="obras/${esc(o._file || id + '.html')}">${esc(titulo(id))}</a><span class="meta">${vistos.size} de ${n} partes · ${minutos(segDe(id))}</span><span class="celdas">${celdas}</span>`;
+      ul.appendChild(li);
+    });
+
+    // zonas vírgenes: lo publicado que nunca se abrió
+    const vir = document.getElementById('virgenes');
+    const nunca = orden.filter(o => !leidos.has(o.id));
+    vir.innerHTML = nunca.length ? nunca.map(o => `<li><a href="obras/${esc(o._file)}">${esc(o.titulo)}</a></li>`).join('')
+      : '<li class="vacio">No queda ninguna: pasaste por todos los textos.</li>';
+
+    // últimos pasos
+    const ol = document.getElementById('pasos');
+    const ult = h.pasos.slice(-40).reverse();
+    ol.innerHTML = ult.length ? ult.map(([t, id, i]) => {
+      const d = new Date(t * 1000);
+      return `<li><time datetime="${d.toISOString()}">${d.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</time>${esc(titulo(id))} · parte ${i + 1}</li>`;
+    }).join('') : '<li class="vacio">—</li>';
+  });
+})();
+</script>
+<script src="visita.js"></script>
+</body>
+</html>

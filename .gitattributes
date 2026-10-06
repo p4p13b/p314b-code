@@ -1,0 +1,5 @@
+# COLABORACION.md era un registro al que cada rama le sumaba una sección al
+# final: si dos ramas lo tocan, en un merge local se conservan las dos.
+# (GitHub no aplica esto al decidir si un PR tiene conflicto; por eso las
+# tandas nuevas van en colaboracion/, un archivo cada una.)
+COLABORACION.md merge=union

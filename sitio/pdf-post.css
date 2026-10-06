@@ -1,0 +1,331 @@
+/* ─── Mismas variables que obra-template.html — un posteo-PDF es un
+   posteo más, no una herramienta aparte. El PDF en sí se ve "tal cual
+   es" (blanco, propio), pero el cromado alrededor (nav, alas, tema,
+   índice, mapa, recorrido) es LITERALMENTE el mismo sistema de lectura
+   del resto del sitio — ver obra-template.html, de donde se migró.
+   Lo único que no aplica acá: las marcas inline en el cuerpo (el PDF
+   no es HTML editable), así que las acciones se anclan por página
+   (a.pdf_pagina) y se muestran siempre que "mostrar acciones" esté
+   activo, en vez de aparecer al hover de una marca puntual. ─── */
+:root {
+  --bg: #0b0a08; --bg-alt: #14120e; --page: #121110; --page-edge: #1c1a15;
+  --ink: #ece7dc; --ink-soft: #b8b0a0; --ink-muted: #756e5f; --ink-ghost: #4a463c;
+  --rule: #262420;
+  --mark: #c9a576; --mark-lt: #e0bf8a; --mark-dk: #a3814f;
+  --mark-bg: rgba(201,165,118,0.12); --mark-bg2: rgba(201,165,118,0.2);
+  --mark-bg-h: rgba(201,165,118,0.12); --mark-bg-p: rgba(201,165,118,0.2);
+  /* AGREGADO (migrado de obra-template.html): contraste propio por tipo de acción */
+  --green: #7fa06a; --green-lt: #9cbf87; --green-dk: #5f7d4d;
+  --green-bg-h: rgba(127,160,106,0.14); --green-bg-p: rgba(127,160,106,0.24);
+  --red: #c26a5a; --red-lt: #d68a7a; --red-dk: #9c4d3f;
+  --red-bg-h: rgba(194,106,90,0.14); --red-bg-p: rgba(194,106,90,0.24);
+  --violet: #a992c9; --violet-lt: #c1aed9; --violet-dk: #7f66a3;
+  --violet-bg-h: rgba(169,146,201,0.14); --violet-bg-p: rgba(169,146,201,0.24);
+  --emergente: #c9a576;
+  --font-body: 'Newsreader', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius: 3px; --nav-h: 52px;
+  --col-pg: 720px; --col-w: 260px;
+}
+html[data-modo="manuscrito"] {
+  --bg: #f4efe3; --bg-alt: #ece4d1; --page: #f9f6ee; --page-edge: #e6ddc6;
+  --ink: #171310; --ink-soft: #4a3f33; --ink-muted: #8a7c5c; --ink-ghost: #b3a688;
+  --rule: #e2dbc8;
+  --mark: #8b6f3a; --mark-lt: #b8946a; --mark-dk: #6b5326;
+  --mark-bg: rgba(139,111,58,0.10); --mark-bg2: rgba(139,111,58,0.18);
+  --mark-bg-h: rgba(139,111,58,0.10); --mark-bg-p: rgba(139,111,58,0.18);
+  /* AGREGADO (migrado de obra-template.html): mismo contraste por tipo, recalibrado para manuscrito claro */
+  --green: #5f7d4d; --green-lt: #46603a; --green-dk: #7fa06a;
+  --green-bg-h: rgba(95,125,77,0.12); --green-bg-p: rgba(95,125,77,0.2);
+  --red: #9c4d3f; --red-lt: #7a3b30; --red-dk: #c26a5a;
+  --red-bg-h: rgba(156,77,63,0.12); --red-bg-p: rgba(156,77,63,0.2);
+  --violet: #7f66a3; --violet-lt: #5f4d7d; --violet-dk: #a992c9;
+  --violet-bg-h: rgba(127,102,163,0.12); --violet-bg-p: rgba(127,102,163,0.2);
+  --emergente: #8b6f3a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--font-body);-webkit-font-smoothing:antialiased;height:100vh;overflow:hidden;}
+button{font-family:inherit;border:none;background:none;cursor:pointer;color:inherit;}
+a{color:inherit;text-decoration:none;}
+a:hover{color:var(--mark-lt);}
+
+.top-nav{position:sticky;top:0;z-index:50;height:var(--nav-h);background:color-mix(in oklab,var(--bg) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--rule);padding:0 24px;display:flex;align-items:center;justify-content:space-between;font-family:var(--font-mono);font-size:11px;letter-spacing:0.08em;color:var(--ink-soft);}
+.top-nav .left,.top-nav .right{display:flex;gap:16px;align-items:center;}
+.book-title{color:var(--ink);font-weight:500;text-transform:uppercase;letter-spacing:0.12em;font-size:11px;}
+.pdf-badge{font-size:8.5px;border:1px solid var(--mark);color:var(--mark-lt);padding:1px 5px;border-radius:2px;letter-spacing:0.1em;}
+.nav-btn{font-family:var(--font-mono);font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--rule);color:var(--ink-soft);transition:all 0.15s;border-radius:2px;}
+.nav-btn:hover{border-color:var(--ink-soft);color:var(--ink);}
+.nav-btn.active{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+
+/* Back-bar — idéntica a obra-template.html: pila de "volver a" cuando
+   se llega desde una diagonal que cruzó de obra. */
+.back-bar{position:fixed;top:var(--nav-h);left:0;right:0;z-index:48;background:var(--mark-dk);color:#fff;font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.08em;padding:8px 28px;display:none;align-items:center;gap:10px;cursor:pointer;}
+.back-bar.active{display:flex;}
+.back-bar:hover{background:color-mix(in oklab, var(--mark-dk) 80%, #000);}
+.back-bar::before{content:"←";}
+
+/* ── Índice — panel oculto/toggleable, igual que obra-template.html ── */
+.overlay-bg{position:fixed;inset:0;background:rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity 0.2s;z-index:65;}
+.overlay-bg.active{opacity:1;pointer-events:auto;}
+.index-panel{position:fixed;top:0;left:0;bottom:0;width:360px;background:var(--bg);border-right:1px solid var(--rule);padding:64px 32px 28px;transform:translateX(-100%);transition:transform 0.3s cubic-bezier(.22,.61,.36,1);z-index:70;overflow-y:auto;box-shadow:4px 0 40px rgba(0,0,0,.35);}
+.index-panel.active{transform:translateX(0);}
+.index-title{font-family:var(--font-mono);font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--rule);}
+.index-item{display:block;padding:12px 0;color:var(--ink-soft);border-bottom:1px solid var(--rule);cursor:pointer;transition:color 0.15s,padding-left 0.15s;}
+.index-item:hover{color:var(--ink);padding-left:5px;}
+.index-item.active{color:var(--ink);font-weight:500;}
+.index-item .num{font-family:var(--font-mono);font-size:10px;color:var(--ink-muted);letter-spacing:0.08em;margin-right:10px;}
+.index-item .name{font-style:italic;font-size:15px;}
+.index-item.nivel-0 .name{font-style:normal;font-size:17px;font-weight:500;}
+.index-item.nivel-3 .name{font-size:14px;color:var(--ink-soft);}
+.index-empty{font-family:var(--font-mono);font-size:11px;color:var(--ink-ghost);font-style:italic;padding:10px 0;}
+
+/* ── Layout central + alas — misma proporción que obra-template.html:
+   1fr / columna central / 1fr. La columna central acá es más ancha
+   (--col-pg:720px vs 640px del libro) porque es una página de PDF
+   completa, no una columna de texto — el resto de la distribución es
+   igual. ── */
+.layout{display:grid;grid-template-columns:1fr var(--col-pg) 1fr;height:calc(100vh - var(--nav-h));position:relative;}
+.wing{background:var(--bg);position:relative;min-width:var(--col-w);overflow-y:auto;max-height:calc(100vh - var(--nav-h));}
+.wing-content{width:100%;padding:24px;opacity:0;transition:opacity 0.2s ease;pointer-events:none;}
+.wing-content.active{opacity:1;pointer-events:auto;}
+.ala-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--rule);}
+
+.center{background:color-mix(in oklab, var(--page) 70%, #000 10%);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.pdf-toolbar{display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 16px;background:var(--bg);border-bottom:1px solid var(--rule);flex-shrink:0;font-family:var(--font-mono);font-size:11px;color:var(--ink-soft);}
+.pdf-toolbar button{border:1px solid var(--rule);padding:4px 11px;border-radius:2px;}
+.pdf-toolbar button:hover{border-color:var(--ink-soft);color:var(--ink);}
+#pv-pageinfo{min-width:64px;text-align:center;color:var(--ink-muted);white-space:nowrap;}
+/* En una parte sola (?parte=): la página del libro entero, para cruzar con las citas */
+.pv-del-libro{font-size:10px;color:var(--ink-muted);letter-spacing:0.04em;white-space:nowrap;}
+.index-item.index-libro .name{font-style:normal;font-size:13px;}
+#pv-pagina{width:4.5ch;font:inherit;color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:2px;padding:2px 4px;text-align:center;}
+#pv-pagina:focus{outline:2px solid var(--mark-lt,var(--mark));outline-offset:1px;border-color:transparent;}
+#pv-zoominfo{min-width:40px;text-align:center;color:var(--ink-muted);}
+
+.pvcore-wrap{flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;padding:24px 16px 60px;}
+.pvcore-page{position:relative;margin-bottom:16px;background:#fff;box-shadow:0 2px 16px rgba(0,0,0,0.35);}
+.pvcore-page canvas{display:block;}
+.pvcore-page-label{position:absolute;top:6px;right:8px;font-family:var(--font-mono);font-size:9px;color:#8a8a8a;background:rgba(255,255,255,0.85);padding:2px 6px;border-radius:2px;}
+.pvcore-page-error{padding:20px;font-family:var(--font-mono);font-size:11px;color:var(--red);}
+.pvcore-textlayer{position:absolute;text-align:initial;inset:0;overflow:hidden;line-height:1;transform-origin:0 0;z-index:2;}
+.pvcore-textlayer span,.pvcore-textlayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%;}
+.pvcore-textlayer ::selection{background:rgba(201,165,118,0.35);}
+/* La cita de cada acción, resaltada sobre la página (capa de texto). */
+.pvcore-textlayer span.pv-marca{background:rgba(201,165,118,0.28);border-radius:1px;cursor:pointer;}
+.pvcore-textlayer span.pv-marca.pv-diag{background:rgba(201,165,118,0.4);box-shadow:0 1.5px 0 rgba(163,129,79,0.9);}
+.pvcore-textlayer span.pv-marca.pv-activa{background:rgba(201,165,118,0.65);}
+body.sin-acciones .pvcore-textlayer span.pv-marca{background:none;box-shadow:none;cursor:text;}
+.wing .dg-card.pv-destello{outline:1px solid var(--mark);outline-offset:4px;transition:outline-color .6s;}
+/* Franja de páginas: dónde hay diagonales, notas o láminas en todo el PDF. */
+.pv-franja{position:absolute;right:2px;top:46px;bottom:12px;width:12px;z-index:5;}
+.pv-franja[hidden]{display:none;}
+.pv-franja button{position:absolute;left:1px;width:10px;height:3px;min-height:3px;padding:0;border:0;border-radius:1px;background:var(--ink-muted);opacity:.75;cursor:pointer;}
+.pv-franja button.diag{background:var(--mark);opacity:1;height:4px;}
+.pv-franja button:hover,.pv-franja button:focus-visible{opacity:1;transform:scaleX(1.5);transform-origin:right;}
+.pv-franja .pv-aqui{position:absolute;left:-2px;width:14px;height:1px;background:var(--ink);pointer-events:none;}
+
+.loading-msg{margin:auto;font-family:var(--font-mono);font-size:11.5px;color:var(--ink-muted);text-align:center;padding:40px;line-height:1.7;}
+.loading-msg code{background:var(--page);padding:2px 6px;border-radius:2px;}
+
+/* ── Tarjetas de acción — mismos estilos y mismo contraste por tipo
+   que obra-template.html (accion-card / diagonal-card), reusados acá
+   sin cambios para que una nota, marginalia, hojear o diagonal se vean
+   IGUAL estén en un posteo de texto o en un posteo-PDF. ── */
+.accion-card{position:relative;padding-left:14px;}
+.accion-card::before{content:'';position:absolute;left:0;top:3px;bottom:3px;width:2px;background:var(--ink-ghost);}
+.accion-card.nota::before{background:var(--green);}
+.accion-card.marginalia::before{background:var(--red);}
+.accion-card.hojear::before{background:var(--violet);}
+.accion-card.nota .accion-label{color:var(--green-lt);}
+.accion-card.hojear .accion-label{color:var(--violet-lt);}
+.accion-card + .accion-card{margin-top:24px;padding-top:20px;border-top:1px solid var(--rule);}
+.accion-label{font-family:var(--font-mono);font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:10px;}
+.accion-text{font-style:italic;font-size:14.5px;line-height:1.58;color:var(--ink-soft);}
+.accion-goto{margin-top:12px;font-family:var(--font-mono);font-size:10px;letter-spacing:0.06em;color:var(--mark-lt);border-bottom:1px dotted var(--mark-lt);display:inline-block;cursor:pointer;transition:color 0.15s,border-color 0.15s;}
+.accion-goto:hover{color:var(--ink);border-bottom-color:var(--ink);}
+.accion-goto::before{content:"↗ ";}
+.accion-pending{font-family:var(--font-mono);font-size:10px;color:var(--ink-ghost);font-style:italic;}
+
+.diagonal-card{position:relative;padding-left:14px;}
+.diagonal-card::before{content:'';position:absolute;left:0;top:3px;bottom:3px;width:2px;background:var(--mark);}
+.diagonal-card + .diagonal-card{margin-top:28px;padding-top:22px;border-top:1px solid var(--rule);}
+.diagonal-fuente{font-family:var(--font-mono);font-size:9px;letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.diagonal-fuente::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--emergente);}
+.diagonal-categoria{font-family:var(--font-mono);font-size:9px;color:var(--ink-ghost);margin-bottom:10px;}
+.dg-destinos{list-style:none;margin:0 0 12px;padding:0;display:grid;gap:10px;}
+.dg-dest{border-left:1px solid var(--rule);padding-left:10px;font-size:13px;}
+.dg-dest-cita{font-style:italic;color:var(--ink-soft);margin:3px 0 4px;font-size:13.5px;}
+.dg-dest .diagonal-ira{margin-top:2px;}
+.diagonal-emergente{font-size:14.5px;line-height:1.58;color:var(--ink);margin-bottom:14px;font-style:italic;}
+.diagonal-cita{border-left:2px solid var(--ink-muted);padding:2px 0 2px 14px;margin-bottom:14px;}
+.diagonal-cita-text{font-style:italic;font-size:13.5px;line-height:1.5;color:var(--ink-soft);}
+.diagonal-instrumento{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.05em;color:var(--ink-ghost);margin-top:-6px;margin-bottom:14px;}
+.bloque-toggle{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-muted);border-bottom:1px dotted var(--ink-muted);cursor:pointer;display:inline-block;margin-bottom:10px;}
+.bloque-toggle:hover{color:var(--ink);border-bottom-color:var(--ink);}
+.bloque-content{display:none;font-size:13.5px;line-height:1.55;color:var(--ink-soft);margin-bottom:10px;}
+.bloque-content.open{display:block;}
+.diagonal-ira{margin-top:8px;}
+.diagonal-pagina{font-family:var(--font-mono);font-size:9px;color:var(--ink-ghost);margin-top:-6px;margin-bottom:12px;}
+/* Datos de la diagonal (tipo de relación, instrumento, nodos), paneles del
+   editor de tres paneles y resumen: igual que obra-template.html. */
+.diagonal-panel{border-left:1px solid var(--rule);padding-left:10px;margin-bottom:14px;font-size:13.5px;line-height:1.55;color:var(--ink-soft);}
+.diagonal-panel-detalle{font-family:var(--font-mono);font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:6px;}
+.diagonal-panel-parrafo{margin-bottom:6px;}
+.diagonal-panel-cita{font-style:italic;margin-bottom:6px;}
+.diagonal-panel-abajo{font-size:12px;color:var(--ink-muted);}
+.diag-dato{display:grid;grid-template-columns:92px 1fr;gap:8px;margin:0 0 7px;font-family:var(--font-mono);font-size:10.5px;line-height:1.45;}
+.diag-k{color:var(--ink-ghost);text-transform:uppercase;letter-spacing:.12em;font-size:9px;padding-top:2px;}
+.diag-v{color:var(--ink);}
+.diag-v small{color:var(--ink-muted);font-size:inherit;}
+.diag-nodos span+span::before{content:' · ';color:var(--ink-ghost);}
+.diag-nodos{color:var(--emergente);}
+.diagonal-resumen{font-size:14.5px;line-height:1.58;color:var(--ink);margin:12px 0 14px;font-style:italic;}
+.diagonal-resumen p{margin:0 0 .7em;}
+.diagonal-resumen p:last-child{margin-bottom:0;}
+.texto-largo{position:relative;}
+.texto-largo.clamp{max-height:16em;overflow:hidden;}
+.texto-largo.clamp::after{content:"";position:absolute;left:0;right:0;bottom:0;height:5em;background:linear-gradient(to bottom,transparent,var(--bg));pointer-events:none;}
+.leer-completo{margin:0 0 14px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--mark-lt);border-bottom:1px dotted var(--mark-lt);cursor:pointer;display:inline-block;}
+
+/* ── Recorrido — idéntico a obra-template.html: fija todas las
+   diagonales (acá: de todo el PDF, no de la página actual) para
+   elegir por dónde seguir. ── */
+#btn-recorrido.active{background:var(--mark-bg);border-color:var(--mark);color:var(--mark-lt);}
+.recorrido-nav{display:flex;flex-direction:column;gap:10px;}
+.recorrido-link{text-align:left;font-family:var(--font-mono);font-size:11px;letter-spacing:0.04em;color:var(--mark-lt);border:1px solid color-mix(in oklab, var(--mark) 40%, var(--rule));padding:12px 16px;border-radius:var(--radius);transition:all 0.15s;background:var(--mark-bg);}
+.recorrido-link:hover{border-color:var(--mark);background:var(--mark-bg2);color:var(--ink);}
+.recorrido-link .recorrido-pag{display:block;font-size:9px;color:var(--ink-muted);margin-top:4px;letter-spacing:0.1em;text-transform:uppercase;}
+.recorrido-empty{font-family:var(--font-mono);font-size:11px;color:var(--ink-muted);line-height:1.6;}
+
+/* ── Leyenda — idéntica a obra-template.html ── */
+.legend{position:fixed;bottom:22px;left:22px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;color:var(--ink-muted);background:var(--page);padding:11px 15px;border:1px solid var(--rule);border-radius:2px;z-index:40;line-height:1.7;box-shadow:0 6px 20px rgba(0,0,0,.25);}
+.legend strong{color:var(--ink);font-weight:500;text-transform:uppercase;letter-spacing:0.14em;display:block;margin-bottom:6px;font-size:9px;}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+.dot.diagonal{background:var(--mark);}
+.dot.hojear{background:var(--violet);}
+.dot.nota{background:var(--green);}
+.dot.marginalia{background:var(--red);}
+
+/* ── Mini-mapa — idéntico a obra-template.html. ── */
+.mapa-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(3px);z-index:80;opacity:0;pointer-events:none;transition:opacity 0.18s;}
+.mapa-overlay.open{opacity:1;pointer-events:auto;}
+.mapa-modal{position:fixed;top:10vh;left:50%;transform:translateX(-50%) translateY(-10px);width:min(460px,92vw);max-height:76vh;background:var(--page);border:1px solid var(--rule);border-radius:6px;box-shadow:0 24px 80px rgba(0,0,0,0.5);z-index:90;opacity:0;pointer-events:none;transition:opacity 0.18s, transform 0.18s;overflow:hidden;display:flex;flex-direction:column;}
+.mapa-modal.open{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0);}
+.mapa-modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--rule);font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-muted);}
+.mapa-close{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink-muted);border:1px solid var(--rule);padding:4px 9px;border-radius:2px;cursor:pointer;transition:all 0.14s;}
+.mapa-close:hover{color:var(--ink);border-color:var(--ink-soft);}
+.mapa-modal-body{padding:22px;overflow-y:auto;display:flex;flex-direction:column;align-items:center;gap:16px;}
+.mapa-svg{width:100%;height:auto;max-width:320px;}
+.mapa-label{font-family:var(--font-mono);font-size:8px;fill:var(--ink-soft);}
+.mapa-label-sitio{font-size:9px;fill:var(--mark-lt);}
+.mapa-node rect{fill:var(--page);stroke-width:1.4;}
+.mapa-node.confirmado rect{stroke:var(--green);}
+.mapa-node.declarado rect{stroke:var(--ink-ghost);stroke-dasharray:2 2;}
+.mapa-edge{stroke-width:1.2;}
+.mapa-edge.confirmado{stroke:var(--green);opacity:0.7;}
+.mapa-edge.declarado{stroke:var(--ink-ghost);stroke-dasharray:2 3;opacity:0.5;}
+.mapa-legend{font-family:var(--font-mono);font-size:9px;color:var(--ink-muted);display:flex;align-items:center;gap:16px;}
+.mapa-legend .dot{display:inline-block;width:7px;height:7px;margin-right:4px;vertical-align:middle;}
+.mapa-empty{font-family:var(--font-mono);font-size:11px;color:var(--ink-ghost);font-style:italic;padding:24px 0;text-align:center;}
+
+/* Hojear: el destino se abre al costado, en un marco, sin dejar este PDF. */
+.hojear-panel{position:fixed;left:0;top:var(--nav-h,52px);bottom:0;z-index:45;display:flex;flex-direction:column;background:var(--bg);border-right:1px solid var(--rule);box-shadow:4px 0 30px rgba(0,0,0,.35);}
+.hojear-panel[hidden]{display:none;}
+.hojear-panel.completa{right:0;width:auto !important;z-index:95;}
+.hojear-barra{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--rule);font-family:var(--font-mono);font-size:12px;color:var(--ink-soft);}
+.hojear-barra .tit{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
+.hojear-barra button{font:inherit;color:var(--ink);background:none;border:1px solid var(--rule);border-radius:3px;min-height:30px;padding:0 8px;cursor:pointer;}
+.hojear-barra button:hover{border-color:var(--ink);}
+.hojear-panel iframe{flex:1;width:100%;border:0;background:var(--bg);}
+/* Esta página dentro del ala de otra: sin barra, sin volver, sin pie. */
+html.en-panel{--nav-h:0px;}
+html.en-panel #pv-gemela{display:none !important;}
+/* Gemela: la otra tirada del cut-up, al costado, en la página que corresponde. */
+#pv-gemela[aria-pressed="true"]{border-color:var(--amber);color:var(--amber);}
+.gemela-info{padding:8px 12px 10px;border-bottom:1px solid var(--rule);font-family:var(--font-mono);font-size:11px;line-height:1.6;color:var(--ink-soft);}
+.gemela-info b{color:var(--ink);font-weight:500;}
+.gemela-info .cl{display:inline-block;padding:0 6px;border:1px solid var(--rule);border-radius:2px;margin-right:6px;}
+.gemela-info .cl.comun{color:var(--green);border-color:color-mix(in oklab,var(--green) 50%,transparent);}
+.gemela-info .cl.variante{color:var(--amber);border-color:color-mix(in oklab,var(--amber) 50%,transparent);}
+.gemela-info .cl.propio{color:var(--violet-lt,var(--ink));border-color:color-mix(in oklab,var(--violet,#8b7cf6) 50%,transparent);}
+.gemela-info .dif{display:block;margin-top:3px;}
+.gemela-info .dif span{display:inline-block;margin:1px 3px 1px 0;padding:0 5px;border-radius:2px;background:var(--bg-alt,rgba(255,255,255,.04));}
+.gemela-info .dif.otra span{text-decoration:underline dotted;}
+html.en-panel .top-nav,html.en-panel .back-bar,html.en-panel .p314b-licencia{display:none !important;}
+@media(max-width:1100px){:root{--col-pg:600px;--col-w:210px;}}
+@media(max-width:900px){.layout{grid-template-columns:1fr;}.wing{display:none;}.legend{display:none;}.index-panel{width:88vw;}}
+
+@media(max-width:700px){
+  .top-nav{padding:0 12px;gap:6px;}
+  .top-nav .left,.top-nav .right{gap:6px;}
+  .nav-btn{padding:6px 8px;font-size:11px;letter-spacing:0;}
+  .nav-btn .lbl,.book-title{display:none;}
+}
+/* ── Móvil: las alas no entran; las acciones de la página van en una
+   hoja que se despliega desde abajo (misma info, mismas tarjetas). ── */
+.hoja-movil{display:none;}
+@media(max-width:900px){
+  .hoja-movil{display:block;position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--bg);border-top:1px solid var(--rule);box-shadow:0 -6px 24px rgba(0,0,0,.35);}
+  .hoja-movil[hidden]{display:none;}
+  .hoja-tira{display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 16px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);}
+  .hoja-cuerpo{display:none;max-height:55vh;overflow-y:auto;padding:4px 16px 20px;}
+  .hoja-movil.abierta .hoja-cuerpo{display:block;}
+  .hoja-cuerpo .accion-card,.hoja-cuerpo .diagonal-card{margin-bottom:18px;}
+  .pvcore-wrap{padding-bottom:90px;}
+}
+
+/* Transición entre páginas del sitio (al seguir una diagonal a otro texto,
+   al volver al corpus): un fundido corto. Solo donde el navegador la
+   soporta y si no se pidió menos movimiento; si no, todo sigue igual. */
+@media (prefers-reduced-motion: no-preference){
+  @view-transition{navigation:auto;}
+  ::view-transition-old(root){animation:p314b-sale .18s ease-in both;}
+  ::view-transition-new(root){animation:p314b-entra .32s ease-out both;}
+}
+@keyframes p314b-sale{to{opacity:0;}}
+@keyframes p314b-entra{from{opacity:0;transform:translateY(10px);}}
+
+/* «Saltar al texto»: invisible hasta que se llega con Tab. */
+.saltar{position:absolute;left:12px;top:-60px;z-index:200;background:var(--ink);color:var(--bg);padding:10px 14px;font-family:var(--font-mono);font-size:13px;text-decoration:none;border-radius:3px;}
+.saltar:focus{top:10px;}
+#textos:focus,#book-page:focus,#pdf-centro:focus{outline:none;}
+/* Copiar enlace (tarjeta de diagonal) y su aviso. */
+.aviso-copiado{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:90;font-family:var(--font-mono);font-size:12px;background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:3px;pointer-events:none;}
+.dg-copiar{margin-left:14px;}
+.dg-copiar::before{content:"⧉ ";}
+@media print{.rec-barra{display:none!important;}}
+/* Estándar de controles (propuesta 30/09): 4 niveles, bordes ≥3:1, texto ≥4.5:1. Va al final para ganar sin tocar lo anterior. */
+:root{--line-ctl:color-mix(in oklab,var(--ink) 42%,var(--bg));--ctl-sz:13px;}
+.nav-volver,.nav-logo[href]{text-decoration:none;}
+:root{--ink-muted:#8f8676;--ink-ghost:#827a6b;}
+html[data-modo="manuscrito"]{--ink-ghost:#7d6f52;}
+
+.nav-btn{font-size:var(--ctl-sz);letter-spacing:0;text-transform:none;padding:7px 11px;min-height:34px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;flex:none;border:1px solid var(--line-ctl);color:var(--ink);border-radius:3px;text-decoration:none;}
+.nav-btn:hover{border-color:var(--ink);background:color-mix(in oklab,var(--ink) 8%,transparent);}
+.nav-btn:focus-visible{outline:2px solid var(--mark-lt,var(--mark));outline-offset:2px;}
+.nav-btn.active,.nav-btn[aria-expanded="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+.top-nav .left .nav-volver{margin-right:6px;}
+.top-nav .left,.top-nav .right{gap:8px;}
+.top-nav .book-title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.top-nav .left{min-width:0;}
+@media (max-width:760px){
+  .top-nav{overflow-x:auto;scrollbar-width:none;}
+  .top-nav .left,.top-nav .right{flex:none;}
+  /* Móvil: solo íconos (el nombre queda para lectores de pantalla), así
+     los seis botones entran en el ancho sin deslizar la barra. */
+  .nav-btn{min-height:44px;min-width:44px;justify-content:center;padding:8px 10px;font-size:12px;white-space:nowrap;}
+  .nav-btn .lbl{display:inline!important;position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;}
+}
+
+/* Guía «cómo leer las marcas»: qué hace cada marca al tocarla. */
+.guia-marcas{position:fixed;inset:0;margin:auto;height:fit-content;max-height:calc(100vh - 32px);overflow:auto;max-width:min(520px,calc(100vw - 32px));width:100%;padding:0;border:1px solid var(--rule);border-radius:4px;background:var(--page,var(--bg));color:var(--ink);box-shadow:0 24px 80px rgba(0,0,0,.55);}
+.guia-marcas::backdrop{background:rgba(0,0,0,.6);}
+.guia-cab{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--rule);font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-muted);}
+.guia-cab button{font-family:var(--font-mono);font-size:12px;color:var(--ink);background:none;border:1px solid var(--rule);border-radius:3px;padding:4px 10px;cursor:pointer;}
+.guia-cuerpo{padding:16px 18px 20px;font-family:var(--font-body);font-size:16px;line-height:1.5;}
+.guia-cuerpo dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:10px 16px;}
+.guia-cuerpo dt{font-family:var(--font-mono);font-size:13px;padding-top:2px;text-underline-offset:.3em;white-space:nowrap;}
+.guia-cuerpo dd{margin:0;color:var(--ink-soft);}
+.guia-cuerpo p{margin:14px 0 0;font-family:var(--font-mono);font-size:12px;line-height:1.6;color:var(--ink-muted);}
+.guia-abrir{font:inherit;color:inherit;background:none;border:0;padding:0;margin-top:4px;text-decoration:underline dotted;text-underline-offset:.25em;cursor:pointer;}
+.guia-abrir:hover{color:var(--ink);}
