@@ -25,6 +25,10 @@ on:
         description: '"ocultar" (solo quitarla de la web) o "eliminar" (a la papelera)'
         required: false
         default: 'ocultar'
+      rama:
+        description: 'main (el sitio público) o pruebas (pruebas.p314b.space)'
+        required: false
+        default: 'main'
 
 permissions:
   contents: read
@@ -32,7 +36,7 @@ permissions:
 # De a una por vez. Si llegan varias mientras corre una, GitHub deja solo la
 # última en espera: como arma todo el sitio, alcanza con esa.
 concurrency:
-  group: publicar
+  group: publicar-${{ inputs.rama || 'main' }}
   cancel-in-progress: false
 
 jobs:
@@ -52,7 +56,7 @@ jobs:
         with:
           repository: p4p13b/p314b
           token: ${{ secrets.P314B_TOKEN }}
-          ref: main
+          ref: ${{ inputs.rama == 'pruebas' && 'pruebas' || 'main' }}
           path: p314b
       - uses: actions/setup-python@v5
         with:
