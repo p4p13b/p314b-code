@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Arma web/ en el repo privado y la guarda en su rama (main o pruebas) (lo que hacía publicar.yml).
+# Arma web/ en el repo privado y la guarda en main (lo que hacía publicar.yml).
 # Con «eliminar», antes saca esas obras del sitio (eliminar_obra.py).
 . "$(dirname "$0")/comun.sh"
 
@@ -52,10 +52,10 @@ resumen() {
 # eliminar_obra.py se perdería al traer main.
 if ! armar_y_guardar; then
   [ -z "$ELIMINAR" ] || exit 1
-  echo "· chocó con otro cambio en la rama: se vuelve a armar sobre lo último"
+  echo "· chocó con otro cambio en main: se vuelve a armar sobre lo último"
   git -C "$REPO_DIR" rebase --abort >> "$REGISTRO" 2>&1 || true
-  git -C "$REPO_DIR" fetch -q origin "$RAMA" >> "$REGISTRO" 2>&1
-  git -C "$REPO_DIR" reset -q --hard "origin/$RAMA" >> "$REGISTRO" 2>&1
+  git -C "$REPO_DIR" fetch -q origin main >> "$REGISTRO" 2>&1
+  git -C "$REPO_DIR" reset -q --hard origin/main >> "$REGISTRO" 2>&1
   git -C "$REPO_DIR" clean -qfd -- sitio web >> "$REGISTRO" 2>&1
   ORIGEN=$(git -C "$REPO_DIR" rev-parse HEAD)
   if ! armar_y_guardar; then
@@ -65,8 +65,8 @@ if ! armar_y_guardar; then
     if [ -n "$(resumen)" ]; then
       cp "$REPO_DIR/registros/ultima-publicacion.md" "$RUNNER_TEMP/resumen.md"
       git -C "$REPO_DIR" rebase --abort >> "$REGISTRO" 2>&1 || true
-      git -C "$REPO_DIR" fetch -q origin "$RAMA" >> "$REGISTRO" 2>&1 || true
-      git -C "$REPO_DIR" reset -q --hard "origin/$RAMA" >> "$REGISTRO" 2>&1 || true
+      git -C "$REPO_DIR" fetch -q origin main >> "$REGISTRO" 2>&1 || true
+      git -C "$REPO_DIR" reset -q --hard origin/main >> "$REGISTRO" 2>&1 || true
       mkdir -p "$REPO_DIR/registros"
       cp "$RUNNER_TEMP/resumen.md" "$REPO_DIR/registros/ultima-publicacion.md"
       guardar "Publicación fallida: resumen [skip ci]" registros/ultima-publicacion.md || true
