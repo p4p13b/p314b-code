@@ -28,9 +28,9 @@ git clone -q --filter=blob:none --no-checkout \
 cd privado
 
 nuevos() {   # nuevos NOMBRE SALTAR_SKIP_CI ruta... → cantidad de commits
-  local base="origin/estado/$1" saltar="$2" rama="${RAMA_V:-main}"; shift 2
+  local base="origin/estado/$1" saltar="$2"; shift 2
   if ! git rev-parse -q --verify "$base" > /dev/null; then echo 1; return; fi
-  git log "$base..origin/$rama" --format='%an%x09%s' -- "$@" |
+  git log "$base..origin/main" --format='%an%x09%s' -- "$@" |
     awk -F'\t' -v s="$saltar" '$1 != "github-actions[bot]" && !(s == 1 && index($2, "[skip ci]"))' |
     wc -l
 }
@@ -42,19 +42,14 @@ ocupado() {  # ocupado WORKFLOW → 1 si hay una corrida en curso o en cola
   [ "$n" -gt 0 ]
 }
 
-lanzar() {   # lanzar NOMBRE CANTIDAD [RAMA]
+lanzar() {   # lanzar NOMBRE CANTIDAD
   if [ "$2" -eq 0 ]; then echo "· $1: nada nuevo"; return; fi
   if ocupado "$1.yml"; then echo "· $1: $2 commit(s) nuevos, ya hay una corrida en curso"; return; fi
-  if [ -n "${3:-}" ]; then gh workflow run "$1.yml" --ref main -f rama="$3" > /dev/null; else gh workflow run "$1.yml" --ref main > /dev/null; fi
-  echo "✓ $1${3:+ ($3)}: $2 commit(s) nuevos, lanzado"
+  gh workflow run "$1.yml" --ref main > /dev/null
+  echo "✓ $1: $2 commit(s) nuevos, lanzado"
 }
 
 lanzar publicar   "$(nuevos publicar 1 sitio datos-lee/cowork/CRONOLOGIA.md datos-lee/txt worker wrangler.jsonc web)"
-# La rama de pruebas (pruebas.p314b.space), si existe: solo se publica.
-if git rev-parse -q --verify origin/pruebas > /dev/null; then
-  lanzar_p=$(RAMA_V=pruebas nuevos publicar-pruebas 1 sitio datos-lee/cowork/CRONOLOGIA.md datos-lee/txt worker wrangler.jsonc web)
-  lanzar publicar "$lanzar_p" pruebas
-fi
 lanzar superficie "$(nuevos superficie 0 sitio/lemas.json sitio/lemas_auto.py 'sitio/obras/*.json' sitio/Archivo/manifest.json sitio/matriz/anexo/scripts datos-lee/txt)"
 lanzar matriz     "$(nuevos matriz 0 sitio/matriz/decisiones.json)"
 

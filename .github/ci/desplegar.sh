@@ -6,9 +6,4 @@ if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
   exit 0
 fi
 cd "$REPO_DIR"
-# pruebas: otro Worker (p314b-pruebas, pruebas.p314b.space); ver wrangler.jsonc
-if [ "$RAMA" = pruebas ]; then
-  callado "subir a Cloudflare (pruebas)" npx --yes wrangler@4 deploy --env pruebas
-else
-  callado "subir a Cloudflare (wrangler deploy)" npx --yes wrangler@4 deploy
-fi
+callado "subir a Cloudflare (wrangler deploy)" npx --yes wrangler@4 deploy
