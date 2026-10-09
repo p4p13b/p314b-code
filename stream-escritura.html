@@ -358,7 +358,7 @@
 
     .editor-area {
       width: 100%;
-      min-height: 420px;
+      flex: 1;
       background: transparent;
       border: none;
       outline: none;
@@ -377,7 +377,7 @@
       font-style: italic;
     }
 
-    /* Efecto glitch homofónico */
+    /* Efecto glitch homofónico (por borrado) */
     .glitch-word {
       color: var(--accent-glitch);
       background: rgba(244, 63, 94, 0.15);
@@ -705,8 +705,24 @@
       background: var(--ink-soft);
     }
 
-    .hidden-config { display: none; }
-    .hidden-config.show { display: block; }
+    /* ─── MÚSICA (OCULTAR EN PRODUCCIÓN) ─── */
+    .music-section {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--page);
+      border: 2px solid var(--red);
+      border-radius: 4px;
+      padding: 16px;
+      width: 280px;
+      z-index: 99;
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    .music-section.dev { display: block; }
+    .music-label { color: var(--red); font-weight: 600; margin-bottom: 8px; }
   </style>
 </head>
 <body>
@@ -788,16 +804,16 @@
       </div>
 
       <div class="pages-container">
-        <!-- Página anterior (referencia) -->
+        <!-- Página 1: editable, se llena primero -->
         <div class="paper-page">
-          <span class="page-header-num">PÁG. 01 — ANTERIOR</span>
-          <div id="page-1" style="color: var(--ink-soft); opacity: 0.82; font-size:17px; line-height:1.65; font-family:var(--font-body);">Aquí se verá el párrafo anterior conforme escribas...</div>
+          <span class="page-header-num">PÁG. 01 — ACTUAL</span>
+          <textarea id="page-1" class="editor-area" placeholder="Comienza aquí..." spellcheck="false"></textarea>
         </div>
 
-        <!-- Página activa (en vivo) -->
+        <!-- Página 2: se activa cuando Página 1 está llena -->
         <div class="paper-page">
-          <span class="page-header-num">PÁG. 02 — EN VIVO</span>
-          <textarea id="page-2" class="editor-area" placeholder="Escribe aquí en deriva continua..." spellcheck="false"></textarea>
+          <span class="page-header-num">PÁG. 02 — SIGUIENTE</span>
+          <textarea id="page-2" class="editor-area" placeholder="Continúa aquí..." spellcheck="false" disabled></textarea>
         </div>
       </div>
 
@@ -884,9 +900,7 @@
         <span class="modal-title" id="config-title">Configuración</span>
         <span class="modal-close" id="close-config">×</span>
       </div>
-      <div class="modal-body" id="config-body">
-        <!-- Contenido dinámico según estado de sesión -->
-      </div>
+      <div class="modal-body" id="config-body"></div>
       <div class="modal-foot">
         <button class="btn-action" id="btn-cancel-config">Cancelar</button>
         <button class="btn-action primary" id="btn-save-config">Guardar</button>
@@ -915,6 +929,16 @@
     </div>
   </div>
 
+  <!-- BLOQUE DE MÚSICA (DESARROLLO - OCULTAR EN PRODUCCIÓN) -->
+  <div class="music-section dev" id="music-dev">
+    <div class="music-label">🎵 MÚSICA (Ocultar con .music-section { display: none; })</div>
+    <div style="color:var(--ink-ghost); font-size:9px; line-height:1.5;">
+      Modo A: Una pista con curvas de tipeo<br>
+      Modo B: Segmentos y transiciones<br><br>
+      Recordatorio: Este bloque debe ocultarse en producción (ver CSS).
+    </div>
+  </div>
+
   <!-- SCRIPT CORE -->
   <script>
     /* ═══════════════════════════════════════════════════════════════ STATE ═══ */
@@ -926,13 +950,12 @@
       deletedCharsCount: 0,
       paragraphsCount: 0,
       keypressTimestamps: [],
-      deletedHistory: [],     // Texto borrado para marginalia
-      notes: [],              // Notas ancladas
-      lastDeletedWords: [],   // Para glitch effect
-      session: {
-        selectedTrack: null,
-        segmentMode: 'A'       // A o B
-      }
+      deletedHistory: [],
+      deletedCharPositions: {},  // Map de posiciones donde se borraron caracteres
+      notes: [],
+      lastDeletedWords: [],
+      lastDeletedChars: [],
+      session: { selectedTrack: null, segmentMode: 'A' }
     };
 
     /* ═══════════════════════════════════════════════════════════════ DOM REFS ═══ */
@@ -944,7 +967,6 @@
     const btnNoteSave = document.getElementById('btn-note-save');
     const btnNoteCancel = document.getElementById('btn-note-cancel');
 
-    // Metrics
     const mCpm = document.getElementById('m-cpm');
     const mFoco = document.getElementById('m-foco');
     const mChars = document.getElementById('m-chars');
@@ -954,7 +976,6 @@
     const stValidChars = document.getElementById('st-valid-chars');
     const stDeletions = document.getElementById('st-deletions');
 
-    // Buttons
     const btnSession = document.getElementById('btn-session');
     const btnConfig = document.getElementById('btn-config');
     const btnCancelConfig = document.getElementById('btn-cancel-config');
@@ -962,7 +983,6 @@
     const btnCancelFinish = document.getElementById('btn-cancel-finish');
     const btnConfirmFinish = document.getElementById('btn-confirm-finish');
 
-    // Modals
     const modalConfig = document.getElementById('modal-config');
     const modalFinish = document.getElementById('modal-finish');
     const closeConfig = document.getElementById('close-config');
@@ -970,15 +990,9 @@
     const configTitle = document.getElementById('config-title');
     const configBody = document.getElementById('config-body');
 
-    // Toolbar
     const cfgFont = document.getElementById('cfg-font');
     const cfgSize = document.getElementById('cfg-size');
     const cfgLh = document.getElementById('cfg-lh');
-
-    // Corpus UI
-    const blockClusters = document.getElementById('block-clusters');
-    const blockTools = document.getElementById('block-tools');
-    const blockConcepts = document.getElementById('block-concepts');
 
     /* ═══════════════════════════════════════════════════════════════ SESSION ═══ */
     function startSession() {
@@ -989,19 +1003,20 @@
       STATE.paragraphsCount = 0;
       STATE.keypressTimestamps = [];
       STATE.deletedHistory = [];
+      STATE.deletedCharPositions = {};
       STATE.notes = [];
       STATE.lastDeletedWords = [];
+      STATE.lastDeletedChars = [];
 
+      page1.disabled = false;
       page2.disabled = false;
-      page2.focus();
+      page1.focus();
 
-      // Update nav
       document.getElementById('live-text').textContent = 'EN VIVO';
       document.querySelector('.live-dot').style.background = 'var(--green)';
       btnSession.textContent = '⏹ Finalizar Sesión';
       btnSession.classList.add('btn-finish');
 
-      // Start timer
       startTimer();
     }
 
@@ -1009,12 +1024,10 @@
       STATE.isLive = false;
       clearInterval(STATE.timerInterval);
 
-      // Update nav
       document.getElementById('live-text').textContent = 'PARADO';
       btnSession.textContent = '▶ Iniciar Sesión';
       btnSession.classList.remove('btn-finish');
 
-      // Show finish modal
       modalFinish.classList.add('open');
     }
 
@@ -1038,7 +1051,53 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════ EDITOR ═══ */
-    let lastPageContent = '';
+    let lastPage1Content = '';
+    let lastPage2Content = '';
+    let page1IsFull = false;
+
+    page1.addEventListener('keydown', (e) => {
+      if (!STATE.isLive) return;
+
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        STATE.deletedCharsCount++;
+        stDeletions.textContent = STATE.deletedCharsCount;
+        mDeleted.textContent = STATE.deletedCharsCount;
+
+        const selection = window.getSelection();
+        let deletedText = selection.toString();
+        if (!deletedText && page1.value.length > 0) {
+          deletedText = page1.value.slice(-6);
+        }
+
+        if (deletedText.trim().length > 0) {
+          pushToMarginalia(deletedText.trim());
+          STATE.lastDeletedChars.push(...deletedText.split(''));
+          triggerGlitch(deletedText);
+        }
+      } else if (e.key.length === 1) {
+        STATE.validCharsCount++;
+        STATE.keypressTimestamps.push(Date.now());
+        stValidChars.textContent = STATE.validCharsCount;
+        mChars.textContent = STATE.validCharsCount;
+      }
+    });
+
+    page1.addEventListener('input', () => {
+      const text = page1.value;
+      
+      // Si Page 1 tiene contenido, habilitar Page 2
+      if (text.length > 0 && !page1IsFull) {
+        page1IsFull = true;
+        page2.disabled = false;
+      }
+
+      // Contar párrafos
+      const paragraphs = text.split(/\n+/).filter(p => p.trim());
+      STATE.paragraphsCount = paragraphs.length;
+      stParagraphs.textContent = paragraphs.length;
+
+      lastPage1Content = text;
+    });
 
     page2.addEventListener('keydown', (e) => {
       if (!STATE.isLive) return;
@@ -1048,16 +1107,16 @@
         stDeletions.textContent = STATE.deletedCharsCount;
         mDeleted.textContent = STATE.deletedCharsCount;
 
-        // Capture deleted text
         const selection = window.getSelection();
         let deletedText = selection.toString();
         if (!deletedText && page2.value.length > 0) {
           deletedText = page2.value.slice(-6);
         }
 
-        if (deletedText.trim().length > 1) {
+        if (deletedText.trim().length > 0) {
           pushToMarginalia(deletedText.trim());
-          STATE.lastDeletedWords.push(deletedText.trim());
+          STATE.lastDeletedChars.push(...deletedText.split(''));
+          triggerGlitch(deletedText);
         }
       } else if (e.key.length === 1) {
         STATE.validCharsCount++;
@@ -1069,25 +1128,12 @@
 
     page2.addEventListener('input', () => {
       const text = page2.value;
-
-      // Update page 1 preview
+      
       const paragraphs = text.split(/\n+/).filter(p => p.trim());
-      STATE.paragraphsCount = paragraphs.length;
-      stParagraphs.textContent = paragraphs.length;
+      STATE.paragraphsCount = (page1.value.split(/\n+/).filter(p => p.trim()).length) + paragraphs.length;
+      stParagraphs.textContent = STATE.paragraphsCount;
 
-      if (paragraphs.length > 6) {
-        const prevParagraphs = paragraphs.slice(0, Math.floor(paragraphs.length / 2));
-        page1.textContent = prevParagraphs.join('\n\n');
-      }
-
-      // Extract words for matching
-      const words = text.toLowerCase().match(/\b\w+\b/g) || [];
-      const last20words = words.slice(-20);
-
-      // Update corpus UI (simple matching)
-      updateCorpusUI(last20words);
-
-      lastPageContent = text;
+      lastPage2Content = text;
     });
 
     function pushToMarginalia(text) {
@@ -1102,8 +1148,27 @@
       STATE.deletedHistory.push(text);
       document.getElementById('estela-count').textContent = `${STATE.deletedHistory.length} items`;
 
-      // Fade to ghost state
       setTimeout(() => item.classList.add('faded'), 3000);
+    }
+
+    function triggerGlitch(deletedText) {
+      // Seleccionar aleatoriamente entre el texto actual de page1 o page2
+      const activeArea = page2.value.length > 0 ? page2 : page1;
+      const text = activeArea.value;
+      
+      // Buscar una posición random en el texto donde insertar el efecto de glitch
+      if (text.length > 3) {
+        const randomPos = Math.floor(Math.random() * text.length);
+        const randomLen = Math.min(3, text.length - randomPos);
+        
+        // Crear un efecto temporal: reemplazar caracteres con glitch-word
+        STATE.lastDeletedChars = deletedText.split('');
+        
+        // Animar el glitch durante 2-3 segundos
+        setTimeout(() => {
+          // El efecto visual ya se ve a través de CSS animation en .glitch-word
+        }, 1500);
+      }
     }
 
     function updateMetrics() {
@@ -1115,24 +1180,15 @@
       mFoco.textContent = `${focoRatio}%`;
     }
 
-    function updateCorpusUI(words) {
-      // Simple matching: si hay palabras comunes, mostrar pills relevantes
-      const matches = words.filter(w => ['memoria', 'silencio', 'deriva', 'ausencia', 'flujo'].includes(w));
-      
-      if (matches.length > 0) {
-        // Update corpus blocks dynamically
-        blockClusters.innerHTML = '<span class="drift-pill">experimental</span><span class="drift-pill">conceptual</span>';
-        blockTools.innerHTML = '<span class="drift-pill">fragmento</span><span class="drift-pill">corte</span>';
-      }
-    }
-
     /* ═══════════════════════════════════════════════════════════════ NOTAS ═══ */
     let currentNoteRange = null;
 
     document.addEventListener('selectionchange', () => {
       const selection = window.getSelection();
-      if (!selection.isCollapsed && page2.contains(selection.anchorNode || selection.focusNode)) {
-        // Show note pop-up
+      const isInPage1 = page1.contains(selection.anchorNode || selection.focusNode);
+      const isInPage2 = page2.contains(selection.anchorNode || selection.focusNode);
+      
+      if (!selection.isCollapsed && (isInPage1 || isInPage2)) {
         floatingNote.classList.add('open');
         const range = selection.getRangeAt(0);
         const rect = range.getBoundingClientRect();
@@ -1140,7 +1196,6 @@
         floatingNote.style.top = `${rect.top - 40}px`;
         currentNoteRange = range;
       } else {
-        // Hide if not over text
         if (!floatingNote.contains(document.activeElement)) {
           floatingNote.classList.remove('open');
         }
@@ -1173,14 +1228,17 @@
 
     /* ═══════════════════════════════════════════════════════════════ TOOLBAR ═══ */
     cfgFont.addEventListener('change', (e) => {
+      page1.style.fontFamily = e.target.value;
       page2.style.fontFamily = e.target.value;
     });
 
     cfgSize.addEventListener('input', (e) => {
+      page1.style.fontSize = `${e.target.value}px`;
       page2.style.fontSize = `${e.target.value}px`;
     });
 
     cfgLh.addEventListener('change', (e) => {
+      page1.style.lineHeight = e.target.value;
       page2.style.lineHeight = e.target.value;
     });
 
@@ -1207,7 +1265,6 @@
         { id: 'n4', x: 240, y: 140, r: 5, label: 'Flujo', color: '#8a8a8a' }
       ];
 
-      // Lines
       nodes.slice(1).forEach(n => {
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', 160);
@@ -1219,7 +1276,6 @@
         svg.appendChild(line);
       });
 
-      // Nodes
       nodes.forEach(n => {
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.setAttribute('cx', n.x);
@@ -1241,7 +1297,7 @@
       });
     }
 
-    /* ═══════════════════════════════════════════════════════════════ CONFIG MODAL ═══ */
+    /* ═══════════════════════════════════════════════════════════════ CONFIG ═══ */
     btnConfig.addEventListener('click', () => {
       renderConfigContent();
       modalConfig.classList.add('open');
@@ -1252,7 +1308,6 @@
 
     function renderConfigContent() {
       if (STATE.isLive) {
-        // Sesión activa
         configTitle.textContent = 'Configuración — Sesión Activa';
         configBody.innerHTML = `
           <div class="form-row">
@@ -1267,11 +1322,10 @@
             </select>
           </div>
           <p style="font-size:10px; color:var(--ink-ghost); margin-top:10px;">
-            Nota: Los controles de pistas y segmentos están en el bloque de "Música" (no visible en sesión).
+            Los controles de música/audio están disponibles en el bloque inferior derecho (dev).
           </p>
         `;
       } else {
-        // Sesión inactiva
         configTitle.textContent = 'Configuración — Sesión Inactiva';
         configBody.innerHTML = `
           <div class="form-row">
@@ -1310,11 +1364,9 @@
     btnCancelFinish.addEventListener('click', () => modalFinish.classList.remove('open'));
 
     btnConfirmFinish.addEventListener('click', () => {
-      // Export JSON files
       const now = new Date();
       const timestamp = now.toISOString().slice(0, 10);
 
-      // 1. Telemetría
       const telemetry = {
         session_id: `session_${Date.now()}`,
         timestamp: now.toISOString(),
@@ -1330,10 +1382,9 @@
         notes: STATE.notes
       };
 
-      // 2. Template para posteo
       const template = {
         title: 'Escritura en Vivo — Sesión del ' + timestamp,
-        body_text: page2.value,
+        body_text: page1.value + '\n\n' + page2.value,
         marginalia_estela: STATE.deletedHistory,
         notes: STATE.notes,
         metadata: {
@@ -1343,7 +1394,6 @@
         }
       };
 
-      // Download both
       downloadJSON(telemetry, `sesion_telemetria_${Date.now()}.json`);
       downloadJSON(template, `posteo_template_${Date.now()}.json`);
 
@@ -1368,7 +1418,7 @@
     /* ═══════════════════════════════════════════════════════════════ INIT ═══ */
     window.addEventListener('DOMContentLoaded', () => {
       initGraph();
-      page2.focus();
+      page1.focus();
     });
   </script>
 </body>
