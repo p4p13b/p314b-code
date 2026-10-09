@@ -377,90 +377,6 @@
       font-style: italic;
     }
 
-    /* Efecto glitch homofónico (por borrado) */
-    .glitch-word {
-      color: var(--accent-glitch);
-      background: rgba(244, 63, 94, 0.15);
-      border-bottom: 1px dashed var(--accent-glitch);
-      padding: 0 2px;
-      border-radius: 2px;
-      animation: glitchShake 0.4s ease-in-out infinite alternate;
-    }
-
-    @keyframes glitchShake {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(-1px); }
-    }
-
-    .note-anchor {
-      background: var(--mark-bg);
-      border-bottom: 1.5px solid var(--mark);
-      cursor: pointer;
-    }
-
-    /* Panel emergente de notas */
-    .floating-note-pop {
-      position: fixed;
-      background: var(--bg-alt);
-      border: 1px solid var(--mark);
-      border-radius: 3px;
-      padding: 8px 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-      z-index: 80;
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-      min-width: 200px;
-    }
-
-    .floating-note-pop.open {
-      display: flex;
-    }
-
-    .floating-note-pop input {
-      background: var(--page);
-      border: 1px solid var(--rule);
-      color: var(--ink);
-      padding: 6px 8px;
-      font-family: var(--font-body);
-      font-size: 13px;
-      border-radius: 2px;
-      outline: none;
-    }
-
-    .floating-note-pop input:focus {
-      border-color: var(--mark);
-    }
-
-    .floating-note-pop .buttons {
-      display: flex;
-      gap: 6px;
-    }
-
-    .floating-note-pop button {
-      flex: 1;
-      padding: 4px 8px;
-      background: var(--mark);
-      color: var(--bg);
-      border-radius: 2px;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      cursor: pointer;
-    }
-
-    .floating-note-pop button:hover {
-      background: var(--mark-lt);
-    }
-
-    .floating-note-pop button.cancel {
-      background: var(--rule);
-      color: var(--ink-soft);
-    }
-
-    .floating-note-pop button.cancel:hover {
-      background: var(--rule-light);
-    }
-
     /* ─── RIGHT COLUMN: CORPUS & METRICS ─── */
     .col-right {
       border-left: 1px solid var(--rule);
@@ -541,12 +457,6 @@
       border-radius: 2px;
     }
 
-    .drift-pill.inversed {
-      border-color: rgba(244, 63, 94, 0.4);
-      color: #fda4af;
-      background: rgba(244, 63, 94, 0.08);
-    }
-
     .metrics-right-block {
       border-top: 1px solid var(--rule);
       background: var(--bg-alt);
@@ -588,6 +498,7 @@
       display: none;
       align-items: center;
       justify-content: center;
+      padding: 20px;
     }
 
     .modal-overlay.open { display: flex; }
@@ -596,7 +507,8 @@
       background: var(--page);
       border: 1px solid var(--rule-light);
       border-radius: 4px;
-      width: min(560px, 92vw);
+      width: min(900px, 95vw);
+      height: min(90vh, 900px);
       box-shadow: 0 20px 60px rgba(0,0,0,0.8);
       overflow: hidden;
       display: flex;
@@ -610,6 +522,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-shrink: 0;
     }
 
     .modal-title {
@@ -630,43 +543,14 @@
     .modal-close:hover { color: var(--ink); }
 
     .modal-body {
+      flex: 1;
       padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+      overflow-y: auto;
       font-family: var(--font-mono);
       font-size: 11px;
       color: var(--ink-soft);
-      max-height: 72vh;
-      overflow-y: auto;
-    }
-
-    .form-row {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-row label {
-      font-size: 9px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--ink-muted);
-    }
-
-    .form-row select, .form-row input {
-      background: var(--bg);
-      border: 1px solid var(--rule);
-      color: var(--ink);
-      padding: 6px 8px;
-      border-radius: 2px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      outline: none;
-    }
-
-    .form-row select:focus, .form-row input:focus {
-      border-color: var(--mark);
+      scrollbar-width: thin;
+      scrollbar-color: var(--rule) transparent;
     }
 
     .modal-foot {
@@ -676,6 +560,79 @@
       display: flex;
       justify-content: flex-end;
       gap: 10px;
+      flex-shrink: 0;
+    }
+
+    /* ─── MÚSICA MODAL STYLES ─── */
+    .config-section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .config-section:last-child {
+      border-bottom: none;
+    }
+
+    .config-label {
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .config-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .config-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .config-field label {
+      font-size: 9px;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="range"],
+    input[type="file"],
+    select {
+      background: var(--bg);
+      border: 1px solid var(--rule);
+      color: var(--ink);
+      padding: 5px 8px;
+      border-radius: 2px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      outline: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    input[type="file"]:focus,
+    select:focus {
+      border-color: var(--mark);
+    }
+
+    input[type="range"] {
+      padding: 0;
+      width: 120px;
+    }
+
+    input[type="number"] {
+      width: 60px;
     }
 
     .btn-action {
@@ -688,11 +645,14 @@
       cursor: pointer;
       border: 1px solid var(--rule);
       color: var(--ink-soft);
+      background: var(--bg-alt);
+      transition: all 0.15s;
     }
 
     .btn-action:hover {
       background: var(--bg);
       color: var(--ink);
+      border-color: var(--ink-soft);
     }
 
     .btn-action.primary {
@@ -705,24 +665,40 @@
       background: var(--ink-soft);
     }
 
-    /* ─── MÚSICA (OCULTAR EN PRODUCCIÓN) ─── */
-    .music-section {
-      display: none;
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: var(--page);
-      border: 2px solid var(--red);
-      border-radius: 4px;
-      padding: 16px;
-      width: 280px;
-      z-index: 99;
-      font-family: var(--font-mono);
-      font-size: 10px;
+    .tab-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 12px;
     }
 
-    .music-section.dev { display: block; }
-    .music-label { color: var(--red); font-weight: 600; margin-bottom: 8px; }
+    .tab-btn {
+      padding: 6px 12px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--ink-muted);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab-btn.active {
+      color: var(--ink);
+      border-bottom-color: var(--mark);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -816,15 +792,6 @@
           <textarea id="page-2" class="editor-area" placeholder="Continúa aquí..." spellcheck="false" disabled></textarea>
         </div>
       </div>
-
-      <!-- Panel flotante de notas -->
-      <div class="floating-note-pop" id="floating-note">
-        <input type="text" id="note-input" placeholder="Escribir nota...">
-        <div class="buttons">
-          <button id="btn-note-save">Guardar</button>
-          <button class="cancel" id="btn-note-cancel">Cancelar</button>
-        </div>
-      </div>
     </main>
 
     <!-- RIGHT: CORPUS & METRICS -->
@@ -900,7 +867,9 @@
         <span class="modal-title" id="config-title">Configuración</span>
         <span class="modal-close" id="close-config">×</span>
       </div>
-      <div class="modal-body" id="config-body"></div>
+      <div class="modal-body" id="config-body">
+        <!-- Contenido dinámico según estado de sesión -->
+      </div>
       <div class="modal-foot">
         <button class="btn-action" id="btn-cancel-config">Cancelar</button>
         <button class="btn-action primary" id="btn-save-config">Guardar</button>
@@ -929,16 +898,6 @@
     </div>
   </div>
 
-  <!-- BLOQUE DE MÚSICA (DESARROLLO - OCULTAR EN PRODUCCIÓN) -->
-  <div class="music-section dev" id="music-dev">
-    <div class="music-label">🎵 MÚSICA (Ocultar con .music-section { display: none; })</div>
-    <div style="color:var(--ink-ghost); font-size:9px; line-height:1.5;">
-      Modo A: Una pista con curvas de tipeo<br>
-      Modo B: Segmentos y transiciones<br><br>
-      Recordatorio: Este bloque debe ocultarse en producción (ver CSS).
-    </div>
-  </div>
-
   <!-- SCRIPT CORE -->
   <script>
     /* ═══════════════════════════════════════════════════════════════ STATE ═══ */
@@ -951,21 +910,14 @@
       paragraphsCount: 0,
       keypressTimestamps: [],
       deletedHistory: [],
-      deletedCharPositions: {},  // Map de posiciones donde se borraron caracteres
       notes: [],
-      lastDeletedWords: [],
-      lastDeletedChars: [],
-      session: { selectedTrack: null, segmentMode: 'A' }
+      session: { musicMode: '1' }
     };
 
     /* ═══════════════════════════════════════════════════════════════ DOM REFS ═══ */
     const page1 = document.getElementById('page-1');
     const page2 = document.getElementById('page-2');
     const marginaliaStream = document.getElementById('marginalia-stream');
-    const floatingNote = document.getElementById('floating-note');
-    const noteInput = document.getElementById('note-input');
-    const btnNoteSave = document.getElementById('btn-note-save');
-    const btnNoteCancel = document.getElementById('btn-note-cancel');
 
     const mCpm = document.getElementById('m-cpm');
     const mFoco = document.getElementById('m-foco');
@@ -1003,10 +955,7 @@
       STATE.paragraphsCount = 0;
       STATE.keypressTimestamps = [];
       STATE.deletedHistory = [];
-      STATE.deletedCharPositions = {};
       STATE.notes = [];
-      STATE.lastDeletedWords = [];
-      STATE.lastDeletedChars = [];
 
       page1.disabled = false;
       page2.disabled = false;
@@ -1051,8 +1000,6 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════ EDITOR ═══ */
-    let lastPage1Content = '';
-    let lastPage2Content = '';
     let page1IsFull = false;
 
     page1.addEventListener('keydown', (e) => {
@@ -1071,8 +1018,6 @@
 
         if (deletedText.trim().length > 0) {
           pushToMarginalia(deletedText.trim());
-          STATE.lastDeletedChars.push(...deletedText.split(''));
-          triggerGlitch(deletedText);
         }
       } else if (e.key.length === 1) {
         STATE.validCharsCount++;
@@ -1085,18 +1030,14 @@
     page1.addEventListener('input', () => {
       const text = page1.value;
       
-      // Si Page 1 tiene contenido, habilitar Page 2
       if (text.length > 0 && !page1IsFull) {
         page1IsFull = true;
         page2.disabled = false;
       }
 
-      // Contar párrafos
       const paragraphs = text.split(/\n+/).filter(p => p.trim());
       STATE.paragraphsCount = paragraphs.length;
       stParagraphs.textContent = paragraphs.length;
-
-      lastPage1Content = text;
     });
 
     page2.addEventListener('keydown', (e) => {
@@ -1115,8 +1056,6 @@
 
         if (deletedText.trim().length > 0) {
           pushToMarginalia(deletedText.trim());
-          STATE.lastDeletedChars.push(...deletedText.split(''));
-          triggerGlitch(deletedText);
         }
       } else if (e.key.length === 1) {
         STATE.validCharsCount++;
@@ -1132,8 +1071,6 @@
       const paragraphs = text.split(/\n+/).filter(p => p.trim());
       STATE.paragraphsCount = (page1.value.split(/\n+/).filter(p => p.trim()).length) + paragraphs.length;
       stParagraphs.textContent = STATE.paragraphsCount;
-
-      lastPage2Content = text;
     });
 
     function pushToMarginalia(text) {
@@ -1151,26 +1088,6 @@
       setTimeout(() => item.classList.add('faded'), 3000);
     }
 
-    function triggerGlitch(deletedText) {
-      // Seleccionar aleatoriamente entre el texto actual de page1 o page2
-      const activeArea = page2.value.length > 0 ? page2 : page1;
-      const text = activeArea.value;
-      
-      // Buscar una posición random en el texto donde insertar el efecto de glitch
-      if (text.length > 3) {
-        const randomPos = Math.floor(Math.random() * text.length);
-        const randomLen = Math.min(3, text.length - randomPos);
-        
-        // Crear un efecto temporal: reemplazar caracteres con glitch-word
-        STATE.lastDeletedChars = deletedText.split('');
-        
-        // Animar el glitch durante 2-3 segundos
-        setTimeout(() => {
-          // El efecto visual ya se ve a través de CSS animation en .glitch-word
-        }, 1500);
-      }
-    }
-
     function updateMetrics() {
       const cpm = STATE.keypressTimestamps.length;
       mCpm.textContent = cpm;
@@ -1178,123 +1095,6 @@
       const total = STATE.validCharsCount + STATE.deletedCharsCount;
       const focoRatio = total > 0 ? ((STATE.deletedCharsCount / total) * 100).toFixed(1) : '0.0';
       mFoco.textContent = `${focoRatio}%`;
-    }
-
-    /* ═══════════════════════════════════════════════════════════════ NOTAS ═══ */
-    let currentNoteRange = null;
-
-    document.addEventListener('selectionchange', () => {
-      const selection = window.getSelection();
-      const isInPage1 = page1.contains(selection.anchorNode || selection.focusNode);
-      const isInPage2 = page2.contains(selection.anchorNode || selection.focusNode);
-      
-      if (!selection.isCollapsed && (isInPage1 || isInPage2)) {
-        floatingNote.classList.add('open');
-        const range = selection.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        floatingNote.style.left = `${rect.left}px`;
-        floatingNote.style.top = `${rect.top - 40}px`;
-        currentNoteRange = range;
-      } else {
-        if (!floatingNote.contains(document.activeElement)) {
-          floatingNote.classList.remove('open');
-        }
-      }
-    });
-
-    btnNoteSave.addEventListener('click', () => {
-      const noteText = noteInput.value.trim();
-      if (!noteText || !currentNoteRange) return;
-
-      const selectedText = currentNoteRange.toString();
-      const noteCard = document.createElement('div');
-      noteCard.className = 'note-card';
-      noteCard.innerHTML = `
-        <div class="anchor-text">"${escapeHtml(selectedText)}"</div>
-        <div>${escapeHtml(noteText)}</div>
-      `;
-
-      marginaliaStream.prepend(noteCard);
-      STATE.notes.push({ anchor: selectedText, note: noteText, timestamp: Date.now() });
-
-      noteInput.value = '';
-      floatingNote.classList.remove('open');
-    });
-
-    btnNoteCancel.addEventListener('click', () => {
-      noteInput.value = '';
-      floatingNote.classList.remove('open');
-    });
-
-    /* ═══════════════════════════════════════════════════════════════ TOOLBAR ═══ */
-    cfgFont.addEventListener('change', (e) => {
-      page1.style.fontFamily = e.target.value;
-      page2.style.fontFamily = e.target.value;
-    });
-
-    cfgSize.addEventListener('input', (e) => {
-      page1.style.fontSize = `${e.target.value}px`;
-      page2.style.fontSize = `${e.target.value}px`;
-    });
-
-    cfgLh.addEventListener('change', (e) => {
-      page1.style.lineHeight = e.target.value;
-      page2.style.lineHeight = e.target.value;
-    });
-
-    /* ═══════════════════════════════════════════════════════════════ GRAPH ═══ */
-    function initGraph() {
-      const svg = document.getElementById('corpus-graph');
-      svg.innerHTML = `
-        <defs>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
-            <feMerge>
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-      `;
-
-      const nodes = [
-        { id: 'center', x: 160, y: 100, r: 8, label: 'Escribiendo', color: '#3b82f6' },
-        { id: 'n1', x: 70, y: 50, r: 5, label: 'Memoria', color: '#8a8a8a' },
-        { id: 'n2', x: 250, y: 60, r: 5, label: 'Deriva', color: '#8a8a8a' },
-        { id: 'n3', x: 90, y: 150, r: 5, label: 'Ausencia', color: '#8a8a8a' },
-        { id: 'n4', x: 240, y: 140, r: 5, label: 'Flujo', color: '#8a8a8a' }
-      ];
-
-      nodes.slice(1).forEach(n => {
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', 160);
-        line.setAttribute('y1', 100);
-        line.setAttribute('x2', n.x);
-        line.setAttribute('y2', n.y);
-        line.setAttribute('stroke', '#242424');
-        line.setAttribute('stroke-width', '1');
-        svg.appendChild(line);
-      });
-
-      nodes.forEach(n => {
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', n.x);
-        circle.setAttribute('cy', n.y);
-        circle.setAttribute('r', n.r);
-        circle.setAttribute('fill', n.color);
-        circle.setAttribute('filter', 'url(#glow)');
-        svg.appendChild(circle);
-
-        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        text.setAttribute('x', n.x);
-        text.setAttribute('y', n.y + 14);
-        text.setAttribute('fill', '#666');
-        text.setAttribute('font-size', '8');
-        text.setAttribute('font-family', 'IBM Plex Mono');
-        text.setAttribute('text-anchor', 'middle');
-        text.textContent = n.label;
-        svg.appendChild(text);
-      });
     }
 
     /* ═══════════════════════════════════════════════════════════════ CONFIG ═══ */
@@ -1310,41 +1110,170 @@
       if (STATE.isLive) {
         configTitle.textContent = 'Configuración — Sesión Activa';
         configBody.innerHTML = `
-          <div class="form-row">
-            <label>Estado:</label>
-            <span style="color:var(--green);">● Transmitiendo en vivo</span>
+          <div class="config-section">
+            <label class="config-label">Estado:</label>
+            <p style="color: var(--green); margin: 0;">● Transmitiendo en vivo</p>
           </div>
-          <div class="form-row">
-            <label>Modo Música (A o B):</label>
-            <select id="cfg-mode">
-              <option value="A" selected>A · Una pista</option>
-              <option value="B">B · Segmentos</option>
-            </select>
+          <div class="config-section">
+            <label class="config-label">Modo Música:</label>
+            <div class="config-row">
+              <button class="tab-btn active" data-mode="1">A · Una pista (Curvas)</button>
+              <button class="tab-btn" data-mode="2">B · Segmentos y transiciones</button>
+            </div>
+            <p style="font-size: 10px; color: var(--ink-ghost); margin: 8px 0 0 0; line-height: 1.4;">
+              Selecciona el modo de reproducción de música durante esta sesión. 
+              Los detalles de configuración están disponibles cuando inicias/antes de iniciar sesión.
+            </p>
           </div>
-          <p style="font-size:10px; color:var(--ink-ghost); margin-top:10px;">
-            Los controles de música/audio están disponibles en el bloque inferior derecho (dev).
-          </p>
         `;
+        
+        $$('[data-mode]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            STATE.session.musicMode = btn.dataset.mode;
+            $$('[data-mode]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+          });
+        });
       } else {
         configTitle.textContent = 'Configuración — Sesión Inactiva';
-        configBody.innerHTML = `
-          <div class="form-row">
-            <label>Estado:</label>
-            <span style="color:var(--ink-muted);">○ Sesión Detenida</span>
-          </div>
-          <div class="form-row">
-            <label>Título Sesión:</label>
-            <input type="text" id="cfg-title" value="Escritura Experimental" style="width:100%;">
-          </div>
-          <div class="form-row">
-            <label>Modo Grabación:</label>
-            <select id="cfg-rec-mode" style="width:100%;">
-              <option value="completo" selected>Completo (Métricas + Marginalia)</option>
-              <option value="limpio">Solo Texto Limpio</option>
-            </select>
-          </div>
-        `;
+        configBody.innerHTML = renderMusicConfig();
       }
+    }
+
+    function renderMusicConfig() {
+      return `
+        <div class="config-section">
+          <label class="config-label">Sesión</label>
+          <div class="config-field">
+            <label>Título sesión:</label>
+            <input type="text" id="cfg-title" value="Escritura Experimental">
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="mode-a">A · Una Pista</button>
+            <button class="tab-btn" data-tab="mode-b">B · Segmentos y Transiciones</button>
+            <button class="tab-btn" data-tab="curves">Curvas del Tipeo</button>
+          </div>
+
+          <!-- Modo A: Una pista -->
+          <div id="mode-a" class="tab-content active">
+            <label class="config-label">Pista de Audio</label>
+            <div class="config-row">
+              <input type="file" id="f1" accept="audio/*">
+            </div>
+            <audio id="a1" controls loop style="width: 100%; margin-top: 10px;"></audio>
+            <div id="meters" style="margin-top: 12px;"></div>
+          </div>
+
+          <!-- Modo B: Segmentos -->
+          <div id="mode-b" class="tab-content">
+            <label class="config-label">Pistas y Segmentos</label>
+            <div class="config-row">
+              <input type="file" id="f2" multiple accept="audio/*" placeholder="Seleccionar archivos">
+              <label>o carpeta: <input type="file" id="f2d" webkitdirectory></label>
+            </div>
+            
+            <div class="config-row">
+              <select id="sel" style="flex: 1;"></select>
+              <button class="btn-action" id="sx">Exportar Segmentos</button>
+              <label>Importar: <input type="file" id="imp" accept=".json"></label>
+            </div>
+
+            <div class="config-row">
+              <button class="btn-action" id="aseg">Autosegmentar (espectro)</button>
+              <button class="btn-action" id="astop">Parar</button>
+              <label>largo mín (s): <input type="number" id="amin" value="20"></label>
+              <label>largo máx (s): <input type="number" id="amax" value="90"></label>
+              <label>sensibilidad: <input type="range" id="asen" min="0" max="2" step=".1" value=".8"></label>
+            </div>
+
+            <div class="config-row">
+              <label style="flex: 1;">
+                <input type="checkbox" id="are"> Rehacer automáticas
+              </label>
+              <span id="aprog" style="color: var(--mark-lt);"></span>
+            </div>
+
+            <audio id="pv" controls style="width: 100%; margin: 12px 0;"></audio>
+            <div id="tl" style="height: 22px; background: var(--bg); border-radius: 4px; margin: 8px 0;"></div>
+
+            <div class="config-row">
+              <label>inicio (s): <input type="number" id="sa" step=".1" value="0"></label>
+              <button class="btn-action" id="ta">tomar actual</button>
+              <label>fin (s): <input type="number" id="sb" step=".1" value="30"></label>
+              <button class="btn-action" id="tb">tomar actual</button>
+            </div>
+
+            <div class="config-row">
+              <label style="flex: 1;">tags: <input type="text" id="stg" placeholder="fuego:llama|arde, noche" style="width: 100%;"></label>
+            </div>
+
+            <div class="config-row">
+              <label>tonalidad: <select id="sk"></select></label>
+              <label>intensidad 1–5: <input type="number" id="si" min="1" max="5" value="3"></label>
+              <label>fade in (s): <input type="number" id="sfi" min=".1" step=".5" value="3"></label>
+              <label>fade out (s): <input type="number" id="sfo" min=".1" step=".5" value="3"></label>
+              <button class="btn-action" id="add">Agregar Segmento</button>
+            </div>
+
+            <div id="list" style="margin-top: 12px; max-height: 200px; overflow-y: auto;"></div>
+
+            <label class="config-label" style="margin-top: 16px;">Reglas de Cambio</label>
+            <div class="config-row">
+              <label>peso tags: <input type="range" data-w="t" min="0" max="2" step=".1" value="1"></label>
+              <label>peso intensidad: <input type="range" data-w="i" min="0" max="2" step=".1" value=".5"></label>
+              <label>peso tonalidad: <input type="range" data-w="k" min="0" max="2" step=".1" value=".4"></label>
+            </div>
+
+            <div class="config-row">
+              <label>inercia (quedarse): <input type="range" data-w="stay" min="0" max=".8" step=".05" value=".25"></label>
+              <label>umbral de cambio: <input type="range" data-w="thr" min="0" max="1" step=".05" value=".25"></label>
+              <label>permanencia mín (s): <input type="range" data-w="dwell" min="2" max="60" step="1" value="10"></label>
+            </div>
+
+            <div class="config-row">
+              <label>vida media lemas (s): <input type="range" data-w="half" min="10" max="180" step="5" value="45"></label>
+              <label>fatiga/min: <input type="range" data-w="fat" min="0" max="1" step=".05" value=".4"></label>
+              <label>penalización repetir: <input type="range" data-w="rot" min="0" max="1" step=".05" value=".5"></label>
+            </div>
+
+            <div class="config-row">
+              <label>memoria repetición (s): <input type="range" data-w="mem" min="30" max="1800" step="30" value="300"></label>
+            </div>
+
+            <div id="topics" style="margin-top: 12px;"></div>
+            <div id="logx" style="font-size: 9px; color: var(--ink-ghost); max-height: 100px; overflow-y: auto;"></div>
+          </div>
+
+          <!-- Curvas del Tipeo -->
+          <div id="curves" class="tab-content">
+            <label class="config-label">Curvas del Tipeo (Modos A y B)</label>
+            <div class="config-row">
+              <label>t/s máximo: <input type="range" data-p="cpsMax" min="2" max="14" step=".5" value="8"></label>
+              <label>velocidad mín: <input type="range" data-p="rMin" min=".25" max="1" step=".05" value=".7"></label>
+              <label>velocidad máx: <input type="range" data-p="rMax" min="1" max="2" step=".05" value="1.2"></label>
+            </div>
+
+            <div class="config-row">
+              <label>volumen mín: <input type="range" data-p="vMin" min="0" max="1" step=".05" value=".15"></label>
+              <label>volumen máx: <input type="range" data-p="vMax" min="0" max="1" step=".05" value="1"></label>
+              <label>reposo tras (s): <input type="range" data-p="idle" min="1" max="8" step=".5" value="2.5"></label>
+            </div>
+
+            <div class="config-row">
+              <label>suavizado: <input type="range" data-p="smooth" min=".5" max=".97" step=".01" value=".85"></label>
+              <label style="display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" data-p="pitch"> preservar tono
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px;">
+                <input type="checkbox" data-p="filt" checked> filtro según regularidad
+              </label>
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     btnSaveConfig.addEventListener('click', () => {
@@ -1415,7 +1344,91 @@
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
+    /* ═══════════════════════════════════════════════════════════════ TABS ═══ */
+    document.addEventListener('click', (e) => {
+      if (e.target.matches('.tab-btn[data-tab]')) {
+        const tabName = e.target.dataset.tab;
+        $$('.tab-btn[data-tab]').forEach(btn => btn.classList.remove('active'));
+        $$('.tab-content').forEach(content => content.classList.remove('active'));
+        e.target.classList.add('active');
+        document.getElementById(tabName)?.classList.add('active');
+      }
+    });
+
+    /* ═══════════════════════════════════════════════════════════════ GRAPH ═══ */
+    function initGraph() {
+      const svg = document.getElementById('corpus-graph');
+      svg.innerHTML = `
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+      `;
+
+      const nodes = [
+        { id: 'center', x: 160, y: 100, r: 8, label: 'Escribiendo', color: '#3b82f6' },
+        { id: 'n1', x: 70, y: 50, r: 5, label: 'Memoria', color: '#8a8a8a' },
+        { id: 'n2', x: 250, y: 60, r: 5, label: 'Deriva', color: '#8a8a8a' },
+        { id: 'n3', x: 90, y: 150, r: 5, label: 'Ausencia', color: '#8a8a8a' },
+        { id: 'n4', x: 240, y: 140, r: 5, label: 'Flujo', color: '#8a8a8a' }
+      ];
+
+      nodes.slice(1).forEach(n => {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', 160);
+        line.setAttribute('y1', 100);
+        line.setAttribute('x2', n.x);
+        line.setAttribute('y2', n.y);
+        line.setAttribute('stroke', '#242424');
+        line.setAttribute('stroke-width', '1');
+        svg.appendChild(line);
+      });
+
+      nodes.forEach(n => {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', n.x);
+        circle.setAttribute('cy', n.y);
+        circle.setAttribute('r', n.r);
+        circle.setAttribute('fill', n.color);
+        circle.setAttribute('filter', 'url(#glow)');
+        svg.appendChild(circle);
+
+        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        text.setAttribute('x', n.x);
+        text.setAttribute('y', n.y + 14);
+        text.setAttribute('fill', '#666');
+        text.setAttribute('font-size', '8');
+        text.setAttribute('font-family', 'IBM Plex Mono');
+        text.setAttribute('text-anchor', 'middle');
+        text.textContent = n.label;
+        svg.appendChild(text);
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════════════════ TOOLBAR ═══ */
+    cfgFont.addEventListener('change', (e) => {
+      page1.style.fontFamily = e.target.value;
+      page2.style.fontFamily = e.target.value;
+    });
+
+    cfgSize.addEventListener('input', (e) => {
+      page1.style.fontSize = `${e.target.value}px`;
+      page2.style.fontSize = `${e.target.value}px`;
+    });
+
+    cfgLh.addEventListener('change', (e) => {
+      page1.style.lineHeight = e.target.value;
+      page2.style.lineHeight = e.target.value;
+    });
+
     /* ═══════════════════════════════════════════════════════════════ INIT ═══ */
+    const $$ = s => [...document.querySelectorAll(s)];
+
     window.addEventListener('DOMContentLoaded', () => {
       initGraph();
       page1.focus();
