@@ -33,8 +33,11 @@ entrada() {
 
 # guardar "mensaje" ruta...: commitea esas rutas en main del repo privado.
 # Si mientras tanto entró otro commit, se lo trae y reintenta. Con
-# ESTRATEGIA=theirs, si chocan con otra versión de los mismos archivos gana
-# la recién calculada (solo para pasos que escriben archivos calculados).
+# ESTRATEGIA=theirs (solo para pasos que escriben archivos calculados), los
+# archivos que este paso cambió se toman enteros de la versión recién
+# calculada sobre lo último de main; el resto de main queda como está. No se
+# mezclan línea a línea: dos JSON calculados mezclados así salen válidos pero
+# rotos (una propuesta sin «destino» tumbó Superficie el 14/10/2026).
 guardar() {
   local msg="$1"; shift
   cd "$REPO_DIR"
@@ -46,15 +49,30 @@ guardar() {
     return 0
   fi
   git commit -q -m "$msg" >> "$REGISTRO" 2>&1
-  local x=()
-  [ "${ESTRATEGIA:-}" = theirs ] && x=(-X theirs)
+  local mio cambiados=() f
+  mio=$(git rev-parse HEAD)
+  mapfile -t cambiados < <(git diff --name-only --no-renames "$mio~1" "$mio")
   for i in 1 2 3 4; do
     if git push -q origin HEAD:main >> "$REGISTRO" 2>&1; then
       echo "✓ guardado en el repo privado"
       return 0
     fi
     sleep $((i * 3))
-    git pull -q --rebase "${x[@]}" origin main >> "$REGISTRO" 2>&1 || { git rebase --abort || true; return 1; }
+    if [ "${ESTRATEGIA:-}" = theirs ]; then
+      git fetch -q origin main >> "$REGISTRO" 2>&1 || return 1
+      git reset -q --hard origin/main >> "$REGISTRO" 2>&1
+      for f in "${cambiados[@]}"; do
+        if git cat-file -e "$mio:$f" 2>/dev/null; then
+          git checkout -q "$mio" -- "$f" >> "$REGISTRO" 2>&1
+        else
+          git rm -q --ignore-unmatch -- "$f" >> "$REGISTRO" 2>&1
+        fi
+      done
+      git diff --cached --quiet && { echo "· sin cambios que guardar"; return 0; }
+      git commit -q -m "$msg" >> "$REGISTRO" 2>&1
+    else
+      git pull -q --rebase origin main >> "$REGISTRO" 2>&1 || { git rebase --abort || true; return 1; }
+    fi
   done
   echo "✗ no se pudo guardar en el repo privado"
   return 1
