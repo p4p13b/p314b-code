@@ -10,6 +10,7 @@ callado "pesos de los instrumentos" python matriz/recalibrar.py
 callado "propuestas (vectores)" python matriz/proponer_cruces.py
 callado "recorridos" python matriz/calcular_recorridos.py
 callado "capa autónoma" python matriz/autonoma.py
+callado "relaciones de la matriz" python matriz/relaciones.py
 callado "medidas de los conceptos" python matriz/medir.py
 callado "estados de los conceptos" python matriz/estados.py
 ESTRATEGIA=theirs guardar "Matriz: propuestas y recorridos al día" sitio/matriz

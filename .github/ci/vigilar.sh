@@ -4,7 +4,7 @@
 # el que calculó). Solo cuentan los commits de personas, no los del bot.
 #
 #   publicar    sitio/, datos-lee/cowork/CRONOLOGIA.md, datos-lee/txt/,
-#               worker/, wrangler.jsonc, web/. No cuentan los commits con
+#               worker/, wrangler.jsonc. (web/ ya no se versiona.) No cuentan los commits con
 #               [skip ci]: son guardados del taller que ya lanzan la
 #               publicación ellos mismos.
 #   superficie  lemas.json, lemas_auto.py, obras/*.json, el manifest del
@@ -49,7 +49,7 @@ lanzar() {   # lanzar NOMBRE CANTIDAD
   echo "✓ $1: $2 commit(s) nuevos, lanzado"
 }
 
-lanzar publicar   "$(nuevos publicar 1 sitio datos-lee/cowork/CRONOLOGIA.md datos-lee/txt worker wrangler.jsonc web)"
+lanzar publicar   "$(nuevos publicar 1 sitio datos-lee/cowork/CRONOLOGIA.md datos-lee/txt worker wrangler.jsonc)"
 lanzar superficie "$(nuevos superficie 0 sitio/lemas.json sitio/lemas_auto.py 'sitio/obras/*.json' sitio/Archivo/manifest.json sitio/matriz/anexo/scripts datos-lee/txt)"
 lanzar matriz     "$(nuevos matriz 0 sitio/matriz/decisiones.json)"
 
