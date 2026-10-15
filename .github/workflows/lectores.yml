@@ -1,0 +1,53 @@
+# Matriz de lectores: cómo eligen los visitantes en el celular. Baja los pasos
+# anónimos de /api/caminos (el Worker, con el token de la autora) y guarda
+# sitio/matriz/lectores-matriz.json en el repo privado. Es descriptiva: no
+# toca estados ni emergentes (ver sitio/matriz/lectores.py).
+#
+# Corre cada hora y a mano (Actions → Lectores → Run workflow). Con
+# «reiniciar» marcado, borra antes todo lo capturado: para empezar de cero
+# al terminar las pruebas.
+name: Lectores
+
+on:
+  workflow_dispatch:
+    inputs:
+      reiniciar:
+        description: Borrar antes todo lo capturado (empezar de cero)
+        type: boolean
+        default: false
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lectores
+  cancel-in-progress: false
+
+jobs:
+  lectores:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      P314B_TOKEN: ${{ secrets.P314B_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: _ci
+      - uses: actions/checkout@v4
+        with:
+          repository: p4p13b/p314b
+          token: ${{ secrets.P314B_TOKEN }}
+          ref: main
+          path: p314b
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Pasos del celular y matriz de lectores
+        run: bash _ci/.github/ci/lectores.sh
+
+      - name: Guardar el registro (si falló)
+        if: failure()
+        run: bash _ci/.github/ci/registro.sh lectores
