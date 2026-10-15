@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Arma web/ en el repo privado y la deja lista para subir a Cloudflare. web/ ya
 # no se versiona (está en el .gitignore del repo privado): se arma en el disco
-# del runner y desplegar.sh la sube desde ahí. En main solo se guarda sitio/.
+# del runner y desplegar.sh la suba desde ahí. En main solo se guarda sitio/.
 # Con «eliminar», antes saca esas obras del sitio (eliminar_obra.py).
 . "$(dirname "$0")/comun.sh"
 
@@ -49,21 +49,18 @@ resumen() {
   [ -f "$REPO_DIR/registros/ultima-publicacion.md" ] && echo registros/ultima-publicacion.md || true
 }
 # Si mientras se armaba entró otra publicación o la matriz, los archivos
-# calculados chocan: se descarta lo armado, se trae main y se vuelve a
-# armar sobre lo último (una vez). Con «eliminar» no: lo que hizo
-# eliminar_obra.py se perdería al traer main.
+# calculados chocan: se hace un pull con rebase, se descarta lo armado si falla,
+# se trae origin/main y se vuelve a armar sobre lo último.
 if ! armar_y_guardar; then
   [ -z "$ELIMINAR" ] || exit 1
-  echo "· chocó con otro cambio en main: se vuelve a armar sobre lo último"
+  echo "· chocó con otro cambio en main: intentando rebase e integración sobre lo último"
+  git -C "$REPO_DIR" pull --rebase origin main >> "$REGISTRO" 2>&1 || true
   git -C "$REPO_DIR" rebase --abort >> "$REGISTRO" 2>&1 || true
   git -C "$REPO_DIR" fetch -q origin main >> "$REGISTRO" 2>&1
   git -C "$REPO_DIR" reset -q --hard origin/main >> "$REGISTRO" 2>&1
   git -C "$REPO_DIR" clean -qfd -- sitio >> "$REGISTRO" 2>&1
   ORIGEN=$(git -C "$REPO_DIR" rev-parse HEAD)
   if ! armar_y_guardar; then
-    # Sin web/ nueva igual queda el resumen de por qué: se lo aparta, se
-    # vuelve a main tal cual (nada de lo armado se guarda) y se guarda solo
-    # ese archivo.
     if [ -n "$(resumen)" ]; then
       cp "$REPO_DIR/registros/ultima-publicacion.md" "$RUNNER_TEMP/resumen.md"
       git -C "$REPO_DIR" rebase --abort >> "$REGISTRO" 2>&1 || true
