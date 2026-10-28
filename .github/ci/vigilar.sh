@@ -71,6 +71,6 @@ echo "· PR: $pendientes para comprobar"
 
 # Un repo público sin commits apaga sus workflows con reloj a los 60 días.
 # Volver a activarlos reinicia la cuenta.
-for wf in vigilar matriz superficie; do
+for wf in vigilar matriz superficie tiradas; do
   gh api -X PUT "repos/$GITHUB_REPOSITORY/actions/workflows/$wf.yml/enable" > /dev/null 2>&1 || true
 done
