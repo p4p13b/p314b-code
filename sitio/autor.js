@@ -9,8 +9,9 @@
       token válido no hay botón, parámetro ni clave que abra nada.
 
    En modo web, las herramientas (taller, matriz) leen los datos directo
-   del repo por la API (siempre la última versión de main) y escriben ahí
-   con el mismo token. Ver publicar.js y .github/workflows/publicar.yml.
+   del repo por la API (siempre la última versión de main, no la copia
+   publicada) y escriben ahí con el mismo token. Ver publicar.js y
+   .github/workflows/publicar.yml.
 
    Uso en una página:
      <script src="autor.js"></script>              en el <head>, sin defer
@@ -28,9 +29,8 @@
   var local = location.protocol === 'file:' ||
     h === 'localhost' || h === '127.0.0.1' || h === '[::1]' || h === '::1' || h === '';
 
-  // Se usa sessionStorage para no dejar el token expuesto en localStorage de forma permanente
-  function leer(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
-  function poner(k, v) { try { if (v == null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} }
+  function leer(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function poner(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
 
   var yo = document.currentScript;
   var herramienta = !!(yo && yo.hasAttribute('data-herramienta'));
@@ -84,6 +84,10 @@
   }
   async function escribirArchivo(rel, contenido, mensaje) {
     var ruta = '/repos/' + REPO.owner + '/' + REPO.repo + '/contents/' + rutaRepo(rel).split('/').map(encodeURIComponent).join('/');
+    // La versión actual (sha) se lee siempre sin caché: el navegador puede
+    // guardar esta respuesta hasta 60 s y, al publicar dos veces seguidas,
+    // mandaba una versión vieja (409). Si igual choca, se relee y se
+    // reintenta una vez.
     var r;
     for (var intento = 0; intento < 2; intento++) {
       var sha;
@@ -104,7 +108,7 @@
     if (!r.ok) { avisarToken(r.status); throw new Error(explicar(r.status, 'leer ' + rel)); }
     return r.text();
   }
-  // Nombres de los archivos de una carpeta del sitio.
+  // Nombres de los archivos de una carpeta del sitio (p. ej. las láminas).
   async function listarCarpeta(rel) {
     var ruta = '/repos/' + REPO.owner + '/' + REPO.repo + '/contents/' + rutaRepo(rel).split('/').map(encodeURIComponent).join('/') + '?ref=' + REPO.rama + '&t=' + Date.now();
     var r = await api(ruta, { cache: 'no-store' });
@@ -113,18 +117,20 @@
     var d = await r.json();
     return Array.isArray(d) ? d.filter(function (x) { return x.type === 'file'; }).map(function (x) { return x.name; }) : [];
   }
-  // Borra un archivo de la papelera del repo. Solo papelera/*.json.
+  // Borra un archivo de la papelera del repo (lo pide la autora desde
+  // «guardadas» en el taller). Solo papelera/*.json: nada más se borra así.
   async function borrarArchivo(rel, mensaje) {
     if (!/^papelera\/[^\/]+\.json$/.test(rel)) throw new Error('solo se pueden borrar archivos de la papelera: ' + rel);
     var ruta = '/repos/' + REPO.owner + '/' + REPO.repo + '/contents/' + rutaRepo(rel).split('/').map(encodeURIComponent).join('/');
     var r0 = await api(ruta + '?ref=' + REPO.rama + '&t=' + Date.now(), { cache: 'no-store' });
-    if (r0.status === 404) return null;
+    if (r0.status === 404) return null;          // ya no estaba
     if (!r0.ok) { avisarToken(r0.status); throw new Error(explicar(r0.status, 'leer ' + rel)); }
     var r = await api(ruta, { method: 'DELETE', body: JSON.stringify({ message: mensaje, sha: (await r0.json()).sha, branch: REPO.rama }) });
     if (!r.ok) { avisarToken(r.status); throw new Error(explicar(r.status, 'borrar ' + rel + ' (permiso Contents)')); }
     return (await r.json()).commit.sha;
   }
   async function dispararPublicacion(obra, sacar) {
+    // sacar: { slug, modo: 'ocultar' | 'eliminar' } para quitar una obra.
     var desde = new Date(Date.now() - 5000).toISOString();
     var inputs = { obra: obra || '' };
     if (sacar) { inputs.eliminar = sacar.slug; inputs.modo = sacar.modo; }
@@ -141,6 +147,8 @@
     return runs[0] || null;
   }
 
+  // Cualquier workflow (actualizar.yml: «actualizar todo»), y su estado
+  // con los pasos del job que está corriendo.
   async function dispararWorkflow(archivo, inputs) {
     var desde = new Date(Date.now() - 5000).toISOString();
     var r = await api('/repos/' + REPO.owner + '/' + REPO.repo + '/actions/workflows/' + archivo + '/dispatches', {
@@ -159,7 +167,13 @@
     return run;
   }
 
+  // En modo web, las HERRAMIENTAS (taller, matriz) leen los archivos de
+  // trabajo del repo por la API (la última versión de main: web/ no los
+  // tiene). Las páginas públicas (índice, obras) leen lo publicado, igual
+  // que un visitante. Los PDF siguen viniendo del sitio.
   window.__fetchOriginal = window.fetch.bind(window);
+  // Un 401/403 de GitHub es casi siempre el token (vencido o sin el
+  // permiso Contents/Actions): se avisa una vez, con el camino al arreglo.
   var avisado = false;
   function avisarToken(status) {
     if (avisado || (status !== 401 && status !== 403)) return;
@@ -184,6 +198,8 @@
         if (url.origin === location.origin && url.pathname.indexOf(base.pathname) === 0 && !/\.pdf$/i.test(url.pathname)) {
           var rel = decodeURIComponent(url.pathname.slice(base.pathname.length)) || 'index.html';
           var ruta = '/repos/' + REPO.owner + '/' + REPO.repo + '/contents/' + rutaRepo(rel).split('/').map(encodeURIComponent).join('/') + '?ref=' + REPO.rama;
+          // Si el token venció o no alcanza, se lee la copia publicada:
+          // el sitio nunca se rompe por un token viejo.
           return api(ruta, { headers: { 'Accept': 'application/vnd.github.raw' }, cache: 'no-store' })
             .then(function (r) { if (!r.ok) avisarToken(r.status); return r.ok ? r : window.__fetchOriginal(entrada, opts); },
                   function () { return window.__fetchOriginal(entrada, opts); });
@@ -233,7 +249,5 @@
     dispararWorkflow: dispararWorkflow,
     estadoWorkflow: estadoWorkflow
   };
-  window.P314B_AUTOR = autor;
-})();
   window.P314B_AUTOR = autor; // compatibilidad
 })();
