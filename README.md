@@ -9,7 +9,8 @@ lo publican.
   obras y los datos. `web/` se arma en el runner al publicar y se sube a
   Cloudflare; ya no se guarda en el repo privado. Ver `.github/ci/comun.sh`.
 - **El resto** (`sitio/`, `worker/`, `tests/`…) es una copia del código al
-  06/10/2026. El código vigente vive en el repo privado.
+  06/10/2026 y **no se edita**: lo que se cambie ahí no llega al sitio. El
+  código vigente vive en el repo privado (`p4p13b/p314b`, carpeta `sitio/`).
 
 Los textos y las obras de p314b tienen su propia licencia (CC BY-NC-ND 4.0)
 y no están en este repo.
