@@ -1,0 +1,54 @@
+# Tiradas: suma semillas nuevas a las pruebas al azar de la matriz
+# (medir.py --rondas) y recalcula los estados, sin rearmar el índice ni las
+# propuestas. Solo Python, sin modelos: tarda unos minutos.
+#
+# Las tiradas se acumulan en sitio/matriz/tiradas-matriz.json mientras no
+# cambie el material de cada concepto; un concepto que ya quedó estable no
+# suma más, así que correrla de más no cuesta casi nada. Corre una vez por
+# semana (jueves) y a mano (Actions → Tiradas → Run workflow), con la
+# cantidad de rondas que se elija.
+name: Tiradas
+
+on:
+  workflow_dispatch:
+    inputs:
+      rondas:
+        description: 'Tandas de semillas nuevas por concepto (5 tiradas cada una)'
+        default: '4'
+  schedule:
+    - cron: '17 15 * * 4'
+
+permissions:
+  contents: read
+
+# El mismo grupo que «Matriz»: las dos escriben sitio/matriz/.
+concurrency:
+  group: matriz
+  cancel-in-progress: false
+
+jobs:
+  tiradas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      P314B_TOKEN: ${{ secrets.P314B_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: _ci
+      - uses: actions/checkout@v4
+        with:
+          repository: p4p13b/p314b
+          token: ${{ secrets.P314B_TOKEN }}
+          ref: main
+          path: p314b
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Tiradas y estados
+        run: bash _ci/.github/ci/tiradas.sh
+
+      - name: Guardar el registro (si falló)
+        if: failure()
+        run: bash _ci/.github/ci/registro.sh tiradas
