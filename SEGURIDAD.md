@@ -9,7 +9,7 @@ Se aplica solo en cada publicación:
     todo el dominio sirva por HTTPS.
   - Política de contenido: solo se cargan scripts, estilos y fuentes del
     propio sitio, cdnjs, jsDelivr y Google Fonts. La única conexión externa
-    es la API de GitHub (el token de la autora).
+    es la API de GitHub (el token del autor).
   - Nadie puede meter el sitio dentro de un iframe ajeno.
   - `nosniff` y referer mínimo.
   - Sin cámara, micrófono, ubicación ni pagos.
@@ -26,7 +26,7 @@ Se aplica solo en cada publicación:
 
 Lo revisado y lo decidido:
 
-- **Scripts de terceros (corregido).** El token de autora vive en el
+- **Scripts de terceros (corregido).** El token de autor vive en el
   navegador (`localStorage`) y cualquier script del sitio puede leerlo. Las
   páginas cargaban pdf.js, d3, KaTeX y baffle desde cdnjs y jsDelivr, sin
   control de integridad: si un CDN servía un archivo alterado, se llevaba el
@@ -51,7 +51,7 @@ Lo revisado y lo decidido:
 - **Cabeceras (bien).** HSTS, `nosniff`, sin iframes ajenos, sin cámara,
   micrófono ni ubicación; las herramientas, sin indexar.
 
-Queda en manos de la autora:
+Queda en manos del autor:
 
 - El token vence (así tiene que ser). Cuando GitHub lo rechaza, se saca uno
   nuevo con los mismos permisos y se pega en `acceso.html`.
@@ -66,7 +66,7 @@ Queda en manos de la autora:
    de los dos. El sitio responde igual en ambos; a los buscadores se les
    indica que la dirección principal es www.
    - **Opcional, recomendado:** redirigir siempre a www, para que haya una
-     sola dirección (el token de autora se guarda por dirección). En
+     sola dirección (el token de autor se guarda por dirección). En
      **Rules → Redirect Rules**, creá una redirección 301 de
      `p314b.space/*` a `https://www.p314b.space/${1}`, conservando la
      consulta.
@@ -109,7 +109,7 @@ Queda en manos de la autora:
 
 ## Al cambiar de dominio
 
-El token de autora se guarda en el navegador, por dominio. Hay que volver
+El token de autor se guarda en el navegador, por dominio. Hay que volver
 a pegarlo una vez en `https://www.p314b.space/acceso.html`, en cada
 navegador que uses. En el dominio viejo convendría borrarlo: botón
 «olvidar token».

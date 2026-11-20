@@ -1,6 +1,6 @@
 # Matriz relacional: índice de pasajes, pesos, propuestas, recorridos y capa
 # autónoma, en el repo privado. Escribe solo sitio/matriz/, que no se
-# publica: lo ve la autora en matriz.html y en el taller.
+# publica: lo ve el autor en matriz.html y en el taller.
 #
 # Corre todos los días, cuando vigilar.yml ve decisiones nuevas
 # (sitio/matriz/decisiones.json) y a mano. El índice con las páginas

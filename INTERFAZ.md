@@ -17,7 +17,7 @@ hacerlo.
 | web | `sitio/`, `web/`, `wrangler.jsonc` | `publicar.yml` (`sitio/**`), `matriz.yml` | sí, `web/` en p314b.space |
 | pulenta | `pulenta/` (`scripts/`, `datos/`) | lo corre `superficie.yml` | no (sus datos entran en `web/` por `parientes.py` y `publicados.py`) |
 
-`datos-lee/` es cuerpo de la autora: lo leen los dos lados, no es de
+`datos-lee/` es cuerpo del autor: lo leen los dos lados, no es de
 ninguno.
 
 ## De la web a pulenta
@@ -32,7 +32,7 @@ lee, sin modificar nada:
   `sitio/matriz/anexo/scripts/fechas.py`.
 - `cache-matriz/anexo/estructural.json`: los vectores de la fase 2 del
   anexo. Lo arma `sitio/matriz/anexo/scripts/estructural.py`.
-- `sitio/lemas.json`: los lemas de la autora.
+- `sitio/lemas.json`: los lemas del autor.
 - Los módulos `lematica.py` y `_rutas.py` de `sitio/matriz/anexo/scripts/`,
   importados desde ahí (no copiados), para que pulenta lematice igual que
   la matriz.
@@ -40,8 +40,8 @@ lee, sin modificar nada:
   `datos-lee/`), por la ruta `fuente` que trae `pasajes.json`.
 
 Escribe solo en `pulenta/datos/`: `familias.json`,
-`familias-revision.csv` (con columnas vacías para la decisión de la
-autora) y `obras.json`. El sitio lee `familias.json` (`sitio/parientes.py`)
+`familias-revision.csv` (con columnas vacías para la decisión del
+autor) y `obras.json`. El sitio lee `familias.json` (`sitio/parientes.py`)
 y `obras.json` (`sitio/publicados.py`).
 
 ## De pulenta a la web
