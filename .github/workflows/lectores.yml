@@ -1,5 +1,5 @@
 # Matriz de lectores: cómo eligen los visitantes en el celular. Baja los pasos
-# anónimos de /api/caminos (el Worker, con el token de la autora) y guarda
+# anónimos de /api/caminos (el Worker, con el token del autor) y guarda
 # sitio/matriz/lectores-matriz.json en el repo privado. Es descriptiva: no
 # toca estados ni emergentes (ver sitio/matriz/lectores.py).
 #

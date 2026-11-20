@@ -5,7 +5,7 @@ lo publican.
 
 - **`.github/workflows/` y `.github/ci/`** son lo que está vivo: los
   workflows corren acá (en un repo público los minutos de Actions no se
-  cobran) y trabajan sobre el repo privado de la autora, donde están las
+  cobran) y trabajan sobre el repo privado del autor, donde están las
   obras y los datos. `web/` se arma en el runner al publicar y se sube a
   Cloudflare; ya no se guarda en el repo privado. Ver `.github/ci/comun.sh`.
 - **El resto** (`sitio/`, `worker/`, `tests/`…) es una copia del código al
