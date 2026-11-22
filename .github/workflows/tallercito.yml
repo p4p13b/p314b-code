@@ -74,3 +74,50 @@ jobs:
           gh release create tallercito tallercito.apk --target "$GITHUB_SHA" \
             -t "Tallercito (app del celular)" \
             -n "APK de la app del celular. Se instala encima de la anterior sin perder los borradores. Versión ${{ github.run_number }}."
+
+  # Prueba de humo en un emulador: instala la APK, la abre, toca «＋ nuevo»
+  # y guarda capturas y el logcat. Falla si la app se cierra sola.
+  prueba:
+    needs: apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tallercito-apk
+      - name: KVM para el emulador
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: default
+          disable-animations: true
+          script: |
+            mkdir -p capturas
+            adb install -r tallercito.apk
+            adb logcat -c
+            adb shell am start -n space.p314b.tallercito/.MainActivity
+            sleep 8
+            adb exec-out screencap -p > capturas/1-principal.png
+            adb shell uiautomator dump /sdcard/v.xml && adb pull /sdcard/v.xml capturas/1-principal.xml || true
+            adb shell input tap 540 330
+            sleep 2
+            adb exec-out screencap -p > capturas/2-nuevo.png
+            adb shell input tap 540 480
+            sleep 3
+            adb exec-out screencap -p > capturas/3-editor.png
+            adb shell input text "Prueba%sdel%stallercito"
+            sleep 1
+            adb exec-out screencap -p > capturas/4-escrito.png
+            adb logcat -d > capturas/logcat.txt
+            if grep -E "FATAL EXCEPTION|AndroidRuntime: Process: space.p314b" capturas/logcat.txt; then echo "La app se cerró"; exit 1; fi
+            adb shell pidof space.p314b.tallercito
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tallercito-capturas
+          path: capturas/
