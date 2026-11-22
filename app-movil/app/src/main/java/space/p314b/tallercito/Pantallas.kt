@@ -331,7 +331,7 @@ private fun Tecla(t: String, on: Boolean, italica: Boolean = false, ancho: Boole
 @Composable
 fun ColumnScope.Vista(est: Estado, ed: Edicion) {
     val col = c
-    Arriba("vista previa", "así se ve en el sitio")
+    Arriba("← editor", "vista previa", alIzq = { est.pantalla = Pantalla.EDITOR })
     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 24.dp)) {
         Mono(if (ed.partes.size > 1) "texto" else "nota", 10.sp, c.red, mayus = true)
         Hueco(8)

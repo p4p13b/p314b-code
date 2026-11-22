@@ -116,6 +116,7 @@ jobs:
           mkdir -p capturas
           cap() { sleep 2; adb exec-out screencap -p > "capturas/$1.png"; }
           adb install -r tallercito.apk
+          adb shell cmd uimode night yes
           adb logcat -c
           adb shell am start -n space.p314b.tallercito/.MainActivity
           sleep 8; cap 1-principal
