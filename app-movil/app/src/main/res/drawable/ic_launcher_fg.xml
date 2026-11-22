@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Un renglón blanco y un punto rojo: la libreta del sitio. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#F5F5F5" android:pathData="M34,58h30v3h-30z" />
+    <path android:fillColor="#F5F5F5" android:pathData="M34,48h40v3h-40z" />
+    <path android:fillColor="#E0393A" android:pathData="M72,59.5m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+</vector>

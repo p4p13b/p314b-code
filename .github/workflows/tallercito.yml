@@ -1,0 +1,76 @@
+# Tallercito: arma la APK de la app del celular (app-movil/).
+#
+# Corre al cambiar app-movil/ en cualquier rama (la APK queda como artefacto
+# de la corrida) y a mano. En main, además, la publica como «release»
+# tallercito, con un enlace fijo para bajarla desde el celular:
+#   https://github.com/p4p13b/p314b-code/releases/download/tallercito/tallercito.apk
+#
+# La firma sale del repo privado (app-movil/firma/, misma rama que esta).
+# Sin ella se firma con una llave de depuración: esa APK no se instala
+# encima de una firmada con la llave propia.
+name: Tallercito (APK)
+
+on:
+  push:
+    paths:
+      - 'app-movil/**'
+      - '.github/workflows/tallercito.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tallercito-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Llave de firma (repo privado)
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          repository: p4p13b/p314b
+          token: ${{ secrets.P314B_TOKEN }}
+          ref: ${{ github.ref_name }}
+          path: _privado
+          sparse-checkout: app-movil/firma
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Armar la APK
+        run: |
+          F=_privado/app-movil/firma
+          if [ -f "$F/tallercito.jks" ]; then
+            export TALLERCITO_KS="$PWD/$F/tallercito.jks"
+            export TALLERCITO_KS_CLAVE="$(cat "$F/clave.txt")"
+            echo "Firma: llave propia"
+          else
+            echo "::warning::Sin la llave del repo privado: se firma con la de depuración."
+          fi
+          cd app-movil
+          gradle --no-daemon --stacktrace assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk ../tallercito.apk
+          ls -l ../tallercito.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tallercito-apk
+          path: tallercito.apk
+      - name: Publicar en Releases (solo main)
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete tallercito -y --cleanup-tag || true
+          gh release create tallercito tallercito.apk --target "$GITHUB_SHA" \
+            -t "Tallercito (app del celular)" \
+            -n "APK de la app del celular. Se instala encima de la anterior sin perder los borradores. Versión ${{ github.run_number }}."
