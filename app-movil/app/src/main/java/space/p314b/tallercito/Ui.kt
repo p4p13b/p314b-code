@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +35,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+
+/* La letra de la app: EB Garamond (res/font). */
+val Garamond = FontFamily(
+    Font(R.font.garamond_regular, FontWeight.Normal, FontStyle.Normal),
+    Font(R.font.garamond_italic, FontWeight.Normal, FontStyle.Italic),
+    Font(R.font.garamond_bold, FontWeight.Bold, FontStyle.Normal),
+    Font(R.font.garamond_bold_italic, FontWeight.Bold, FontStyle.Italic),
+)
+
+private var garamondCache: android.graphics.Typeface? = null
+fun garamond(ctx: android.content.Context): android.graphics.Typeface =
+    garamondCache ?: (androidx.core.content.res.ResourcesCompat.getFont(ctx, R.font.garamond) ?: android.graphics.Typeface.SERIF).also { garamondCache = it }
 
 /* Colores del sitio: oscuro (negro, tinta clara, rojo) y claro (blanco y rojo). */
 data class Colores(
@@ -64,7 +77,7 @@ fun Tema(contenido: @Composable () -> Unit) {
 /** Texto serif (el del sitio). */
 @Composable
 fun Serif(t: String, size: TextUnit = 17.sp, color: Color = c.soft, italic: Boolean = false, modifier: Modifier = Modifier, align: TextAlign? = null) =
-    BasicText(t, modifier, TextStyle(color = color, fontSize = size, fontFamily = FontFamily.Serif,
+    BasicText(t, modifier, TextStyle(color = color, fontSize = size, fontFamily = Garamond,
         fontStyle = if (italic) FontStyle.Italic else FontStyle.Normal, lineHeight = size * 1.4, textAlign = align ?: TextAlign.Start))
 
 /** Texto mono (etiquetas, datos). */
