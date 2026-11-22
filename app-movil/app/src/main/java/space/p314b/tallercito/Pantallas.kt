@@ -211,7 +211,7 @@ fun ColumnScope.Editor(est: Estado, ed: Edicion) {
         BasicTextField(
             ed.titulo, { ed.titulo = it; ed.sucio = true },
             Modifier.fillMaxWidth().padding(vertical = 6.dp),
-            textStyle = TextStyle(color = c.ink, fontSize = 22.sp, fontFamily = FontFamily.Serif, fontStyle = FontStyle.Italic),
+            textStyle = TextStyle(color = c.ink, fontSize = 22.sp, fontFamily = Garamond, fontStyle = FontStyle.Italic),
             singleLine = true, cursorBrush = SolidColor(c.red),
             decorationBox = { inner -> Box { if (ed.titulo.isEmpty()) Serif("Título", 22.sp, c.ghost, italic = true); inner() } },
         )
@@ -240,23 +240,24 @@ fun ColumnScope.Editor(est: Estado, ed: Edicion) {
         val v = ed.vista
         val vuelta = tick // se vuelve a calcular la barra cuando se mueve el cursor
         val sel = v?.selectionStart ?: 0
-        val al = v?.let { Formato.alineacionEn(it.text, sel) } ?: Layout.Alignment.ALIGN_NORMAL
-        val fam = v?.let { Formato.familiaEn(it.text, sel) } ?: "serif"
-        val tam = v?.let { Formato.tamanoEn(it.text, sel) }
+        val al = v?.let { Formato.alineacionEn(it.text, sel) } ?: "left"
+        val fam = v?.let { Formato.familiaEn(it) } ?: "serif"
+        val tam = v?.let { Formato.tamanoEn(it) }
         val bold = v?.let { Formato.tiene(it.text, it.selectionStart, it.selectionEnd, Typeface.BOLD) } ?: false
         val ital = v?.let { Formato.tiene(it.text, it.selectionStart, it.selectionEnd, Typeface.ITALIC) } ?: false
-        fun op(f: (EditorTexto) -> Unit) { ed.vista?.let { f(it); ed.sucio = true; tick++ } }
+        fun op(f: (EditorTexto) -> Unit) { ed.vista?.let { f(it); justificar(it); ed.sucio = true; tick++ } }
         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Tecla("⇤", al == Layout.Alignment.ALIGN_NORMAL) { op { Formato.alinear(it, Layout.Alignment.ALIGN_NORMAL) } }
-            Tecla("⇔", al == Layout.Alignment.ALIGN_CENTER) { op { Formato.alinear(it, Layout.Alignment.ALIGN_CENTER) } }
-            Tecla("⇥", al == Layout.Alignment.ALIGN_OPPOSITE) { op { Formato.alinear(it, Layout.Alignment.ALIGN_OPPOSITE) } }
+            Tecla("⇤", al == "left") { op { Formato.alinear(it, "left") } }
+            Tecla("⇔", al == "center") { op { Formato.alinear(it, "center") } }
+            Tecla("⇥", al == "right") { op { Formato.alinear(it, "right") } }
+            Tecla("☰", al == "justify") { op { Formato.alinear(it, "justify") } }
             Box(Modifier.weight(1f))
             Tecla("B", bold) { op { Formato.alternar(it, Typeface.BOLD) } }
             Tecla("I", ital, italica = true) { op { Formato.alternar(it, Typeface.ITALIC) } }
             Tecla("N", false) { op { Formato.normal(it) } }
         }
         Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            val nombreFam = mapOf("serif" to "serif", "sans-serif" to "sans", "monospace" to "mono")
+            val nombreFam = mapOf("serif" to "garamond", "sans-serif" to "sans", "monospace" to "mono")
             Tecla("letra: ${nombreFam[fam]} ▾", fam != "serif", ancho = true) {
                 val sig = when (fam) { "serif" -> "sans-serif"; "sans-serif" -> "monospace"; else -> "serif" }
                 op { Formato.fuente(it, sig) }
@@ -275,13 +276,14 @@ fun ColumnScope.Editor(est: Estado, ed: Edicion) {
                         setHintTextColor(col.ghost.toArgb())
                         highlightColor = col.red.copy(alpha = 0.3f).toArgb()
                         hint = "Escribí…"
-                        typeface = Typeface.SERIF
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+                        typeface = garamond(ctx)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
                         setLineSpacing(0f, 1.35f)
                         gravity = Gravity.TOP or Gravity.START
                         inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
                         setPadding(36, 30, 36, 30)
                         setText(Formato.aSpanned(ed.partes[ed.idx]))
+                        justificar(this)
                         addTextChangedListener(object : TextWatcher {
                             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, d: Int) {}
                             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, d: Int) {}
@@ -303,12 +305,18 @@ fun ColumnScope.Editor(est: Estado, ed: Edicion) {
     }
 }
 
+/** Android justifica el cuadro entero: se activa cuando todo el texto corrido está justificado. */
+private fun justificar(v: TextView) {
+    v.justificationMode = if (Formato.todoJustificado(v.text as? android.text.Spanned ?: return)) android.text.Layout.JUSTIFICATION_MODE_INTER_WORD else android.text.Layout.JUSTIFICATION_MODE_NONE
+}
+
 private fun cambiarParte(ed: Edicion, n: Int) {
     ed.volcar()
     ed.idx = n
     ed.vista?.let {
         it.tag = "cargando"
         it.setText(Formato.aSpanned(ed.partes[n]))
+        justificar(it)
         it.tag = null
     }
 }
@@ -348,11 +356,11 @@ fun ColumnScope.Vista(est: Estado, ed: Edicion) {
             AndroidView(factory = { ctx ->
                 TextView(ctx).apply {
                     setTextColor(col.soft.toArgb())
-                    typeface = Typeface.SERIF
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+                    typeface = garamond(ctx)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
                     setLineSpacing(0f, 1.45f)
                 }
-            }, update = { it.text = Formato.aSpanned(html) }, modifier = Modifier.fillMaxWidth())
+            }, update = { it.text = Formato.aSpanned(html); justificar(it) }, modifier = Modifier.fillMaxWidth())
         }
     }
     Abajo {
@@ -404,7 +412,7 @@ fun ColumnScope.DestinoPantalla(est: Estado, ed: Edicion) {
                     Row(Modifier.fillMaxWidth().padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
                         Mono("⌕ ", 14.sp, c.ghost)
                         BasicTextField(buscar, { buscar = it }, Modifier.weight(1f), singleLine = true,
-                            textStyle = TextStyle(color = c.soft, fontSize = 16.sp, fontFamily = FontFamily.Serif), cursorBrush = SolidColor(c.red),
+                            textStyle = TextStyle(color = c.soft, fontSize = 16.sp, fontFamily = Garamond), cursorBrush = SolidColor(c.red),
                             decorationBox = { inner -> Box { if (buscar.isEmpty()) Serif("buscar", 16.sp, c.ghost); inner() } })
                     }
                     Linea()

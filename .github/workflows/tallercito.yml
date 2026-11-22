@@ -128,6 +128,8 @@ jobs:
           adb shell input text "Segundo%sparrafo."
           adb shell input keyevent 4
           cap 4-escrito
+          python3 tocar.py "tamaño: normal ▾"; cap 5a-tamano-grande
+          python3 tocar.py "☰"; cap 5b-justificado
           python3 tocar.py "B"; cap 5-negrita
           python3 tocar.py "VISTA PREVIA →"; cap 6-vista
           python3 tocar.py "SIGUIENTE →"; cap 7-destino
