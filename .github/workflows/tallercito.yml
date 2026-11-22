@@ -65,18 +65,29 @@ jobs:
         with:
           name: tallercito-apk
           path: tallercito.apk
+      - name: Publicar la prueba (ramas que no son main)
+        if: github.ref != 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete tallercito-prueba -R "$GITHUB_REPOSITORY" -y --cleanup-tag || true
+          gh release create tallercito-prueba tallercito.apk -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            -t "Tallercito (prueba, rama ${{ github.ref_name }})" \
+            -n "APK de prueba, todavía sin mergear. Versión ${{ github.run_number }}."
       - name: Publicar en Releases (solo main)
         if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete tallercito -y --cleanup-tag || true
-          gh release create tallercito tallercito.apk --target "$GITHUB_SHA" \
+          gh release delete tallercito -R "$GITHUB_REPOSITORY" -y --cleanup-tag || true
+          gh release create tallercito tallercito.apk -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
             -t "Tallercito (app del celular)" \
             -n "APK de la app del celular. Se instala encima de la anterior sin perder los borradores. Versión ${{ github.run_number }}."
 
-  # Prueba de humo en un emulador: instala la APK, la abre, toca «＋ nuevo»
-  # y guarda capturas y el logcat. Falla si la app se cierra sola.
+  # Prueba de humo en un emulador: instala la APK, recorre A → B → vista
+  # previa → C → guardar, y guarda capturas y el logcat. Falla si la app se
+  # cierra sola. En ramas que no son main, las capturas van a la release de
+  # prueba.
   prueba:
     needs: apk
     runs-on: ubuntu-latest
@@ -85,6 +96,49 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: tallercito-apk
+      - name: Guion de la prueba
+        run: |
+          cat > tocar.py <<'PY'
+          import re, subprocess, sys
+          xml = subprocess.run(['adb', 'exec-out', 'uiautomator', 'dump', '/dev/tty'], capture_output=True, text=True).stdout
+          for m in re.finditer(r'<node [^>]*>', xml):
+              n = m.group(0)
+              t = re.search(r' text="([^"]*)"', n).group(1)
+              d = re.search(r' content-desc="([^"]*)"', n).group(1)
+              if sys.argv[1] in (t, d) or (len(sys.argv) > 2 and sys.argv[1] in t):
+                  x1, y1, x2, y2 = map(int, re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n).groups())
+                  subprocess.run(['adb', 'shell', 'input', 'tap', str((x1 + x2) // 2), str((y1 + y2) // 2)])
+                  print('toqué', sys.argv[1]); sys.exit(0)
+          print('NO ESTÁ:', sys.argv[1]); print(re.findall(r' text="([^"]+)"', xml)); sys.exit(1)
+          PY
+          cat > prueba.sh <<'SH'
+          set -x
+          mkdir -p capturas
+          cap() { sleep 2; adb exec-out screencap -p > "capturas/$1.png"; }
+          adb install -r tallercito.apk
+          adb logcat -c
+          adb shell am start -n space.p314b.tallercito/.MainActivity
+          sleep 8; cap 1-principal
+          python3 tocar.py "＋ NUEVO"; cap 2-nuevo
+          python3 tocar.py "Nuevo borrador · Nota"; cap 3-editor
+          python3 tocar.py "Título"; adb shell input text "Prueba%sdel%stallercito"
+          python3 tocar.py "Escribí…" || adb shell input tap 540 1300
+          adb shell input text "Primer%sparrafo%sde%sprueba."; adb shell input keyevent 66
+          adb shell input text "Segundo%sparrafo."
+          adb shell input keyevent 4
+          cap 4-escrito
+          python3 tocar.py "B"; cap 5-negrita
+          python3 tocar.py "VISTA PREVIA →"; cap 6-vista
+          python3 tocar.py "SIGUIENTE →"; cap 7-destino
+          python3 tocar.py "NO"; sleep 4; cap 8-sumar
+          python3 tocar.py "RETORNAR A LA PANTALLA PRINCIPAL"; cap 9-aviso
+          python3 tocar.py "SEGUIR EDITANDO"
+          python3 tocar.py "SÍ"
+          python3 tocar.py "GUARDAR BORRADOR"; cap 10-guardado
+          adb logcat -d > capturas/logcat.txt
+          if grep -E "FATAL EXCEPTION" capturas/logcat.txt; then echo "La app se cerró"; exit 1; fi
+          adb shell pidof space.p314b.tallercito
+          SH
       - name: KVM para el emulador
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -94,30 +148,17 @@ jobs:
         with:
           api-level: 30
           arch: x86_64
-          target: default
+          target: google_apis
+          profile: pixel_4
           disable-animations: true
-          script: |
-            mkdir -p capturas
-            adb install -r tallercito.apk
-            adb logcat -c
-            adb shell am start -n space.p314b.tallercito/.MainActivity
-            sleep 8
-            adb exec-out screencap -p > capturas/1-principal.png
-            adb shell uiautomator dump /sdcard/v.xml && adb pull /sdcard/v.xml capturas/1-principal.xml || true
-            adb shell input tap 540 330
-            sleep 2
-            adb exec-out screencap -p > capturas/2-nuevo.png
-            adb shell input tap 540 480
-            sleep 3
-            adb exec-out screencap -p > capturas/3-editor.png
-            adb shell input text "Prueba%sdel%stallercito"
-            sleep 1
-            adb exec-out screencap -p > capturas/4-escrito.png
-            adb logcat -d > capturas/logcat.txt
-            if grep -E "FATAL EXCEPTION|AndroidRuntime: Process: space.p314b" capturas/logcat.txt; then echo "La app se cerró"; exit 1; fi
-            adb shell pidof space.p314b.tallercito
+          script: bash prueba.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: tallercito-capturas
           path: capturas/
+      - name: Capturas a la release de prueba
+        if: always() && github.ref != 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload tallercito-prueba capturas/* -R "$GITHUB_REPOSITORY" --clobber || true
