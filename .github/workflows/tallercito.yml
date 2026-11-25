@@ -125,7 +125,8 @@ jobs:
           python3 tocar.py "Título"; adb shell input text "Prueba%sdel%stallercito"
           python3 tocar.py "Escribí…" || adb shell input tap 540 1300
           adb shell input text "Primer%sparrafo%sde%sprueba."; adb shell input keyevent 66
-          adb shell input text "Segundo%sparrafo."
+          adb shell input text "Segundo%sparrafo%scon%sbastantes%spalabras%spara%sver%scuantas%sentran%sen%scada%srenglon%sde%sla%spantalla."
+          cap 3b-teclado
           adb shell input keyevent 4
           cap 4-escrito
           python3 tocar.py "tamaño: normal ▾"; cap 5a-tamano-grande
