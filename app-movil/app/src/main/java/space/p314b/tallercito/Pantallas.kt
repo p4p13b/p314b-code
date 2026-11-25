@@ -25,6 +25,10 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -203,9 +207,16 @@ fun ColumnScope.Principal(est: Estado) {
 fun ColumnScope.Editor(est: Estado, ed: Edicion) {
     var tick by remember { mutableIntStateOf(0) }
     val col = c
+    // Con el teclado abierto y escribiendo en el cuadro, se esconde todo lo que no es el texto.
+    var alto by remember { mutableIntStateOf(0) }
+    var foco by remember { mutableStateOf(false) }
+    val altoPantalla = LocalConfiguration.current.screenHeightDp
+    val dens = LocalDensity.current.density
+    val compacto = foco && alto > 0 && alto / dens < altoPantalla * 0.65f
     Arriba("← principal", if (ed.base.esCopia) "copia · borrador" else if (ed.partes.size > 1) "acumulado · borrador" else "nota · borrador",
         alIzq = { ed.volcar(); est.pedirVolver() })
-    Column(Modifier.weight(1f).padding(horizontal = 16.dp)) {
+    Column(Modifier.weight(1f).onSizeChanged { alto = it.height }.padding(horizontal = 16.dp)) {
+        if (!compacto) {
         Hueco(12)
         Mono("título", 10.sp, mayus = true)
         BasicTextField(
@@ -218,24 +229,26 @@ fun ColumnScope.Editor(est: Estado, ed: Edicion) {
         Linea()
         Hueco(6)
         Mono("creado ${fecha(ed.base.creado)}" + (if (!ed.esNuevo) " · modificado ${fecha(ed.base.modificado)}" else "") + " · sin categoría", 10.5.sp, c.ghost)
+        }
         if (ed.partes.size > 1) {
-            Hueco(10)
+            Hueco(if (compacto) 6 else 10)
+            val pv = if (compacto) 2.dp else 8.dp
             Row(Modifier.fillMaxWidth().border(1.dp, c.rule), verticalAlignment = Alignment.CenterVertically) {
-                Mono("‹", 20.sp, if (ed.idx > 0) c.red else c.ghost, modifier = Modifier.clickable(enabled = ed.idx > 0) { cambiarParte(ed, ed.idx - 1) }.padding(horizontal = 18.dp, vertical = 8.dp))
+                Mono("‹", 20.sp, if (ed.idx > 0) c.red else c.ghost, modifier = Modifier.clickable(enabled = ed.idx > 0) { cambiarParte(ed, ed.idx - 1) }.padding(horizontal = 18.dp, vertical = pv))
                 Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
                     Mono("parte ${ed.idx + 1} de ${ed.partes.size}", 12.sp, c.ink, mayus = true)
-                    ed.titulosPartes.getOrNull(ed.idx)?.takeIf { it.isNotBlank() }?.let { Mono("«$it»", 11.sp) }
+                    if (!compacto) ed.titulosPartes.getOrNull(ed.idx)?.takeIf { it.isNotBlank() }?.let { Mono("«$it»", 11.sp) }
                 }
-                Mono("›", 20.sp, if (ed.idx < ed.partes.size - 1) c.red else c.ghost, modifier = Modifier.clickable(enabled = ed.idx < ed.partes.size - 1) { cambiarParte(ed, ed.idx + 1) }.padding(horizontal = 18.dp, vertical = 8.dp))
+                Mono("›", 20.sp, if (ed.idx < ed.partes.size - 1) c.red else c.ghost, modifier = Modifier.clickable(enabled = ed.idx < ed.partes.size - 1) { cambiarParte(ed, ed.idx + 1) }.padding(horizontal = 18.dp, vertical = pv))
             }
-            Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center) {
+            if (!compacto) Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center) {
                 repeat(ed.partes.size.coerceAtMost(12)) { i ->
                     Box(Modifier.padding(horizontal = 3.dp).size(7.dp).background(if (i == ed.idx) c.red else c.ghost, CircleShape))
                 }
             }
         }
-        Hueco(8)
-        Linea()
+        Hueco(if (compacto) 4 else 8)
+        if (!compacto) Linea()
         // Barra: alineación · tipografía · tamaño · B I N
         val v = ed.vista
         val vuelta = tick // se vuelve a calcular la barra cuando se mueve el cursor
@@ -246,6 +259,24 @@ fun ColumnScope.Editor(est: Estado, ed: Edicion) {
         val bold = v?.let { Formato.tiene(it.text, it.selectionStart, it.selectionEnd, Typeface.BOLD) } ?: false
         val ital = v?.let { Formato.tiene(it.text, it.selectionStart, it.selectionEnd, Typeface.ITALIC) } ?: false
         fun op(f: (EditorTexto) -> Unit) { ed.vista?.let { f(it); justificar(it); ed.sucio = true; tick++ } }
+        val nombreFam = mapOf("serif" to "garamond", "sans-serif" to "sans", "monospace" to "mono")
+        val nombreTam = when (tam) { "big" -> "grande"; "small" -> "chico"; else -> "normal" }
+        val sigFam = when (fam) { "serif" -> "sans-serif"; "sans-serif" -> "monospace"; else -> "serif" }
+        val sigTam = when (tam) { null -> Formato.GRANDE; "big" -> Formato.CHICO; else -> null }
+        if (compacto) {
+            // Una sola fila que se desliza de costado.
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Tecla("⇤", al == "left") { op { Formato.alinear(it, "left") } }
+                Tecla("⇔", al == "center") { op { Formato.alinear(it, "center") } }
+                Tecla("⇥", al == "right") { op { Formato.alinear(it, "right") } }
+                Tecla("☰", al == "justify") { op { Formato.alinear(it, "justify") } }
+                Tecla("B", bold) { op { Formato.alternar(it, Typeface.BOLD) } }
+                Tecla("I", ital, italica = true) { op { Formato.alternar(it, Typeface.ITALIC) } }
+                Tecla("N", false) { op { Formato.normal(it) } }
+                Tecla("${nombreFam[fam]} ▾", fam != "serif", ancho = true) { op { Formato.fuente(it, sigFam) } }
+                Tecla("$nombreTam ▾", tam != null, ancho = true) { op { Formato.tamano(it, sigTam) } }
+            }
+        } else {
         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Tecla("⇤", al == "left") { op { Formato.alinear(it, "left") } }
             Tecla("⇔", al == "center") { op { Formato.alinear(it, "center") } }
@@ -257,15 +288,9 @@ fun ColumnScope.Editor(est: Estado, ed: Edicion) {
             Tecla("N", false) { op { Formato.normal(it) } }
         }
         Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            val nombreFam = mapOf("serif" to "garamond", "sans-serif" to "sans", "monospace" to "mono")
-            Tecla("letra: ${nombreFam[fam]} ▾", fam != "serif", ancho = true) {
-                val sig = when (fam) { "serif" -> "sans-serif"; "sans-serif" -> "monospace"; else -> "serif" }
-                op { Formato.fuente(it, sig) }
-            }
-            Tecla("tamaño: ${when (tam) { "big" -> "grande"; "small" -> "chico"; else -> "normal" }} ▾", tam != null, ancho = true) {
-                val sig = when (tam) { null -> Formato.GRANDE; "big" -> Formato.CHICO; else -> null }
-                op { Formato.tamano(it, sig) }
-            }
+            Tecla("letra: ${nombreFam[fam]} ▾", fam != "serif", ancho = true) { op { Formato.fuente(it, sigFam) } }
+            Tecla("tamaño: $nombreTam ▾", tam != null, ancho = true) { op { Formato.tamano(it, sigTam) } }
+        }
         }
         Box(Modifier.fillMaxWidth().weight(1f).background(c.bg2).border(1.dp, c.rule)) {
             AndroidView(
@@ -277,11 +302,13 @@ fun ColumnScope.Editor(est: Estado, ed: Edicion) {
                         highlightColor = col.red.copy(alpha = 0.3f).toArgb()
                         hint = "Escribí…"
                         typeface = garamond(ctx)
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
-                        setLineSpacing(0f, 1.35f)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, TAM_PANTALLA)
+                        setLineSpacing(0f, 1.3f)
                         gravity = Gravity.TOP or Gravity.START
                         inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE or InputType.TYPE_TEXT_FLAG_CAP_SENTENCES
-                        setPadding(36, 30, 36, 30)
+                        val px = resources.displayMetrics.density
+                        setPadding((12 * px).toInt(), (10 * px).toInt(), (12 * px).toInt(), (10 * px).toInt())
+                        setOnFocusChangeListener { _, f -> foco = f }
                         setText(Formato.aSpanned(ed.partes[ed.idx]))
                         justificar(this)
                         addTextChangedListener(object : TextWatcher {
@@ -299,11 +326,14 @@ fun ColumnScope.Editor(est: Estado, ed: Edicion) {
         }
         Hueco(4)
     }
-    Abajo {
+    if (!compacto) Abajo {
         Mono(if (ed.sucio) "sin guardar" else "guardado", 10.sp, if (ed.sucio) c.amb else c.muted, mayus = true, modifier = Modifier.weight(1f))
         Boton("vista previa →") { ed.volcar(); est.pantalla = Pantalla.VISTA }
     }
 }
+
+/** Tamaño de la letra en pantalla (solo se ve así en el celular; el posteo no cambia). */
+private const val TAM_PANTALLA = 15f
 
 /** Android justifica el cuadro entero: se activa cuando todo el texto corrido está justificado. */
 private fun justificar(v: TextView) {
@@ -357,8 +387,8 @@ fun ColumnScope.Vista(est: Estado, ed: Edicion) {
                 TextView(ctx).apply {
                     setTextColor(col.soft.toArgb())
                     typeface = garamond(ctx)
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 19f)
-                    setLineSpacing(0f, 1.45f)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, TAM_PANTALLA + 1)
+                    setLineSpacing(0f, 1.4f)
                 }
             }, update = { it.text = Formato.aSpanned(html); justificar(it) }, modifier = Modifier.fillMaxWidth())
         }
